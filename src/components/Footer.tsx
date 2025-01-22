@@ -1,14 +1,16 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
+
 
 const Footer = () => {
     return (
       <footer className="footer">
         <div className="_gnb__menu_1h8bp_13">
           <ul>
-            <li><a href="/page1">메인화면</a></li>
-            <li><a href="/page2">지도</a></li>
-            <li><a href="/page3">테스트</a></li>
-            <li><a href="/page4">Page 4</a></li>
+            <li><Link to="/">메인화면</Link></li>  
+            <li><Link to="/Map">지도</Link></li>   
+            <li><Link to="/test">테스트</Link></li>  
+            <li><Link to="/page4">Page 4</Link></li>  
           </ul>
         </div>
       </footer>
