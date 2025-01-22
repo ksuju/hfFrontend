@@ -100,6 +100,25 @@
 
 
  /* 슬라이드 마우스 포인터 손 모양으로 설정 */
+/* .slider {
+  cursor: pointer;
+  width: '100%';
+  overflow: hidden;
+} */
+
 .slider {
   cursor: pointer;
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+.slides {
+  display: flex;
+  transition: transform 0.5s ease-in-out;
+}
+
+.slide {
+  min-width: 100%;
+  box-sizing: border-box;
 }
