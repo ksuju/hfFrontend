@@ -5,7 +5,7 @@ import axios from 'axios';
 // 메시지 인터페이스 간소화
 interface ChatMessage {
     nickname?: string;
-    content: string;
+    chatMessageContent: string;
 }
 
 const WEBSOCKET_URL = 'ws://localhost:8090/ws/chat';
@@ -20,9 +20,9 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
     const fetchPreviousMessages = async () => {
         try {
             const response = await axios.get(
-                `http://localhost:8090/api/v1/groups/${chatRoomId}/messages`,
-                { params: { afterChatMessageId: -1 } }
+                `http://localhost:8090/api/v1/groups/${chatRoomId}/messages`
             );
+            
             setMessages(response.data);
         } catch (error) {
             console.error('메시지 조회 실패:', error);
@@ -94,7 +94,7 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
             <div className="messages-list">
                 {messages.map((msg, index) => (
                     <div key={index} className="message">
-                        {msg.content}
+                        {msg.nickname} : {msg.chatMessageContent || "내용 없음"}
                     </div>
                 ))}
             </div>
