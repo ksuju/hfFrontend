@@ -1,5 +1,4 @@
 import React from 'react';
-import '../css/Header.css'; // 스타일을 적용하려면 반드시 import 해야 합니다.
 
 const Header = () => {
   return (
