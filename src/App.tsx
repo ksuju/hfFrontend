@@ -1,3 +1,5 @@
+import Chat from './Chat';  // Chat 컴포넌트 import
+
 function App() {
 
   console.log(import.meta.env.VITE_CORE_FRONT_BASE_URL);
@@ -9,6 +11,10 @@ function App() {
   return (
     <>
       <h1>Hello World!</h1>
+      <Chat
+        chatRoomId={1}  // 채팅방 고유 식별자 
+        memberId={1}  // 현재 사용자 ID
+      />
     </>
   )
 }
