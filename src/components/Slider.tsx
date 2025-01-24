@@ -6,6 +6,7 @@ interface Slide {
   festivalUrl: string;
 }
 
+
 interface SliderProps {
   slides: Slide[];
   title: string;
