@@ -1,94 +1,48 @@
 import React, { useState, useEffect, useRef } from 'react';
+import Slider from './Slider';
 
 const Main = () => {
 
-  const [currentIndex, setCurrentIndex] = useState(0);
   /*
     슬라이더 자동 이간 시간. useRef는 참조(reference)를 의미하며,
     직접적인 DOM요소 접근, 리렌더링 되도 값 보존. 외부 라이브러리 연동등에 사용된다고 한다.
     setTimeout은 일정시간 후 callback을 실행해줄 수 있는 js function이다.
     즉 slideInterval은 값이 없거나,  일정시간 후 callback을 호출하는 값을 참조하고 있다.
   */
-  const slideInterval = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [mainSlides, setMainSlides] = useState<any[]>([]);
+  const [apisSlides, setApisSlides] = useState<any[]>([]);
+  const [kopisSlides, setKopisSlides] = useState<any[]>([]);
 
-  const [slides, setSlides] = useState<any[]>([]);
-
-
+  
   const getSlideData = async () => {
     try {
-      const response = await fetch('http://localhost:8090/kopis/slideData'); 
-      const data = await response.json();
-      setSlides(data); 
+
+      const mainSlideData = await fetch('http://localhost:8090/api/v1/festivalPosts/slideData');
+      const mainData = await mainSlideData.json();
+      setMainSlides(mainData);
+  
+      const categorySlideData = await fetch('http://localhost:8090/api/v1/festivalPosts/getForSlid');
+      const categoryData = await categorySlideData.json();
+
+      setApisSlides(categoryData.APIS);
+      setKopisSlides(categoryData.KOPIS);
+
     } catch (error) {
       console.error('슬라이드 데이터를 가져오는 데 실패했습니다:', error);
     }
   };
 
-  const startAutoSlide = () => {
-    slideInterval.current = setInterval(() => {
-      setCurrentIndex((prevIndex) => (prevIndex + 1) % slides.length);
-      console.log("autoslide 오토슬라이드 동작", );
-    }, 13000); /* setInterval, setTimeOut은 첫 인자로, 콜백함수, 둘째 인자로 number를 받는데
-                 number 때마다 callback을 실행한다. 즉 여기서는 3초마다 CurrentIndex를 set하고 있다.
-                 3초마다 이전상태값(prevIndex) +1을 한다음 슬라이드 전체 길이에 비교하여 나머지(%) 를
-               계산하여, 첫 슬라이드로 돌아갈지, 아니면 다음 슬라이드로 넘어갈지 정해진다.
-               */  
-  };
-
-  const stopAutoSlide = () => {
-    if (slideInterval.current) {
-        clearInterval(slideInterval.current);
-    }
-  };
-
-
-  const handleDrag = (direction: 'left' | 'right') => {
-    console.log("handleDrag 핸들슬라이드 동작", );
-    stopAutoSlide();
-    if (direction === 'left') {
-      setCurrentIndex((prevIndex) => (prevIndex - 1 + slides.length) % slides.length);
-    } else {
-      setCurrentIndex((prevIndex) => (prevIndex + 1) % slides.length);
-    }
-    startAutoSlide();
-  };
 
   useEffect(() => {
-    startAutoSlide();
     getSlideData();
-    return () => stopAutoSlide(); // 컴포넌트 언마운트 시 인터벌 정리
   }, []);
 
 
   return (
-    <div className="slider" onMouseEnter={stopAutoSlide} onMouseLeave={startAutoSlide}>
-      {slides.length > 0 ? (
-        <div
-          className="slides"
-          style={{
-            transform: `translateX(-${currentIndex * 100}%)`,
-          }}
-        >
-          {slides.map((slide, index) => (
-            <div className="slide" key={slide.festivalId}>
-              {slide.festivalName}
-              <img 
-                src={slide.festivalUrl} 
-                alt={slide.festivalName}
-                style={{ 
-                  width: '100%', 
-                  height: '400px', 
-                  objectFit: 'contain' 
-                }} 
-              />
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div>Loading...</div>
-      )}
-      <button className="prev" onClick={() => handleDrag('left')}>◀</button>
-      <button className="next" onClick={() => handleDrag('right')}>▶</button>
+    <div className="main-content">
+      <Slider slides={mainSlides} title="" autoSlide={true} />
+      <Slider slides={apisSlides} title="축제~" autoSlide={false} />
+      <Slider slides={kopisSlides} title="공연~" autoSlide={false} />
     </div>
   );
 };

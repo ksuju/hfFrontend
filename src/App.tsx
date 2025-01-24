@@ -16,8 +16,9 @@ function App() {
   //   .then((data) => console.log(data));
 
 
+  
   return (
-    <BrowserRouter> {/*Router는 사용자 요청에 맞는 Component를 표시해준다 */}
+    <BrowserRouter> 
       <div id="commonLayoutComponent" className="commonLayoutContainer">
         <Header />
           <Routes>
