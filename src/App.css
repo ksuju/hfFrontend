@@ -3,6 +3,8 @@
   margin: 0 auto;
   padding: 1rem;
   text-align: center;
+  margin-top: -10px;
+  margin-bottom: -10px;
 }
 
 
@@ -116,12 +118,19 @@ header nav ul li a {
 
 
 
+
 /*슬라이더 컴포넌트 설정*/
 .slider {
   cursor: pointer;
   width: 100%;
   overflow: hidden;
   position: relative;
+}
+
+.slider-container {
+  position: relative;
+  overflow: hidden;
+  user-select: none;
 }
 
 .slides {
@@ -132,7 +141,32 @@ header nav ul li a {
 .slide {
   min-width: 100%;
   box-sizing: border-box;
+  flex: 0 0 100%;
 }
+
+/*슬라이더 화살표 설정정*/
+.arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  color: black;
+  background: none;
+  padding: 10px;
+  border: none;
+  cursor: pointer;
+  opacity: 70%;
+  font-size: 18px;
+  z-index: 10;
+}
+
+.arrow.left {
+  left: 10px;
+}
+
+.arrow.right {
+  right: 10px;
+}
+
 
 
 /* Footer설정 */
