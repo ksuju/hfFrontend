@@ -47,6 +47,7 @@ const KakaoMap = () => {
         border: '1px solid black',
         boxSizing: 'border-box'
       }}></div>
+      <div><h2>빈장소</h2></div>
     </div>
   )
 };

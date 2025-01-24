@@ -15,17 +15,17 @@ function App() {
   // fetch(import.meta.env.VITE_CORE_API_BASE_URL + "/api")
   //   .then((data) => console.log(data));
 
-
-  
   return (
-    <BrowserRouter> 
+    <BrowserRouter>
       <div id="commonLayoutComponent" className="commonLayoutContainer">
         <Header />
+        <main className="route-content">
           <Routes>
             <Route path="/" element={<Main />} />
             <Route path="/Map" element={<KakaoMap />} />
             <Route path="/test" element={<Test />} />
           </Routes>
+        </main>
         <Footer />
       </div>
     </BrowserRouter>

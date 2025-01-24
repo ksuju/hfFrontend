@@ -1,7 +1,6 @@
 #root {
   max-width: 680px;
   margin: 0 auto;
-  padding: 1rem;
   text-align: center;
   margin-top: -10px;
   margin-bottom: -10px;
@@ -16,13 +15,19 @@
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  min-height: 88vh; /* 전체 뷰포트 높이를 차지 */
+  min-height: 150vh; /* 전체 뷰포트 높이를 차지 */
   padding-top: var(--layout-padding-top);
   padding-bottom: 0;
   padding-bottom: calc(env(safe-area-inset-bottom) + 0px);
   padding-bottom: calc(constant(safe-area-inset-bottom) + 0px);
   background-color: var(--layout-bg-color);
 }
+
+.route-content {
+  flex: 1; 
+  display: flex;
+}
+
 
 
 .content {
@@ -144,6 +149,8 @@ header nav ul li a {
   flex: 0 0 100%;
 }
 
+
+
 /*슬라이더 화살표 설정정*/
 .arrow {
   position: absolute;
@@ -169,8 +176,8 @@ header nav ul li a {
 
 
 
-/* Footer설정 */
 
+/* Footer설정 */
 .footer {
   width: 100%;
   background-color: #333;
