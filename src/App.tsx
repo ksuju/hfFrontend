@@ -12,19 +12,20 @@ function App() {
   console.log(import.meta.env.VITE_CORE_FRONT_BASE_URL);
   console.log(import.meta.env.VITE_CORE_API_BASE_URL);
 
-  fetch(import.meta.env.VITE_CORE_API_BASE_URL + "/api")
-    .then((data) => console.log(data));
-
+  // fetch(import.meta.env.VITE_CORE_API_BASE_URL + "/api")
+  //   .then((data) => console.log(data));
 
   return (
-    <BrowserRouter> {/*Router는 사용자 요청에 맞는 Component를 표시해준다 */}
+    <BrowserRouter>
       <div id="commonLayoutComponent" className="commonLayoutContainer">
         <Header />
+        <main className="route-content">
           <Routes>
             <Route path="/" element={<Main />} />
             <Route path="/Map" element={<KakaoMap />} />
             <Route path="/test" element={<Test />} />
           </Routes>
+        </main>
         <Footer />
       </div>
     </BrowserRouter>
