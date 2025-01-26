@@ -1,35 +1,35 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
+import KakaoMap from './components/KakaoMap'
+import Header from './components/Header'
+import Footer from './components/Footer'
+import Test from './components/test'
+import Main from './components/Main'
+import { BrowserRouter, Route, Routes } from 'react-router-dom';//Router 설정
+
 
 function App() {
-  const [count, setCount] = useState(0)
+
+  console.log(import.meta.env.VITE_CORE_FRONT_BASE_URL);
+  console.log(import.meta.env.VITE_CORE_API_BASE_URL);
+
+  // fetch(import.meta.env.VITE_CORE_API_BASE_URL + "/api")
+  //   .then((data) => console.log(data));
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <BrowserRouter>
+      <div id="commonLayoutComponent" className="commonLayoutContainer">
+        <Header />
+        <main className="route-content">
+          <Routes>
+            <Route path="/" element={<Main />} />
+            <Route path="/Map" element={<KakaoMap />} />
+            <Route path="/test" element={<Test />} />
+          </Routes>
+        </main>
+        <Footer />
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;
