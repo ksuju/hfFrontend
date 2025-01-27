@@ -1,9 +1,42 @@
 #root {
-  max-width: 1280px;
+  max-width: 680px;
   margin: 0 auto;
-  padding: 2rem;
   text-align: center;
+  margin-top: -10px;
+  margin-bottom: -10px;
 }
+
+
+/*App.tsx의 컴포넌트 크기를 동일하게 설정정*/
+.commonLayoutContainer {
+  width: 100%;
+  min-width: 650px;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 150vh; /* 전체 뷰포트 높이를 차지 */
+  padding-top: var(--layout-padding-top);
+  padding-bottom: 0;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 0px);
+  padding-bottom: calc(constant(safe-area-inset-bottom) + 0px);
+  background-color: var(--layout-bg-color);
+}
+
+.route-content {
+  flex: 1; 
+  display: flex;
+}
+
+
+
+.content {
+  flex: 1; 
+  overflow-y: auto; 
+}
+
+
+
 
 .logo {
   height: 6em;
@@ -40,3 +73,220 @@
 .read-the-docs {
   color: #888;
 }
+
+
+
+/*header설정정*/
+header {
+  width: 100%;
+  padding: 10px 0;
+  background-color: #333;
+  color: #fff;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  margin-bottom: 3px;
+  position: sticky;
+  display: flex;
+}
+
+header .container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 24px;
+}
+
+header nav ul {
+  list-style-type: none;
+  display: flex;
+  margin: 0;
+  padding: 0;
+}
+
+header nav ul li {
+  margin-left: 20px;
+}
+
+header nav ul li a {
+  text-decoration: none;
+  color: #fff;
+  font-size: 16px;
+}
+
+
+
+
+/*슬라이더 컴포넌트 설정*/
+.slider {
+  cursor: pointer;
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
+.slider-container {
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+}
+
+.slides {
+  display: flex;
+  transition: transform 0.5s ease-in-out;
+}
+
+.slide {
+  min-width: 100%;
+  box-sizing: border-box;
+  flex: 0 0 100%;
+}
+
+
+
+/*슬라이더 화살표 설정정*/
+.arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  color: black;
+  background: none;
+  padding: 10px;
+  border: none;
+  cursor: pointer;
+  opacity: 70%;
+  font-size: 18px;
+  z-index: 10;
+}
+
+.arrow.left {
+  left: 10px;
+}
+
+.arrow.right {
+  right: 10px;
+}
+
+
+
+
+/* Footer설정 */
+.footer {
+  width: 100%;
+  background-color: #333;
+  color: #fff;
+  padding: 20px 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: sticky;  
+  bottom: 0;        
+  left: 0;          
+  z-index: 1000;    
+}
+
+._gnb__menu_1h8bp_13 {
+  max-width: 1200px;
+  width: 100%;
+}
+
+._gnb__menu_1h8bp_13 ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+._gnb__menu_1h8bp_13 li {
+  margin: 0 15px;
+}
+
+._gnb__menu_1h8bp_13 a {
+  text-decoration: none;
+  color: white;
+  font-size: 14px;
+}
+
+._gnb__menu_1h8bp_13 a:hover {
+  color: #ff6700; /* 원하는 hover 색상 */
+}
+
+
+
+/*카카오 map api 설정*/
+
+.search-container {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.search-container input {
+  width: 100%;
+  padding: 10px;
+  padding-right: 40px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.search-button {
+  position: absolute;
+  right: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.search-button img {
+  width: 20px;
+  height: 20px;
+}
+
+.results-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.results-list ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.results-list li {
+  padding: 10px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+}
+
+.results-list li:hover {
+  background-color: #f5f5f5;
+}
+
+.place-details {
+  margin-top: 20px;
+  padding: 10px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+}
+
+
+
+
+
+
+
+
+
+
