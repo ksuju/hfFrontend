@@ -5,6 +5,7 @@ import axios from 'axios';
 interface ChatMessage {
     nickname?: string;
     chatMessageContent: string;
+    messageTimestamp: string;  // 추가
 }
 
 interface PageInfo {
@@ -27,6 +28,11 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
     const [currentPage, setCurrentPage] = useState(0);
     const [hasMore, setHasMore] = useState(true);
     const stompClientRef = useRef<Client | null>(null);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
 
     // 이전 메시지 조회
     const fetchPreviousMessages = async (page: number) => {
@@ -84,6 +90,10 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
         };
     }, [chatRoomId]);
 
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
+
     const sendMessage = async () => {
         if (!messageInput.trim() || !stompClientRef.current) return;
 
@@ -109,14 +119,23 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
         }
     };
 
+    // 시간 포맷팅 함수
+    const formatMessageTime = (timestamp: string) => {
+        const date = new Date(timestamp);
+        const hours = date.getHours();
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        const ampm = hours >= 12 ? '오후' : '오전';
+        const formattedHours = hours % 12 || 12;
+        
+        return `${ampm} ${formattedHours}:${minutes}`;
+    };
+
     return (
         <div className="messages-container">
-            <div className="messages-list">
-                {messages.slice().reverse().map((msg, index) => (
-                    <div key={index} className="message">
-                        {msg.nickname} : {msg.chatMessageContent || "내용 없음"}
-                    </div>
-                ))}
+            <div className="messages-list" style={{ 
+                height: "400px", // 고정된 높이 설정
+                overflowY: "auto" // 스크롤 가능하도록 설정
+            }}>
                 {hasMore && (
                     <button 
                         onClick={loadMoreMessages} 
@@ -125,6 +144,15 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
                         이전 메시지 더보기
                     </button>
                 )}
+                {messages.slice().reverse().map((msg, index) => (
+                    <div key={index} className="message" style={{ display: 'flex', gap: '8px' }}>
+                        <span>{msg.nickname} : {msg.chatMessageContent || "내용 없음"}</span>
+                        <span style={{ color: '#888', fontSize: '0.9em' }}>
+                            {formatMessageTime(msg.messageTimestamp)}
+                        </span>
+                    </div>
+                ))}
+                <div ref={messagesEndRef} /> {/* 스크롤 타겟 요소 */}
             </div>
 
             <div className="message-input">
