@@ -2,50 +2,72 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Client } from '@stomp/stompjs';
 import axios from 'axios';
 
-// 메시지 인터페이스 간소화
 interface ChatMessage {
     nickname?: string;
     chatMessageContent: string;
 }
 
+interface PageInfo {
+    size: number;
+    number: number;
+    totalElements: number;
+    totalPages: number;
+}
+
+interface ChatResponse {
+    content: ChatMessage[];
+    page: PageInfo;
+}
+
 const WEBSOCKET_URL = 'ws://localhost:8090/ws/chat';
-// const API_BASE_URL = import.meta.env.VITE_CORE_API_BASE_URL;
 
 const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, memberId }) => {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [messageInput, setMessageInput] = useState('');
+    const [currentPage, setCurrentPage] = useState(0);
+    const [hasMore, setHasMore] = useState(true);
     const stompClientRef = useRef<Client | null>(null);
 
     // 이전 메시지 조회
-    const fetchPreviousMessages = async () => {
+    const fetchPreviousMessages = async (page: number) => {
         try {
-            const response = await axios.get(
-                `http://localhost:8090/api/v1/groups/${chatRoomId}/messages`
+            const response = await axios.get<ChatResponse>(
+                `http://localhost:8090/api/v1/chatRooms/${chatRoomId}/messages?page=${page}`
             );
             
-            setMessages(response.data);
+            if (page === 0) {
+                setMessages(response.data.content);
+            } else {
+                setMessages(prev => [...prev, ...response.data.content]);
+            }
+            
+            setHasMore(page < response.data.page.totalPages - 1);
         } catch (error) {
             console.error('메시지 조회 실패:', error);
         }
     };
 
+    const loadMoreMessages = () => {
+        const nextPage = currentPage + 1;
+        setCurrentPage(nextPage);
+        fetchPreviousMessages(nextPage);
+    };
+
     useEffect(() => {
         const client = new Client({
             brokerURL: WEBSOCKET_URL,
-            reconnectDelay: 5000, // 자동 재연결 (5초 간격)
+            reconnectDelay: 5000,
             debug: (str) => {
                 console.log('STOMP: ', str);
             },
             onConnect: () => {
                 console.log('STOMP 연결 성공');
-                // 이전 메시지 조회
-                fetchPreviousMessages();
+                fetchPreviousMessages(0);
 
-                // 메시지 구독
                 client.subscribe(`/topic/chat/${chatRoomId}`, (message) => {
                     if (message.body) {
                         const receivedMessage: ChatMessage = JSON.parse(message.body);
-                        setMessages((prev) => [...prev, receivedMessage]);
+                        setMessages(prev => [receivedMessage, ...prev]);
                     }
                 });
             },
@@ -54,11 +76,11 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
             },
         });
 
-        client.activate(); // 클라이언트 활성화
+        client.activate();
         stompClientRef.current = client;
 
         return () => {
-            client.deactivate(); // 클라이언트 비활성화
+            client.deactivate();
         };
     }, [chatRoomId]);
 
@@ -71,15 +93,13 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
         };
 
         try {
-            // STOMP를 통해 메시지 전송
             stompClientRef.current.publish({
                 destination: `/app/chat/${chatRoomId}`,
                 body: JSON.stringify(messageToSend),
             });
 
-            // 메시지 기록 저장 (REST API 호출)
             await axios.post(
-                `http://localhost:8090/api/v1/groups/${chatRoomId}/messages`,
+                `http://localhost:8090/api/v1/chatRooms/${chatRoomId}/messages`,
                 messageToSend
             );
 
@@ -90,13 +110,21 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
     };
 
     return (
-        <div className="chat-container">
+        <div className="messages-container">
             <div className="messages-list">
-                {messages.map((msg, index) => (
+                {messages.slice().reverse().map((msg, index) => (
                     <div key={index} className="message">
                         {msg.nickname} : {msg.chatMessageContent || "내용 없음"}
                     </div>
                 ))}
+                {hasMore && (
+                    <button 
+                        onClick={loadMoreMessages} 
+                        className="load-more-button"
+                    >
+                        이전 메시지 더보기
+                    </button>
+                )}
             </div>
 
             <div className="message-input">
