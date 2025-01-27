@@ -28,10 +28,12 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
     const [currentPage, setCurrentPage] = useState(0);
     const [hasMore, setHasMore] = useState(true);
     const stompClientRef = useRef<Client | null>(null);
-    const messagesEndRef = useRef<HTMLDivElement>(null);
+    const messagesListRef = useRef<HTMLDivElement>(null);
 
     const scrollToBottom = () => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        if (messagesListRef.current) {
+            messagesListRef.current.scrollTop = messagesListRef.current.scrollHeight;
+        }
     };
 
     // 이전 메시지 조회
@@ -43,8 +45,10 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
             
             if (page === 0) {
                 setMessages(response.data.content);
+                scrollToBottom(); // 초기 로드시에만 스크롤
             } else {
                 setMessages(prev => [...prev, ...response.data.content]);
+                // 이전 메시지 로드시에는 스크롤 하지 않음
             }
             
             setHasMore(page < response.data.page.totalPages - 1);
@@ -72,8 +76,14 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
 
                 client.subscribe(`/topic/chat/${chatRoomId}`, (message) => {
                     if (message.body) {
-                        const receivedMessage: ChatMessage = JSON.parse(message.body);
-                        setMessages(prev => [receivedMessage, ...prev]);
+                        const receivedMessage = JSON.parse(message.body);
+                        const chatMessage: ChatMessage = {
+                            nickname: receivedMessage.nickname,
+                            chatMessageContent: receivedMessage.chatMessageContent,
+                            messageTimestamp: receivedMessage.createDate // createDate를 messageTimestamp로 매핑
+                        };
+                        setMessages(prev => [chatMessage, ...prev]);
+                        scrollToBottom();
                     }
                 });
             },
@@ -89,10 +99,6 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
             client.deactivate();
         };
     }, [chatRoomId]);
-
-    useEffect(() => {
-        scrollToBottom();
-    }, [messages]);
 
     const sendMessage = async () => {
         if (!messageInput.trim() || !stompClientRef.current) return;
@@ -122,39 +128,59 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
     // 시간 포맷팅 함수
     const formatMessageTime = (timestamp: string) => {
         const date = new Date(timestamp);
+        if (isNaN(date.getTime())) {
+            console.error('Invalid timestamp:', timestamp);
+            return '';
+        }
+        
         const hours = date.getHours();
-        const minutes = date.getMinutes().toString().padStart(2, '0');
+        const minutes = date.getMinutes();
         const ampm = hours >= 12 ? '오후' : '오전';
         const formattedHours = hours % 12 || 12;
+        const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
         
-        return `${ampm} ${formattedHours}:${minutes}`;
+        return `${ampm} ${formattedHours}:${formattedMinutes}`;
     };
 
     return (
         <div className="messages-container">
-            <div className="messages-list" style={{ 
-                height: "400px", // 고정된 높이 설정
-                overflowY: "auto" // 스크롤 가능하도록 설정
-            }}>
+            <div 
+                className="messages-list" 
+                ref={messagesListRef}
+                style={{ 
+                    height: "400px",
+                    overflowY: "auto",
+                    display: "flex",
+                    flexDirection: "column"
+                }}
+            >
                 {hasMore && (
                     <button 
                         onClick={loadMoreMessages} 
                         className="load-more-button"
+                        style={{
+                            margin: "10px auto",
+                            padding: "5px 10px"
+                        }}
                     >
                         이전 메시지 더보기
                     </button>
                 )}
-                {messages.slice().reverse().map((msg, index) => (
-                    <div key={index} className="message" style={{ display: 'flex', gap: '8px' }}>
-                        <span>{msg.nickname} : {msg.chatMessageContent || "내용 없음"}</span>
-                        <span style={{ color: '#888', fontSize: '0.9em' }}>
-                            {formatMessageTime(msg.messageTimestamp)}
-                        </span>
-                    </div>
-                ))}
-                <div ref={messagesEndRef} /> {/* 스크롤 타겟 요소 */}
+                <div style={{ flexGrow: 1 }}> {/* 여백을 위한 공간 */}
+                    {messages.slice().reverse().map((msg, index) => (
+                        <div key={index} className="message" style={{ 
+                            display: 'flex', 
+                            gap: '8px',
+                            margin: '5px 0'
+                        }}>
+                            <span>{msg.nickname} : {msg.chatMessageContent || "내용 없음"}</span>
+                            <span style={{ color: '#888', fontSize: '0.9em' }}>
+                                {formatMessageTime(msg.messageTimestamp)}
+                            </span>
+                        </div>
+                    ))}
+                </div>
             </div>
-
             <div className="message-input">
                 <input
                     type="text"
