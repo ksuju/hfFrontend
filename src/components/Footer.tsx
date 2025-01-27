@@ -10,7 +10,7 @@ const Footer = () => {
             <li><Link to="/">메인화면</Link></li>  
             <li><Link to="/Map">지도</Link></li>   
             <li><Link to="/test">테스트</Link></li>  
-            <li><Link to="/page4">Page 4</Link></li>  
+            <li><Link to="/chat">채팅 테스트</Link></li>  
           </ul>
         </div>
       </footer>
