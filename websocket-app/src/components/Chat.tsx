@@ -83,7 +83,10 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
                             messageTimestamp: receivedMessage.createDate // createDate를 messageTimestamp로 매핑
                         };
                         setMessages(prev => [chatMessage, ...prev]);
-                        scrollToBottom();
+                        // 새 메시지 수신시에만 스크롤
+                        if (receivedMessage.memberId === memberId) {
+                            scrollToBottom();
+                        }
                     }
                 });
             },
@@ -120,6 +123,8 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
             );
 
             setMessageInput('');
+            // 메시지 전송 후 스크롤
+            scrollToBottom();
         } catch (error) {
             console.error('메시지 전송 실패:', error);
         }
