@@ -1,6 +1,10 @@
 import AuthHeader from '../components/AuthHeader';
 
 const Login = () => {
+
+    const socialLoginForKakaoUrl = `http://localhost:8090/oauth2/authorization/kakao`; // 카카오 로그인 요청 URL
+    const redirectUrlAfterSocialLogin = "http://localhost:5173"; // 카카오 로그인 후 리다이렉트 URL
+
     return (
         <div className="min-h-screen flex flex-col bg-white lg:bg-gray-100">
             <AuthHeader />
@@ -57,9 +61,20 @@ const Login = () => {
                         </div>
 
                         <div className="mt-6">
-                            <button className="w-full h-12 border border-gray-200 rounded-lg font-medium hover:border-primary transition-colors">
-                                카카오
-                            </button>
+                            <a href={`${socialLoginForKakaoUrl}?redirectUrl=${redirectUrlAfterSocialLogin}`}
+                                className="block w-full">
+                                <button
+                                    type="button"
+                                    className="w-full h-12 border border-gray-200 rounded-lg font-medium hover:border-primary transition-colors flex items-center justify-center gap-2"
+                                >
+                                    <img
+                                        src="/kakao-logo.png"
+                                        alt="카카오 로고"
+                                        className="w-5 h-5"
+                                    />
+                                    카카오 로그인
+                                </button>
+                            </a>
                         </div>
                     </div>
                 </div>
