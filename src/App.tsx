@@ -4,6 +4,7 @@ import Header from './components/Header'
 import Footer from './components/Footer'
 import Test from './components/test'
 import Main from './components/Main'
+import Chat from '../websocket-app/src/components/Chat';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';//Router 설정
 
 
@@ -24,6 +25,7 @@ function App() {
             <Route path="/" element={<Main />} />
             <Route path="/Map" element={<KakaoMap />} />
             <Route path="/test" element={<Test />} />
+            <Route path="/chat" element={<Chat chatRoomId={1} memberId={1} />} />
           </Routes>
         </main>
         <Footer />
