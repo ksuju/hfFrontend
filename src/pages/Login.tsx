@@ -2,10 +2,10 @@ import AuthHeader from '../components/AuthHeader';
 
 const Login = () => {
     return (
-        <div className="min-h-screen flex flex-col">
+        <div className="min-h-screen flex flex-col bg-white lg:bg-gray-100">
             <AuthHeader />
-            <div className="flex-1 flex flex-col justify-center px-4 pt-16">
-                <div className="max-w-[430px] mx-auto w-full">
+            <div className="flex-1 flex flex-col justify-center px-4 pt-16 lg:pt-0">
+                <div className="max-w-[430px] lg:max-w-screen-sm mx-auto w-full lg:bg-white lg:p-8 lg:rounded-2xl lg:shadow-md">
                     <div className="text-center mb-12">
                         <h2 className="text-2xl font-semibold text-gray-800">로그인</h2>
                         <p className="text-gray-500 mt-2">환영합니다</p>

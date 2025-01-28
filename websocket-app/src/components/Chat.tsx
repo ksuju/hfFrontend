@@ -42,7 +42,7 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
             const response = await axios.get<ChatResponse>(
                 `http://localhost:8090/api/v1/chatRooms/${chatRoomId}/messages?page=${page}`
             );
-            
+
             if (page === 0) {
                 setMessages(response.data.content);
                 scrollToBottom(); // 초기 로드시에만 스크롤
@@ -50,7 +50,7 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
                 setMessages(prev => [...prev, ...response.data.content]);
                 // 이전 메시지 로드시에는 스크롤 하지 않음
             }
-            
+
             setHasMore(page < response.data.page.totalPages - 1);
         } catch (error) {
             console.error('메시지 조회 실패:', error);
@@ -137,22 +137,22 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
             console.error('Invalid timestamp:', timestamp);
             return '';
         }
-        
+
         const hours = date.getHours();
         const minutes = date.getMinutes();
         const ampm = hours >= 12 ? '오후' : '오전';
         const formattedHours = hours % 12 || 12;
         const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
-        
+
         return `${ampm} ${formattedHours}:${formattedMinutes}`;
     };
 
     return (
         <div className="messages-container">
-            <div 
-                className="messages-list" 
+            <div
+                className="messages-list"
                 ref={messagesListRef}
-                style={{ 
+                style={{
                     height: "400px",
                     overflowY: "auto",
                     display: "flex",
@@ -160,8 +160,8 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
                 }}
             >
                 {hasMore && (
-                    <button 
-                        onClick={loadMoreMessages} 
+                    <button
+                        onClick={loadMoreMessages}
                         className="load-more-button"
                         style={{
                             margin: "10px auto",
@@ -173,8 +173,8 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
                 )}
                 <div style={{ flexGrow: 1 }}> {/* 여백을 위한 공간 */}
                     {messages.slice().reverse().map((msg, index) => (
-                        <div key={index} className="message" style={{ 
-                            display: 'flex', 
+                        <div key={index} className="message" style={{
+                            display: 'flex',
                             gap: '8px',
                             margin: '5px 0'
                         }}>

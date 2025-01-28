@@ -1,15 +1,17 @@
+// Footer.tsx
 import { Link, useLocation } from 'react-router-dom'
 
 const Footer = () => {
     const location = useLocation()
 
     return (
-        <footer className="fixed bottom-0 left-0 right-0 bg-white shadow-[0_-2px_4px_rgba(0,0,0,0.1)]">
+        <footer className="fixed bottom-0 left-0 right-0 bg-white shadow-[0_-2px_4px_rgba(0,0,0,0.1)] z-10">
             <nav className="max-w-[430px] mx-auto grid grid-cols-3 h-16">
                 <Link
                     to="/posts"
-                    className={`flex flex-col items-center justify-center ${location.pathname === '/posts' ? 'text-primary font-medium' : 'text-gray-500'
-                        }`}
+                    className={`flex flex-col items-center justify-center ${
+                        location.pathname === '/posts' ? 'text-primary font-medium' : 'text-gray-500'
+                    }`}
                 >
                     <svg
                         className={`w-6 h-6 mb-1 ${location.pathname === '/posts' ? 'text-primary' : 'text-gray-500'}`}
@@ -23,8 +25,9 @@ const Footer = () => {
                 </Link>
                 <Link
                     to="/"
-                    className={`flex flex-col items-center justify-center ${location.pathname === '/' ? 'text-primary font-medium' : 'text-gray-500'
-                        }`}
+                    className={`flex flex-col items-center justify-center ${
+                        location.pathname === '/' ? 'text-primary font-medium' : 'text-gray-500'
+                    }`}
                 >
                     <svg
                         className={`w-6 h-6 mb-1 ${location.pathname === '/' ? 'text-primary' : 'text-gray-500'}`}
@@ -38,8 +41,9 @@ const Footer = () => {
                 </Link>
                 <Link
                     to="/chatroom"
-                    className={`flex flex-col items-center justify-center ${location.pathname === '/chatroom' ? 'text-primary font-medium' : 'text-gray-500'
-                        }`}
+                    className={`flex flex-col items-center justify-center ${
+                        location.pathname === '/chatroom' ? 'text-primary font-medium' : 'text-gray-500'
+                    }`}
                 >
                     <svg
                         className={`w-6 h-6 mb-1 ${location.pathname === '/chatroom' ? 'text-primary' : 'text-gray-500'}`}
@@ -51,7 +55,6 @@ const Footer = () => {
                     </svg>
                     <span>모임</span>
                 </Link>
-                <Link to="/chat">채팅 테스트</Link>
             </nav>
         </footer>
     )
