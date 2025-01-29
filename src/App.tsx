@@ -9,6 +9,7 @@ import Meeting from './pages/Meeting'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
 import Chat from "../websocket-app/src/components/Chat.tsx"
+import MyPage from './pages/MyPage'
 
 function App() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -70,6 +71,7 @@ function App() {
                                             <Route path="/posts" element={<Festival />} />
                                             <Route path="/chatroom" element={<Meeting />} />
                                             <Route path="/chat" element={<Chat chatRoomId={1} memberId={1} />} />
+                                            <Route path="/mypage" element={<MyPage />} />
                                         </Routes>
                                     </div>
                                 </div>
