@@ -1,9 +1,47 @@
+import { useState } from 'react';
 import AuthHeader from '../components/AuthHeader';
+import kakaoLogo from '../assets/images/kakao-logo.png'
 
-const Login = () => {
+interface LoginProps {
+    setIsLoggedIn: React.Dispatch<React.SetStateAction<boolean>>;
+}
 
+const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
     const socialLoginForKakaoUrl = `http://localhost:8090/oauth2/authorization/kakao`; // 카카오 로그인 요청 URL
     const redirectUrlAfterSocialLogin = "http://localhost:5173"; // 카카오 로그인 후 리다이렉트 URL
+
+
+    // 로그인 폼 입력 값 상태 관리
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+
+    const handleLogin = async (e: React.FormEvent) => {
+        console.log(import.meta.env.VITE_CORE_API_BASE_URL);
+
+        e.preventDefault();
+        try {
+            const response = await fetch(import.meta.env.VITE_CORE_API_BASE_URL + '/api/v1/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email,
+                    password
+                }),
+                credentials: 'include', // 쿠키 포함
+            });
+
+            if (response.ok) {
+                setIsLoggedIn(true);
+                window.location.href = '/'; // 홈 페이지로 리다이렉트
+            } else {
+                console.error('로그인 실패');
+            }
+        } catch (error) {
+            console.error('로그인 실패:', error);
+        }
+    };
 
     return (
         <div className="min-h-screen flex flex-col bg-white lg:bg-gray-100">
@@ -15,13 +53,16 @@ const Login = () => {
                         <p className="text-gray-500 mt-2">환영합니다</p>
                     </div>
 
+
                     {/* 로그인 폼 */}
-                    <form className="space-y-4">
+                    <form className="space-y-4" onSubmit={handleLogin}>
                         <div>
                             <input
                                 type="email"
                                 placeholder="이메일"
                                 className="w-full h-12 px-4 border border-gray-200 rounded-lg focus:outline-none focus:border-primary"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
                             />
                         </div>
                         <div>
@@ -29,6 +70,8 @@ const Login = () => {
                                 type="password"
                                 placeholder="비밀번호"
                                 className="w-full h-12 px-4 border border-gray-200 rounded-lg focus:outline-none focus:border-primary"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
                             />
                         </div>
                         <button
@@ -38,6 +81,7 @@ const Login = () => {
                             로그인
                         </button>
                     </form>
+
 
                     {/* 회원가입 링크 */}
                     <div className="mt-6 text-center">
@@ -49,8 +93,9 @@ const Login = () => {
                         </p>
                     </div>
 
+
                     {/* 소셜 로그인 */}
-                    <div className="mt-8">
+                    <div className="mt-8 px-4"> {/* 좌우 여백 추가 */}
                         <div className="relative">
                             <div className="absolute inset-0 flex items-center">
                                 <div className="w-full border-t border-gray-200"></div>
@@ -61,19 +106,19 @@ const Login = () => {
                         </div>
 
                         <div className="mt-6">
-                            <a href={`${socialLoginForKakaoUrl}?redirectUrl=${redirectUrlAfterSocialLogin}`}
-                                className="block w-full">
-                                <button
-                                    type="button"
-                                    className="w-full h-12 border border-gray-200 rounded-lg font-medium hover:border-primary transition-colors flex items-center justify-center gap-2"
-                                >
-                                    <img
-                                        src="/kakao-logo.png"
-                                        alt="카카오 로고"
-                                        className="w-5 h-5"
-                                    />
-                                    카카오 로그인
-                                </button>
+                            <a
+                                href={`${socialLoginForKakaoUrl}?redirectUrl=${redirectUrlAfterSocialLogin}`}
+                                className="block w-full"
+                            >
+                                <img
+                                    src={kakaoLogo}
+                                    alt="카카오 계정으로 로그인"
+                                    className="w-full max-w-[400px] h-[60px] mx-auto cursor-pointer" // 크기 조정
+                                    style={{
+                                        aspectRatio: '600/90',
+                                        objectFit: 'contain'
+                                    }}
+                                />
                             </a>
                         </div>
                     </div>
