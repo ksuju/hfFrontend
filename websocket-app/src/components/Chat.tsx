@@ -16,9 +16,11 @@ interface PageInfo {
     totalPages: number;
 }
 
-interface ChatResponse {
-    content: ChatMessage[];
-    page: PageInfo;
+interface ChatResponse {    // RsData 형식에 맞춰서 수정
+    data: {
+        content: ChatMessage[];
+        page: PageInfo;
+    }
 }
 
 const WEBSOCKET_URL = 'ws://localhost:8090/ws/chat';
@@ -44,20 +46,20 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
             );
 
             if (page === 0) {
-                setMessages(response.data.content);
+                setMessages(response.data.data.content);
                 // 첫 로드시 가장 최신 메시지의 읽음 상태 업데이트
-                if (response.data.content.length > 0) {
-                    const latestMessage = response.data.content[0]; // 가장 최신 메시지
+                if (response.data.data.content.length > 0) {
+                    const latestMessage = response.data.data.content[0]; // 가장 최신 메시지
                     if (latestMessage.messageId) {  // id 필드 추가 필요
                         updateMessageReadStatus(latestMessage.messageId);
                     }
                 }
                 setTimeout(() => scrollToBottom(), 100);
             } else {
-                setMessages(prev => [...prev, ...response.data.content]);
+                setMessages(prev => [...prev, ...response.data.data.content]);
             }
 
-            setHasMore(page < response.data.page.totalPages - 1);
+            setHasMore(page < response.data.data.page.totalPages - 1);
         } catch (error) {
             console.error('메시지 조회 실패:', error);
         }
