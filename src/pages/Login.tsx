@@ -32,13 +32,17 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
                 credentials: 'include', // 쿠키 포함
             });
 
+            console.log("API URL:", import.meta.env.VITE_CORE_API_BASE_URL + '/api/v1/auth/login');
+
             if (response.ok) {
                 setIsLoggedIn(true);
                 window.location.href = '/'; // 홈 페이지로 리다이렉트
             } else {
-                console.error('로그인 실패');
+                const errorData = await response.json();
+                console.error('로그인 실패', errorData);
             }
         } catch (error) {
+
             console.error('로그인 실패:', error);
         }
     };
