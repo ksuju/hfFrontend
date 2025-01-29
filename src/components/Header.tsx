@@ -7,7 +7,7 @@ const Header = () => {
             <div className="max-w-[600px] lg:max-w-screen-lg mx-auto h-full px-4 flex justify-between items-center">
                 <Link to="/" className="flex items-center">
                     <img src="/logo.png" alt="로고" className="h-8"/>
-                    <span className="text-primary font-bold ml-2">숨은사람찾기</span>
+                    <span className="text-primary font-bold ml-2">숨은사람친구</span>
                 </Link>
                 <div className="flex items-center gap-2">
                     <Link to="/chat">채팅 테스트</Link>

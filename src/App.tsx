@@ -8,6 +8,7 @@ import Meeting from './pages/Meeting'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
 import Chat from "../websocket-app/src/components/Chat.tsx";
+import FestivalMap from "./pages/FestivalMap.tsx";
 
 function App() {
     return (
@@ -27,6 +28,7 @@ function App() {
                                             <Route path="/posts" element={<Festival />} />
                                             <Route path="/chatroom" element={<Meeting />} />
                                             <Route path="/chat" element={<Chat chatRoomId={1} memberId={1}/>}/>
+                                            <Route path="/map" element={<FestivalMap />} />  {/* 공연 지도 페이지 추가 */}
                                         </Routes>
                                     </div>
                                 </div>
