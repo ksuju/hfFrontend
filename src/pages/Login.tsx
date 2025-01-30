@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import AuthHeader from '../components/AuthHeader';
 import kakaoLogo from '../assets/images/kakao-logo.png'
 
@@ -14,6 +14,15 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
     // 로그인 폼 입력 값 상태 관리
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [saveEmail, setSaveEmail] = useState(false);
+
+    useEffect(() => {
+        const savedEmail = localStorage.getItem('savedEmail');
+        if (savedEmail) {
+            setEmail(savedEmail);
+            setSaveEmail(true);
+        }
+    }, []);
 
     const handleLogin = async (e: React.FormEvent) => {
         console.log(import.meta.env.VITE_CORE_API_BASE_URL);
@@ -35,6 +44,11 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
             console.log("API URL:", import.meta.env.VITE_CORE_API_BASE_URL + '/api/v1/auth/login');
 
             if (response.ok) {
+                if (saveEmail) {
+                    localStorage.setItem('savedEmail', email);
+                } else {
+                    localStorage.removeItem('savedEmail');
+                }
                 setIsLoggedIn(true);
                 window.location.href = '/'; // 홈 페이지로 리다이렉트
             } else {
@@ -77,6 +91,18 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                             />
+                        </div>
+                        <div className="flex items-center">
+                            <input
+                                type="checkbox"
+                                id="saveEmail"
+                                checked={saveEmail}
+                                onChange={(e) => setSaveEmail(e.target.checked)}
+                                className="mr-2"
+                            />
+                            <label htmlFor="saveEmail" className="text-sm text-gray-600">
+                                이메일 저장
+                            </label>
                         </div>
                         <button
                             type="submit"
@@ -132,4 +158,4 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
     );
 };
 
-export default Login; 
+export default Login;
