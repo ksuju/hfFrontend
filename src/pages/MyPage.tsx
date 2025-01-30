@@ -112,7 +112,9 @@ const MyPage = () => {
                 {/* 프로필 섹션 */}
                 <div className="flex items-center mb-8">
                     <img
-                        src={userInfo.profilePath}
+                        src={userInfo.profilePath?.startsWith('http')
+                            ? userInfo.profilePath
+                            : `https://kr.object.ncloudstorage.com/hf-bucket2025/member/${userInfo.profilePath}`}
                         alt="프로필"
                         className="w-80 h-80 rounded-full mr-6"
                     />

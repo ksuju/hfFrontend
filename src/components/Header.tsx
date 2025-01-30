@@ -54,7 +54,9 @@ const Header = ({ isLoggedIn, setIsLoggedIn }: HeaderProps) => {
                                 <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
                                     {userInfo?.data?.profilePath ? (
                                         <img
-                                            src={userInfo.data.profilePath}
+                                            src={userInfo.data.profilePath.startsWith('http')
+                                                ? userInfo.data.profilePath
+                                                : `https://kr.object.ncloudstorage.com/hf-bucket2025/member/${userInfo.data.profilePath}`}
                                             alt="프로필"
                                             className="w-full h-full object-cover"
                                         />
