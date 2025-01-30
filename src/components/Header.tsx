@@ -12,15 +12,22 @@ const Header = ({ isLoggedIn, setIsLoggedIn }: HeaderProps) => {
 
     const handleLogout = async () => {
         try {
-            await fetch(import.meta.env.VITE_CORE_API_BASE_URL + '/api/v1/auth/logout', {
+            const response = await fetch(import.meta.env.VITE_CORE_API_BASE_URL + '/api/v1/auth/logout', {
                 method: 'GET',
-                credentials: 'include', // 쿠키 포함
+                credentials: 'include',
             });
-            setIsLoggedIn(false);
-            localStorage.removeItem('isLoggedIn');
-            localStorage.removeItem('userInfo');
+
+            if (response.ok) {
+                setIsLoggedIn(false);
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('userInfo');
+            } else {
+                const errorData = await response.json();
+                alert(errorData.msg || '로그아웃에 실패했습니다.');
+            }
         } catch (error) {
-            console.error('로그아웃 실패:', error);
+            console.error('로그아웃 에러:', error);
+            alert('서버 연결에 실패했습니다.');
         }
     };
 

@@ -53,10 +53,11 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
                 window.location.href = '/'; // 홈 페이지로 리다이렉트
             } else {
                 const errorData = await response.json();
+                alert(errorData.msg || '로그인에 실패했습니다.');
                 console.error('로그인 실패', errorData);
             }
         } catch (error) {
-
+            alert('서버와의 통신에 실패했습니다.');
             console.error('로그인 실패:', error);
         }
     };

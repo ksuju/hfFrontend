@@ -9,28 +9,29 @@ const MyPage = () => {
         phoneNumber: userInfo?.phoneNumber || '',
         location: userInfo?.location || '',
         gender: userInfo?.gender || '',
-        birthday: userInfo?.birthday || ''
+        birthday: userInfo?.birthday || '',
+        mkAlarm: userInfo?.mkAlarm || false
     });
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // 수정 요청 함수
+    // 회원정보 수정
     const handleUpdate = async () => {
         try {
-            const response = await fetch(import.meta.env.VITE_CORE_API_BASE_URL + '/api/v1/members/update', {
+            const response = await fetch(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/members/update`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
                 body: JSON.stringify(editForm)
             });
 
             if (response.ok) {
-                alert('회원정보가 수정되었습니다.');
+                const updatedUserInfo = await response.json();
+                localStorage.setItem('userInfo', JSON.stringify(updatedUserInfo));
                 setIsEditing(false);
-                // 새로운 정보 localStorage 업데이트 로직 필요
+                window.location.reload();
             } else {
-                alert('회원정보 수정에 실패했습니다.');
+                const errorData = await response.json();
+                alert(errorData.msg || '회원정보 수정에 실패했습니다.');
             }
         } catch (error) {
             console.error('수정 에러:', error);
@@ -38,7 +39,7 @@ const MyPage = () => {
         }
     };
 
-    // 회원 탈퇴 함수
+    // 회원 탈퇴
     const handleDelete = async () => {
         const confirmed = window.confirm('정말로 탈퇴하시겠습니까?');
         if (!confirmed) return;
@@ -53,12 +54,14 @@ const MyPage = () => {
             );
 
             if (response.ok) {
-                alert('회원 탈퇴가 완료되었습니다.');
+                const data = await response.json();
+                alert(data.msg || '회원 탈퇴가 완료되었습니다.');
                 localStorage.removeItem('isLoggedIn');
                 localStorage.removeItem('userInfo');
                 navigate('/');
             } else {
-                alert('회원 탈퇴에 실패했습니다.');
+                const errorData = await response.json();
+                alert(errorData.msg || '회원 탈퇴에 실패했습니다.');
             }
         } catch (error) {
             console.error('탈퇴 에러:', error);
@@ -66,6 +69,7 @@ const MyPage = () => {
         }
     };
 
+    // 이미지 업로드
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -81,13 +85,12 @@ const MyPage = () => {
             });
 
             if (response.ok) {
-                alert('프로필 이미지가 업데이트되었습니다.');
-                // 새로운 이미지 정보로 localStorage 업데이트
                 const updatedUserInfo = await response.json();
                 localStorage.setItem('userInfo', JSON.stringify(updatedUserInfo));
                 window.location.reload();
             } else {
-                alert('이미지 업로드에 실패했습니다.');
+                const errorData = await response.json();
+                alert(errorData.msg || '이미지 업로드에 실패했습니다.');
             }
         } catch (error) {
             console.error('이미지 업로드 에러:', error);
@@ -111,7 +114,8 @@ const MyPage = () => {
                 localStorage.setItem('userInfo', JSON.stringify(updatedUserInfo));
                 window.location.reload();
             } else {
-                alert('프로필 이미지 초기화에 실패했습니다.');
+                const errorData = await response.json();
+                alert(errorData.msg || '프로필 이미지 초기화에 실패했습니다.');
             }
         } catch (error) {
             console.error('프로필 초기화 에러:', error);
@@ -181,27 +185,28 @@ const MyPage = () => {
                             ×
                         </button>
                     </div>
-                    <input
-                        type="file"
-                        ref={fileInputRef}
-                        onChange={handleImageUpload}
-                        accept="image/*"
-                        className="hidden"
-                    />
-                    <button
-                        onClick={() => fileInputRef.current?.click()}
-                        className="absolute bottom-0 right-28 px-4 py-2 bg-primary text-white rounded-lg hover:bg-opacity-90 transition-colors"
-                    >
-                        프로필 변경
-                    </button>
-                    <div>
+                    <div className="ml-12">
                         <h3 className="text-xl font-bold text-gray-900">{userInfo.nickname}</h3>
-                        <p className="text-gray-500">ID: {userInfo.id}</p>
-                        <p className="text-gray-600 mt-2">상태: {userInfo.state}</p>
+                        <p className="text-gray-500 mt-2">ID: {userInfo.id}</p>
+                        <p className="text-gray-500">이메일: {userInfo.email}</p>
+                        <p className="text-gray-500">로그인 유형: {userInfo.loginType}</p>
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            onChange={handleImageUpload}
+                            accept="image/*"
+                            className="hidden"
+                        />
+                        <button
+                            onClick={() => fileInputRef.current?.click()}
+                            className="mt-4 px-4 py-2 bg-primary text-white rounded-lg hover:bg-opacity-90 transition-colors"
+                        >
+                            프로필 사진 변경
+                        </button>
                     </div>
                 </div>
 
-                {/* 정보 섹션 */}
+                {/* 수정 가능한 정보 섹션 */}
                 {isEditing ? (
                     <form className="space-y-6">
                         <div className="border-b pb-3">
@@ -246,6 +251,18 @@ const MyPage = () => {
                                 className="w-full h-10 px-3 border border-gray-300 rounded-lg focus:outline-none focus:border-primary"
                             />
                         </div>
+
+                        <div className="border-b pb-3">
+                            <label className="flex items-center text-base font-bold text-primary mb-1">
+                                <input
+                                    type="checkbox"
+                                    checked={editForm.mkAlarm}
+                                    onChange={(e) => setEditForm({ ...editForm, mkAlarm: e.target.checked })}
+                                    className="mr-2"
+                                />
+                                마케팅 수신 동의
+                            </label>
+                        </div>
                     </form>
                 ) : (
                     <div className="space-y-6">
@@ -272,6 +289,11 @@ const MyPage = () => {
                         <div className="border-b pb-3">
                             <p className="text-base font-bold text-primary mb-1">가입일</p>
                             <p className="text-base text-gray-900">{new Date(userInfo.createDate).toLocaleDateString()}</p>
+                        </div>
+
+                        <div className="border-b pb-3">
+                            <p className="text-base font-bold text-primary mb-1">마케팅 수신 동의</p>
+                            <p className="text-base text-gray-900">{userInfo.mkAlarm ? "동의" : "미동의"}</p>
                         </div>
                     </div>
                 )}
