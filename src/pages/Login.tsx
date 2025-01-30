@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import AuthHeader from '../components/AuthHeader';
 import kakaoLogo from '../assets/images/kakao-logo.png'
+import googleLogo from '../assets/images/google-logo.svg'
+
 
 interface LoginProps {
     setIsLoggedIn: React.Dispatch<React.SetStateAction<boolean>>;
@@ -8,6 +10,7 @@ interface LoginProps {
 
 const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
     const socialLoginForKakaoUrl = `http://localhost:8090/oauth2/authorization/kakao`; // 카카오 로그인 요청 URL
+    const socialLoginForGoogleUrl = `http://localhost:8090/oauth2/authorization/google`; // 구글 로그인 요청 URL
     const redirectUrlAfterSocialLogin = "http://localhost:5173"; // 카카오 로그인 후 리다이렉트 URL
 
 
@@ -150,6 +153,23 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
                                         objectFit: 'contain'
                                     }}
                                 />
+                            </a>
+
+
+                            <a
+                                href={`${socialLoginForGoogleUrl}?redirectUrl=${redirectUrlAfterSocialLogin}`}
+                                className="block w-full mt-2" // 상단 여백 추가
+                            >
+                                <div className="w-full max-w-[400px] h-[60px] mx-auto cursor-pointer flex items-center justify-center border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                                    <img
+                                        src={googleLogo}
+                                        alt="Google"
+                                        className="w-6 h-6 mr-2"
+                                    />
+                                    <span className="text-gray-600 font-medium">
+                                        Google 계정으로 로그인
+                                    </span>
+                                </div>
                             </a>
                         </div>
                     </div>
