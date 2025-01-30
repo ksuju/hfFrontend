@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const MyPage = () => {
@@ -11,6 +11,7 @@ const MyPage = () => {
         gender: userInfo?.gender || '',
         birthday: userInfo?.birthday || ''
     });
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     // 수정 요청 함수
     const handleUpdate = async () => {
@@ -65,6 +66,59 @@ const MyPage = () => {
         }
     };
 
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('profileImage', file);
+
+        try {
+            const response = await fetch(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/members/profile-image`, {
+                method: 'POST',
+                credentials: 'include',
+                body: formData
+            });
+
+            if (response.ok) {
+                alert('프로필 이미지가 업데이트되었습니다.');
+                // 새로운 이미지 정보로 localStorage 업데이트
+                const updatedUserInfo = await response.json();
+                localStorage.setItem('userInfo', JSON.stringify(updatedUserInfo));
+                window.location.reload();
+            } else {
+                alert('이미지 업로드에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('이미지 업로드 에러:', error);
+            alert('서버 연결에 실패했습니다.');
+        }
+    };
+
+    // 프로필 이미지 초기화 함수 추가
+    const handleResetImage = async () => {
+        try {
+            const response = await fetch(
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/members/reset-profile-image`,
+                {
+                    method: 'PATCH',
+                    credentials: 'include',
+                }
+            );
+
+            if (response.ok) {
+                const updatedUserInfo = await response.json();
+                localStorage.setItem('userInfo', JSON.stringify(updatedUserInfo));
+                window.location.reload();
+            } else {
+                alert('프로필 이미지 초기화에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('프로필 초기화 에러:', error);
+            alert('서버 연결에 실패했습니다.');
+        }
+    };
+
     if (!userInfo) {
         return <div>로그인이 필요합니다.</div>;
     }
@@ -110,14 +164,36 @@ const MyPage = () => {
 
             <div className="bg-white rounded-lg shadow-md p-6">
                 {/* 프로필 섹션 */}
-                <div className="flex items-center mb-8">
-                    <img
-                        src={userInfo.profilePath?.startsWith('http')
-                            ? userInfo.profilePath
-                            : `https://kr.object.ncloudstorage.com/hf-bucket2025/member/${userInfo.profilePath}`}
-                        alt="프로필"
-                        className="w-80 h-80 rounded-full mr-6"
+                <div className="flex items-center mb-8 relative">
+                    <div className="relative">
+                        <img
+                            src={userInfo.profilePath?.startsWith('http')
+                                ? userInfo.profilePath
+                                : `https://kr.object.ncloudstorage.com/hf-bucket2025/member/${userInfo.profilePath}`}
+                            alt="프로필"
+                            className="w-80 h-80 rounded-full"
+                        />
+                        <button
+                            onClick={handleResetImage}
+                            className="absolute top-0 right-0 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                            title="프로필 이미지 삭제"
+                        >
+                            ×
+                        </button>
+                    </div>
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleImageUpload}
+                        accept="image/*"
+                        className="hidden"
                     />
+                    <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="absolute bottom-0 right-28 px-4 py-2 bg-primary text-white rounded-lg hover:bg-opacity-90 transition-colors"
+                    >
+                        프로필 변경
+                    </button>
                     <div>
                         <h3 className="text-xl font-bold text-gray-900">{userInfo.nickname}</h3>
                         <p className="text-gray-500">ID: {userInfo.id}</p>
