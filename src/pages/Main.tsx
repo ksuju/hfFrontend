@@ -4,11 +4,16 @@ import 'swiper/css';
 import 'swiper/css/pagination';
 import SearchBar from '../components/SearchBar';
 import { useEffect, useState } from 'react';
+import {useNavigate} from "react-router-dom";
 
 // 게시글 데이터 타입 정의
 interface Festival {
     festivalId: string;
+    festivalName: string;
+    festivalStartDate: string;
+    festivalEndDate: string;
     festivalUrl: string;
+    festivalArea: string;
 }
 
 // 사용할 장르 목록
@@ -24,7 +29,9 @@ const genres = [
 
 const Main = () => {
     const [mainPosts, setMainPosts] = useState<Festival[]>([]);
-    const [genrePosts, setGenrePosts] = useState<{ [key: string]: Festival[] }>({});
+    const [genrePosts, setGenrePosts] = useState<Festival[] []>([]);
+    const navigate = useNavigate(); // 👈 페이지 이동 함수
+
 
     // 메인 배너 게시글 가져오기 (서울 기준)
     const fetchMainPosts = async () => {
@@ -43,21 +50,21 @@ const Main = () => {
 
     // 장르별 게시글 가져오기
     const fetchGenrePosts = async () => {
-        const newGenrePosts: { [key: string]: Festival[] } = {};
-
+        const newGenrePosts: Festival[][] = [];
         await Promise.all(
-            genres.map(async (genre) => {
+            genres.map(async (genre, index) => {
                 try {
-                    const response = await fetch(`http://localhost:8090/api/v1/posts/select?genre=${encodeURIComponent(genre)}&count=10`);
+                    const response = await fetch(`http://localhost:8090/api/v1/posts/select?genre=${encodeURIComponent(genre)}&page=0&size=10`);
                     if (!response.ok) {
                         throw new Error(`HTTP error! Status: ${response.status}`);
                     }
-                    const data: Festival[] = await response.json();
+                    const data = await response.json();
                     console.log(`Fetched posts for ${genre}:`, data);
-                    newGenrePosts[genre] = data.slice(0, 10); // 최대 10개 저장
+
+                    newGenrePosts[index] = data.content.slice(0, 10); // 최대 10개 저장
                 } catch (error) {
                     console.error(`Error fetching ${genre} data:`, error);
-                    newGenrePosts[genre] = []; // 에러 발생 시 빈 배열 설정
+                    newGenrePosts[index] = []; // 에러 발생 시 빈 배열 설정
                 }
             })
         );
@@ -74,7 +81,6 @@ const Main = () => {
         <div className="flex flex-col">
             {/* 검색창 */}
             <SearchBar placeholder="축제, 공연, 모임을 검색해보세요" onSearch={() => {}} />
-
             <div className="px-4 my-20">
                 {/* 메인 배너 */}
                 <Swiper
@@ -99,20 +105,34 @@ const Main = () => {
                 </Swiper>
 
                 {/* 장르별 배너 섹션 */}
-                {genres.map((genre) => (
-                    <div key={genre} className="mt-8 lg:mt-12">
+                {genres.map((genre, index) => (
+                    <div key={genre} className="mt-4 lg:mt-12">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-lg font-bold">{genre}</h2>
-                            <button className="text-sm text-primary">더보기</button>
+                            <button className="text-sm text-primary"
+                                    onClick={() => navigate(`/posts?genre=${encodeURIComponent(genre)}`)}
+                            >더보기</button>
                         </div>
-                        <Swiper slidesPerView={3} spaceBetween={12} className="w-full">
-                            {genrePosts[genre]?.map((genrePost) => (
+                        <Swiper slidesPerView={3} spaceBetween={12} className="w-full pb-1" >
+                            {genrePosts[index]?.map((genrePost) => (
                                 <SwiperSlide key={genrePost.festivalId}>
-                                    <div className="w-full aspect-[4/5] bg-gray-200 rounded-lg">
-                                        <img
-                                            src={genrePost.festivalUrl}
-                                            className="w-full h-full object-cover rounded-lg"
-                                        />
+                                    <div className="bg-white rounded-lg shadow-md overflow-hidden">
+                                        {/* 이미지 영역 */}
+                                        <div className="relative pb-[85%]">
+                                            <img
+                                                src={genrePost.festivalUrl || "https://via.placeholder.com/150"}
+                                                alt={genrePost.festivalName}
+                                                className="absolute inset-0 w-full h-full object-cover bg-gray-200"
+                                            />
+                                        </div>
+                                        {/* 텍스트 영역 (고정 높이 적용) */}
+                                        <div className="p-2">
+                                            <h3 className="text-sm font-medium leading-tight line-clamp-2 h-[18px] overflow-hidden">{genrePost.festivalName}</h3>
+                                            <p className="text-xs text-gray-500 mt-1">{genrePost.festivalArea}</p>
+                                            <p className="text-xs text-gray-500">
+                                                {genrePost.festivalStartDate?.slice(5)}~{genrePost.festivalEndDate?.slice(5)}
+                                            </p>
+                                        </div>
                                     </div>
                                 </SwiperSlide>
                             ))}

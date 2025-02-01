@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import SearchBar from '../components/SearchBar';
+import {useSearchParams} from "react-router-dom";
 
 // API 응답 데이터 타입 정의
 interface FestivalPost {
@@ -21,8 +22,9 @@ interface FestivalApiResponse {
 }
 
 const Festival = () => {
+  const [searchParams] = useSearchParams();
+  const selectedGenre = searchParams.get("genre") || ""; // 기본값 "축제"
   const [searchPosts, setSearchPosts] = useState<FestivalPost[]>([]);
-  // const [visibleCount, setVisibleCount] = useState(15);
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true); // 더 불러올 데이터가 있는지 여부
   const [page, setPage] = useState(0);
@@ -32,7 +34,7 @@ const Festival = () => {
     if (isLoading || !hasMore) return;
     setIsLoading(true);
     try {
-      const response = await fetch(`http://localhost:8090/api/v1/posts/all?page=${pageNumber}&size=15`);
+      const response = await fetch(`http://localhost:8090/api/v1/posts/select?genre=${encodeURIComponent(selectedGenre)}&page=${pageNumber}&size=15`);
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
