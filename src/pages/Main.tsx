@@ -29,7 +29,7 @@ const Main = () => {
     // 메인 배너 게시글 가져오기 (서울 기준)
     const fetchMainPosts = async () => {
         try {
-            const response = await fetch(`http://localhost:8090/api/v1/posts/view?area=서울`);
+            const response = await fetch(`http://localhost:8090/api/v1/posts/view?area=서울&count=5`);
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
@@ -48,7 +48,7 @@ const Main = () => {
         await Promise.all(
             genres.map(async (genre) => {
                 try {
-                    const response = await fetch(`http://localhost:8090/api/v1/posts/select?genre=${encodeURIComponent(genre)}`);
+                    const response = await fetch(`http://localhost:8090/api/v1/posts/select?genre=${encodeURIComponent(genre)}&count=10`);
                     if (!response.ok) {
                         throw new Error(`HTTP error! Status: ${response.status}`);
                     }
