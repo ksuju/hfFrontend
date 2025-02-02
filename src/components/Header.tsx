@@ -13,7 +13,7 @@ const Header = ({ isLoggedIn, setIsLoggedIn }: HeaderProps) => {
     const handleLogout = async () => {
         try {
             const response = await fetch(import.meta.env.VITE_CORE_API_BASE_URL + '/api/v1/auth/logout', {
-                method: 'GET',
+                method: 'POST',
                 credentials: 'include',
             });
 

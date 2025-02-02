@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import AuthHeader from '../components/AuthHeader';
-import kakaoLogo from '../assets/images/kakao-logo.png'
-import googleLogo from '../assets/images/google-logo.svg'
-
+import { SiKakao, SiNaver, SiGoogle, SiGithub } from 'react-icons/si';
 
 interface LoginProps {
     setIsLoggedIn: React.Dispatch<React.SetStateAction<boolean>>;
@@ -11,6 +9,8 @@ interface LoginProps {
 const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
     const socialLoginForKakaoUrl = `http://localhost:8090/oauth2/authorization/kakao`; // 카카오 로그인 요청 URL
     const socialLoginForGoogleUrl = `http://localhost:8090/oauth2/authorization/google`; // 구글 로그인 요청 URL
+    const socialLoginForNaverUrl = `http://localhost:8090/oauth2/authorization/naver`;  // 네이버 로그인 요청 URL
+    const socialLoginForGithubUrl = `http://localhost:8090/oauth2/authorization/github`;  // 깃허브 로그인 요청 URL
     const redirectUrlAfterSocialLogin = "http://localhost:5173"; // 카카오 로그인 후 리다이렉트 URL
 
 
@@ -53,7 +53,7 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
                     localStorage.removeItem('savedEmail');
                 }
                 setIsLoggedIn(true);
-                window.location.href = '/'; // 홈 페이지로 리다이렉트
+                window.location.href = '/'; // 홈 페이지
             } else {
                 const errorData = await response.json();
                 alert(errorData.msg || '로그인에 실패했습니다.');
@@ -129,7 +129,7 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
 
 
                     {/* 소셜 로그인 */}
-                    <div className="mt-8 px-4"> {/* 좌우 여백 추가 */}
+                    <div className="mt-8">
                         <div className="relative">
                             <div className="absolute inset-0 flex items-center">
                                 <div className="w-full border-t border-gray-200"></div>
@@ -139,37 +139,33 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
                             </div>
                         </div>
 
-                        <div className="mt-6">
+                        <div className="mt-6 flex justify-center space-x-4">
                             <a
                                 href={`${socialLoginForKakaoUrl}?redirectUrl=${redirectUrlAfterSocialLogin}`}
-                                className="block w-full"
+                                className="w-12 h-12 flex items-center justify-center rounded-full bg-yellow-300 hover:bg-opacity-90 transition-colors"
                             >
-                                <img
-                                    src={kakaoLogo}
-                                    alt="카카오 계정으로 로그인"
-                                    className="w-full max-w-[400px] h-[60px] mx-auto cursor-pointer" // 크기 조정
-                                    style={{
-                                        aspectRatio: '600/90',
-                                        objectFit: 'contain'
-                                    }}
-                                />
+                                <SiKakao className="w-6 h-6 text-brown-500" />
                             </a>
 
+                            <a
+                                href={`${socialLoginForNaverUrl}?redirectUrl=${redirectUrlAfterSocialLogin}`}
+                                className="w-12 h-12 flex items-center justify-center rounded-full bg-green-500 hover:bg-opacity-90 transition-colors"
+                            >
+                                <SiNaver className="w-6 h-6 text-white" />
+                            </a>
 
                             <a
                                 href={`${socialLoginForGoogleUrl}?redirectUrl=${redirectUrlAfterSocialLogin}`}
-                                className="block w-full mt-2" // 상단 여백 추가
+                                className="w-12 h-12 flex items-center justify-center rounded-full bg-white border border-gray-200 hover:bg-gray-50 transition-colors"
                             >
-                                <div className="w-full max-w-[400px] h-[60px] mx-auto cursor-pointer flex items-center justify-center border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                                    <img
-                                        src={googleLogo}
-                                        alt="Google"
-                                        className="w-6 h-6 mr-2"
-                                    />
-                                    <span className="text-gray-600 font-medium">
-                                        Google 계정으로 로그인
-                                    </span>
-                                </div>
+                                <SiGoogle className="w-6 h-6 text-gray-600" />
+                            </a>
+
+                            <a
+                                href={`${socialLoginForGithubUrl}?redirectUrl=${redirectUrlAfterSocialLogin}`}
+                                className="w-12 h-12 flex items-center justify-center rounded-full bg-gray-800 hover:bg-opacity-90 transition-colors"
+                            >
+                                <SiGithub className="w-6 h-6 text-white" />
                             </a>
                         </div>
                     </div>
