@@ -28,20 +28,25 @@ const Festival = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true); // 더 불러올 데이터가 있는지 여부
   const [page, setPage] = useState(0);
+  const [searchKeyword, setSearchKeyword] = useState("");
 
   // 축제 데이터 가져오기 (페이지 스크롤링 기준 요청)
-  const fetchFestivalPosts = async (pageNumber: number) => {
+  const fetchFestivalPosts = async (pageNumber: number, keyword = "") => {
     if (isLoading || !hasMore) return;
     setIsLoading(true);
     try {
-      const response = await fetch(`http://localhost:8090/api/v1/posts/select?genre=${encodeURIComponent(selectedGenre)}&page=${pageNumber}&size=15`);
+      const url = keyword
+          ? `http://localhost:8090/api/v1/posts/search?keyword=${encodeURIComponent(keyword)}&page=${pageNumber}&size=15`
+          : `http://localhost:8090/api/v1/posts/select?genre=${encodeURIComponent(selectedGenre)}&page=${pageNumber}&size=15`;
+
+      const response = await fetch(url);
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
       const data: FestivalApiResponse = await response.json();
       console.log("Fetched Festival Posts:", data); // 👈 여기에서 콘솔 확인
 
-      setSearchPosts((prev) => [...prev, ...data.content]);
+      setSearchPosts((prev) => (pageNumber === 0 ? data.content : [...prev, ...data.content]));
       setHasMore(data.page.number + 1 < data.page.totalPages);
       setPage(data.page.number + 1);
     } catch (error) {
@@ -51,26 +56,37 @@ const Festival = () => {
     }
   };
 
+  // 검색어 변경 시 자동 검색 (디바운스 적용)
   useEffect(() => {
-    fetchFestivalPosts(0); // 초기 15개 데이터 요청
-  }, []);
+    const delayDebounceFn = setTimeout(() => {
+      fetchFestivalPosts(0, searchKeyword);
+    }, 500); // 500ms 디바운스 적용
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchKeyword]);
+
+  // 검색 실행 함수
+  const handleSearch = (keyword: string) => {
+    setSearchKeyword(keyword);
+    setPage(0);
+    setHasMore(true);
+  };
 
   // 무한 스크롤 이벤트 리스너
   useEffect(() => {
     const handleScroll = () => {
       if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200 && !isLoading) {
-        fetchFestivalPosts(page);
+        fetchFestivalPosts(page, searchKeyword);
       }
     };
-
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [page, isLoading]);
+  }, [page, isLoading, searchKeyword]);
 
   return (
       <div className="max-w-[600px] mx-auto">
         {/* 검색창 */}
-        <SearchBar placeholder="축제/공연을 검색해보세요" onSearch={() => {}} />
+        <SearchBar placeholder="축제, 공연을 검색해보세요" onChange={handleSearch} />
         <div className="p-4 my-20">
           <div className="grid grid-cols-3 gap-3">
             {searchPosts.map((searchPost) => (

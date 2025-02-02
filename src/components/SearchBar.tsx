@@ -3,27 +3,26 @@ import { useState } from 'react';
 
 interface SearchBarProps {
     placeholder: string;
-    onSearch: (keyword: string) => void;
+    onChange: (keyword: string) => void;
 }
 
-const SearchBar = ({ placeholder, onSearch }: SearchBarProps) => {
+const SearchBar = ({ placeholder, onChange }: SearchBarProps) => {
     const [keyword, setKeyword] = useState('');
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (keyword.trim()) {
-            onSearch(keyword.trim());
-        }
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newKeyword = e.target.value;
+        setKeyword(newKeyword);
+        onChange(newKeyword); // Trigger the onChange callback on every input change
     };
 
     return (
         <div className="fixed top-16 left-0 right-0 bg-white z-20 shadow-sm">
             <div className="max-w-[600px] lg:max-w-screen-lg mx-auto px-4 py-2">
-                <form onSubmit={handleSubmit} className="relative">
+                <form className="relative">
                     <input
                         type="text"
                         value={keyword}
-                        onChange={(e) => setKeyword(e.target.value)}
+                        onChange={handleChange}
                         placeholder={placeholder}
                         className="w-full h-12 pl-12 pr-4 rounded-full border border-gray-200 focus:outline-none focus:border-primary"
                     />
