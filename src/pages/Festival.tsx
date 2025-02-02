@@ -60,7 +60,7 @@ const Festival = () => {
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       fetchFestivalPosts(0, searchKeyword);
-    }, 500); // 500ms 디바운스 적용
+    }, 100); // 100ms 디바운스 적용
 
     return () => clearTimeout(delayDebounceFn);
   }, [searchKeyword]);
