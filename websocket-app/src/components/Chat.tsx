@@ -277,8 +277,11 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
                         flex: 1,
                         padding: '8px',
                         borderRadius: '4px',
-                        border: '1px solid #ddd'
+                        border: '1px solid #ddd',
+                        outline: 'none' // 기본 포커스 테두리 제거
                     }}
+                    onFocus={(e) => e.target.style.border = '1px solid #F26A2E'} // 포커스 시 테두리 색상
+                    onBlur={(e) => e.target.style.border = '1px solid #ddd'} // 포커스 해제 시 원래 색상
                 />
                 <button 
                     onClick={sendMessage}
