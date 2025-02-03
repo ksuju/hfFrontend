@@ -1,42 +1,67 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import AuthHeader from '../components/AuthHeader';
+import { SiKakao, SiNaver, SiGoogle, SiGithub } from 'react-icons/si';
 
-const Login = () => {
+interface LoginProps {
+    setIsLoggedIn: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
+    const socialLoginForKakaoUrl = `http://localhost:8090/oauth2/authorization/kakao`; // 카카오 로그인 요청 URL
+    const socialLoginForGoogleUrl = `http://localhost:8090/oauth2/authorization/google`; // 구글 로그인 요청 URL
+    const socialLoginForNaverUrl = `http://localhost:8090/oauth2/authorization/naver`;  // 네이버 로그인 요청 URL
+    const socialLoginForGithubUrl = `http://localhost:8090/oauth2/authorization/github`;  // 깃허브 로그인 요청 URL
+    const redirectUrlAfterSocialLogin = "http://localhost:5173"; // 카카오 로그인 후 리다이렉트 URL
+
+
+    // 로그인 폼 입력 값 상태 관리
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
-    const navigate = useNavigate();
+    const [saveEmail, setSaveEmail] = useState(false);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    useEffect(() => {
+        const savedEmail = localStorage.getItem('savedEmail');
+        if (savedEmail) {
+            setEmail(savedEmail);
+            setSaveEmail(true);
+        }
+    }, []);
+
+    const handleLogin = async (e: React.FormEvent) => {
+        console.log(import.meta.env.VITE_CORE_API_BASE_URL);
+
         e.preventDefault();
-
-        // 로그인 API 호출 (여기서는 예시로 fetch 사용)
         try {
-            const response = await fetch('http://localhost:8090/api/v1/auth/login', {
+            const response = await fetch(import.meta.env.VITE_CORE_API_BASE_URL + '/api/v1/auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
                     email,
-                    password,
+                    password
                 }),
+                credentials: 'include', // 쿠키 포함
             });
 
-            if (!response.ok) {
-                throw new Error('로그인 실패');
+            console.log("API URL:", import.meta.env.VITE_CORE_API_BASE_URL + '/api/v1/auth/login');
+
+            if (response.ok) {
+                if (saveEmail) {
+                    localStorage.setItem('savedEmail', email);
+                } else {
+                    localStorage.removeItem('savedEmail');
+                }
+                setIsLoggedIn(true);
+                window.location.href = '/'; // 홈 페이지
+            } else {
+                const errorData = await response.json();
+                alert(errorData.msg || '로그인에 실패했습니다.');
+                console.error('로그인 실패', errorData);
             }
-
-            const data = await response.json();
-            // 로그인 성공 시 access토큰 & refresh토큰 저장
-            localStorage.setItem('accessToken', data.data.accessToken);
-            localStorage.setItem('refreshToken', data.data.refreshToken);
-
-            // Main 페이지로 리다이렉션
-            navigate('/');
         } catch (error) {
-            setError('로그인 실패: ' + (error instanceof Error ? error.message : '알 수 없음'));
+            alert('서버와의 통신에 실패했습니다.');
+            console.error('로그인 실패:', error);
         }
     };
 
@@ -49,25 +74,39 @@ const Login = () => {
                         <h2 className="text-2xl font-semibold text-gray-800">로그인</h2>
                         <p className="text-gray-500 mt-2">환영합니다</p>
                     </div>
+
+
                     {/* 로그인 폼 */}
-                    <form className="space-y-4" onSubmit={handleSubmit}>
+                    <form className="space-y-4" onSubmit={handleLogin}>
                         <div>
                             <input
                                 type="email"
                                 placeholder="이메일"
+                                className="w-full h-12 px-4 border border-gray-200 rounded-lg focus:outline-none focus:border-primary"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="w-full h-12 px-4 border border-gray-200 rounded-lg focus:outline-none focus:border-primary"
                             />
                         </div>
                         <div>
                             <input
                                 type="password"
                                 placeholder="비밀번호"
+                                className="w-full h-12 px-4 border border-gray-200 rounded-lg focus:outline-none focus:border-primary"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="w-full h-12 px-4 border border-gray-200 rounded-lg focus:outline-none focus:border-primary"
                             />
+                        </div>
+                        <div className="flex items-center">
+                            <input
+                                type="checkbox"
+                                id="saveEmail"
+                                checked={saveEmail}
+                                onChange={(e) => setSaveEmail(e.target.checked)}
+                                className="mr-2"
+                            />
+                            <label htmlFor="saveEmail" className="text-sm text-gray-600">
+                                이메일 저장
+                            </label>
                         </div>
                         <button
                             type="submit"
@@ -76,7 +115,8 @@ const Login = () => {
                             로그인
                         </button>
                     </form>
-                    {error && <p className="text-red-500 mt-2">{error}</p>}
+
+
                     {/* 회원가입 링크 */}
                     <div className="mt-6 text-center">
                         <p className="text-gray-500">
@@ -86,6 +126,8 @@ const Login = () => {
                             </a>
                         </p>
                     </div>
+
+
                     {/* 소셜 로그인 */}
                     <div className="mt-8">
                         <div className="relative">
@@ -96,10 +138,35 @@ const Login = () => {
                                 <span className="px-2 bg-white text-gray-500">간편 로그인</span>
                             </div>
                         </div>
-                        <div className="mt-6">
-                            <button className="w-full h-12 border border-gray-200 rounded-lg font-medium hover:border-primary transition-colors">
-                                카카오
-                            </button>
+
+                        <div className="mt-6 flex justify-center space-x-4">
+                            <a
+                                href={`${socialLoginForKakaoUrl}?redirectUrl=${redirectUrlAfterSocialLogin}`}
+                                className="w-12 h-12 flex items-center justify-center rounded-full bg-yellow-300 hover:bg-opacity-90 transition-colors"
+                            >
+                                <SiKakao className="w-6 h-6 text-brown-500" />
+                            </a>
+
+                            <a
+                                href={`${socialLoginForNaverUrl}?redirectUrl=${redirectUrlAfterSocialLogin}`}
+                                className="w-12 h-12 flex items-center justify-center rounded-full bg-green-500 hover:bg-opacity-90 transition-colors"
+                            >
+                                <SiNaver className="w-6 h-6 text-white" />
+                            </a>
+
+                            <a
+                                href={`${socialLoginForGoogleUrl}?redirectUrl=${redirectUrlAfterSocialLogin}`}
+                                className="w-12 h-12 flex items-center justify-center rounded-full bg-white border border-gray-200 hover:bg-gray-50 transition-colors"
+                            >
+                                <SiGoogle className="w-6 h-6 text-gray-600" />
+                            </a>
+
+                            <a
+                                href={`${socialLoginForGithubUrl}?redirectUrl=${redirectUrlAfterSocialLogin}`}
+                                className="w-12 h-12 flex items-center justify-center rounded-full bg-gray-800 hover:bg-opacity-90 transition-colors"
+                            >
+                                <SiGithub className="w-6 h-6 text-white" />
+                            </a>
                         </div>
                     </div>
                 </div>
