@@ -96,10 +96,10 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
         const client = new Client({
             brokerURL: WEBSOCKET_URL,
             reconnectDelay: 5000,
-            // connectHeaders에 인증 정보와 채팅방 ID 추가
+            // connectHeaders에 멤버ID와 채팅방ID 추가
             connectHeaders: {
-                Authorization: `Bearer ${getAccessToken()}`, // 쿠키에서 토큰 가져오기
-                roomId: chatRoomId.toString()
+                memberId: memberId.toString(),
+                chatRoomId: chatRoomId.toString()
             },
             debug: (str) => {
                 console.log('STOMP: ', str);
@@ -137,15 +137,6 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
             client.deactivate();
         };
     }, [chatRoomId]);
-
-    // 쿠키에서 accessToken 가져오는 함수
-    const getAccessToken = () => {
-        const cookies = document.cookie.split(';');
-        const accessToken = cookies
-            .find(cookie => cookie.trim().startsWith('accessToken='))
-            ?.split('=')[1];
-        return accessToken || '';
-    };
 
     useEffect(() => {
         const fetchUserInfo = async () => {
