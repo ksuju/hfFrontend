@@ -13,7 +13,7 @@ const displayGender = (serverGender: string | null) => {
     return '정보 없음';
 };
 
-const MyPage = () => {
+const xMyPage = () => {
     const navigate = useNavigate();
     const [isEditing, setIsEditing] = useState(false);
     const userInfo = localStorage.getItem('userInfo') ? JSON.parse(localStorage.getItem('userInfo')!).data : null;
@@ -538,4 +538,4 @@ const MyPage = () => {
     );
 };
 
-export default MyPage;
+export default xMyPage;
