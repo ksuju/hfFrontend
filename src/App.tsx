@@ -8,8 +8,9 @@ import Festival from './pages/Festival'
 import Meeting from './pages/Meeting'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
-import Chat from "../websocket-app/src/components/Chat.tsx"
 import MyPage from './pages/MyPage'
+import Chat from "../websocket-app/src/components/Chat.tsx";
+import FestivalMap from "./pages/FestivalMap.tsx";
 
 const App = () => {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -85,6 +86,8 @@ const App = () => {
                                                 } 
                                             />
                                             <Route path="/mypage" element={<MyPage />} />
+                                            <Route path="/chat" element={<Chat chatRoomId={1} memberId={1}/>}/>
+                                            <Route path="/map" element={<FestivalMap />} />  {/* 공연 지도 페이지 추가 */}
                                         </Routes>
                                     </div>
                                 </div>
