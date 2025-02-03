@@ -32,6 +32,7 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
     const [hasMore, setHasMore] = useState(true);
     const stompClientRef = useRef<Client | null>(null);
     const messagesListRef = useRef<HTMLDivElement>(null);
+    const [currentUserNickname, setCurrentUserNickname] = useState<string>('');
 
     const scrollToBottom = () => {
         if (messagesListRef.current) {
@@ -42,7 +43,8 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
     const fetchPreviousMessages = async (page: number) => {
         try {
             const response = await axios.get<ChatResponse>(
-                `http://localhost:8090/api/v1/chatRooms/${chatRoomId}/messages?page=${page}`
+                `http://localhost:8090/api/v1/chatRooms/${chatRoomId}/messages?page=${page}`,
+                { withCredentials: true }  // 인증 정보 포함
             );
 
             if (page === 0) {
@@ -81,7 +83,8 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
 
             await axios.put(
                 `http://localhost:8090/api/v1/chatRooms/${chatRoomId}/messages/readStatus`,
-                messageReadStatus
+                messageReadStatus,
+                { withCredentials: true }  // 인증 정보 포함
             );
         } catch (error) {
             console.error('메시지 읽음 상태 업데이트 실패:', error);
@@ -129,6 +132,21 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
         };
     }, [chatRoomId]);
 
+    useEffect(() => {
+        const fetchUserInfo = async () => {
+            try {
+                const userInfo = localStorage.getItem('userInfo');
+                if (userInfo) {
+                    const { data } = JSON.parse(userInfo);
+                    setCurrentUserNickname(data.nickname);
+                }
+            } catch (error) {
+                console.error('사용자 정보 로드 실패:', error);
+            }
+        };
+        fetchUserInfo();
+    }, []);
+
     const sendMessage = async () => {
         if (!messageInput.trim() || !stompClientRef.current) return;
 
@@ -145,7 +163,8 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
 
             await axios.post(
                 `http://localhost:8090/api/v1/chatRooms/${chatRoomId}/messages`,
-                messageToSend
+                messageToSend,
+                { withCredentials: true }  // 인증 정보 포함
             );
 
             setMessageInput('');
@@ -185,63 +204,60 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
                 }}
             >
                 {hasMore && (
-                    <button
-                        onClick={loadMoreMessages}
-                        className="load-more-button"
-                        style={{
-                            margin: "10px auto",
-                            padding: "5px 10px"
-                        }}
-                    >
-                        이전 메시지 더보기
-                    </button>
+                    <button onClick={loadMoreMessages}>이전 메시지 더보기</button>
                 )}
                 <div style={{ flexGrow: 1 }}>
-                    {messages.slice().reverse().map((msg, index) => (
-                        <div key={index} className="message" style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            margin: '10px 0'
-                        }}>
-                            <div style={{
-                                display: 'flex',
-                                gap: '8px',
-                                alignItems: 'flex-end',
-                                marginBottom: '4px'
-                            }}>
-                                <span style={{ 
-                                    color: '#666',
-                                    fontSize: '0.9em',
-                                    fontWeight: 500
-                                }}>
-                                    {msg.nickname}
-                                </span>
-                            </div>
-                            <div style={{
-                                display: 'flex',
-                                gap: '8px',
-                                alignItems: 'flex-end'
-                            }}>
+                    {messages.slice().reverse().map((msg, index, array) => {
+                        const isMyMessage = msg.nickname === currentUserNickname;
+                        const prevMessage = array[index - 1];
+                        const showNickname = !isMyMessage && 
+                            (!prevMessage || prevMessage.nickname !== msg.nickname);
+                        
+                        return (
+                            <div key={index} 
+                                style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: isMyMessage ? 'flex-end' : 'flex-start',
+                                    margin: '8px 0'
+                                }}
+                            >
+                                {showNickname && (
+                                    <span style={{
+                                        fontSize: '0.8rem',
+                                        color: '#666',
+                                        marginBottom: '4px',
+                                        marginLeft: '8px'
+                                    }}>
+                                        {msg.nickname}
+                                    </span>
+                                )}
                                 <div style={{
-                                    background: '#f0f2f5',
-                                    padding: '8px 12px',
-                                    borderRadius: '12px 12px 12px 0',
-                                    maxWidth: '70%',
-                                    wordBreak: 'break-word',
-                                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)'
+                                    display: 'flex',
+                                    flexDirection: isMyMessage ? 'row-reverse' : 'row',
+                                    alignItems: 'flex-end',
+                                    gap: '8px'
                                 }}>
-                                    {msg.chatMessageContent || "내용 없음"}
+                                    <div style={{
+                                        background: isMyMessage ? '#F26A2E' : '#e9ecef', // 내 메시지 말풍선 색
+                                        color: isMyMessage ? 'white' : 'black',
+                                        padding: '8px 12px',
+                                        borderRadius: isMyMessage ? '15px 15px 0 15px' : '15px 15px 15px 0',
+                                        maxWidth: '70%',
+                                        wordBreak: 'break-word'
+                                    }}>
+                                        {msg.chatMessageContent}
+                                    </div>
+                                    <div style={{
+                                        fontSize: '0.75rem',
+                                        color: '#6c757d'
+                                    }}>
+                                        {formatMessageTime(msg.messageTimestamp)}
+                                    </div>
                                 </div>
-                                <span style={{ 
-                                    color: '#888', 
-                                    fontSize: '0.8em',
-                                    marginBottom: '4px'
-                                }}>
-                                    {formatMessageTime(msg.messageTimestamp)}
-                                </span>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             </div>
             <div className="message-input" style={{
@@ -267,15 +283,27 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
                 <button 
                     onClick={sendMessage}
                     style={{
-                        padding: '8px 16px',
-                        backgroundColor: '#007bff',
-                        color: 'white',
+                        padding: '8px',
+                        backgroundColor: 'transparent',
                         border: 'none',
                         borderRadius: '4px',
-                        cursor: 'pointer'
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
                     }}
                 >
-                    전송
+                    <img 
+                        src="src/assets/images/send.png"
+                        alt="전송"
+                        style={{
+                            width: '24px',
+                            height: '24px',
+                            filter: messageInput.trim() 
+                                ? 'invert(47%) sepia(82%) saturate(2604%) hue-rotate(337deg) brightness(97%) contrast(92%)' 
+                                : 'opacity(0.5)'
+                        }}
+                    />
                 </button>
             </div>
         </div>
