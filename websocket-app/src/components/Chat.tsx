@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Client } from '@stomp/stompjs';
 import axios from 'axios';
 
+
 interface ChatMessage {
     messageId?: number;
     nickname?: string;
@@ -43,7 +44,7 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
     const fetchPreviousMessages = async (page: number) => {
         try {
             const response = await axios.get<ChatResponse>(
-                `http://localhost:8090/api/v1/chatRooms/${chatRoomId}/messages?page=${page}`,
+                import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/chatRooms/${chatRoomId}/messages?page=${page}`,
                 { withCredentials: true }  // 인증 정보 포함
             );
 
@@ -82,7 +83,7 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
             };
 
             await axios.put(
-                `http://localhost:8090/api/v1/chatRooms/${chatRoomId}/messages/readStatus`,
+                import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/chatRooms/${chatRoomId}/messages/readStatus`,
                 messageReadStatus,
                 { withCredentials: true }  // 인증 정보 포함
             );
@@ -95,6 +96,11 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
         const client = new Client({
             brokerURL: WEBSOCKET_URL,
             reconnectDelay: 5000,
+            // connectHeaders에 인증 정보와 채팅방 ID 추가
+            connectHeaders: {
+                Authorization: `Bearer ${getAccessToken()}`, // 쿠키에서 토큰 가져오기
+                roomId: chatRoomId.toString()
+            },
             debug: (str) => {
                 console.log('STOMP: ', str);
             },
@@ -132,6 +138,15 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
         };
     }, [chatRoomId]);
 
+    // 쿠키에서 accessToken 가져오는 함수
+    const getAccessToken = () => {
+        const cookies = document.cookie.split(';');
+        const accessToken = cookies
+            .find(cookie => cookie.trim().startsWith('accessToken='))
+            ?.split('=')[1];
+        return accessToken || '';
+    };
+
     useEffect(() => {
         const fetchUserInfo = async () => {
             try {
@@ -162,7 +177,7 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
             });
 
             await axios.post(
-                `http://localhost:8090/api/v1/chatRooms/${chatRoomId}/messages`,
+                import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/chatRooms/${chatRoomId}/messages`,
                 messageToSend,
                 { withCredentials: true }  // 인증 정보 포함
             );
