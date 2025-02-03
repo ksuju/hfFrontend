@@ -98,9 +98,6 @@ const Meeting = () => {
                         <h3 className="font-medium text-base flex-grow truncate max-w-[75%]">
                             {meeting.roomTitle}
                         </h3>
-                        <div className="text-sm text-gray-500 whitespace-nowrap">
-                            {meeting.joinMemberNum}/{meeting.roomMemberLimit}명
-                        </div>
                     </div>
 
                     {/* 내용 */}
@@ -108,10 +105,16 @@ const Meeting = () => {
                         {meeting.roomContent}
                     </p>
                     <div className="flex justify-between text-xs text-gray-400 mt-2">
-                        {/* 생성 날짜 */}
-                        <p>{new Date(meeting.createDate).toISOString().slice(0, 10).replace(/-/g, '.')}</p>
-                        {/* 축제 이름 */}
-                        <p className="ml-2 text-xs text-gray-500">{meeting.festivalName}</p>
+                        {/* 생성 날짜 + 축제 이름 (왼쪽 정렬) */}
+                        <div className="flex items-center">
+                            <p>{new Date(meeting.createDate).toISOString().slice(0, 10).replace(/-/g, '.')}</p>
+                            <p className="ml-2 text-xs text-gray-500">{meeting.festivalName}</p>
+                        </div>
+
+                        {/* 참여 인원수 (오른쪽 정렬) */}
+                        <div className="text-xs text-gray-500 whitespace-nowrap ml-auto">
+                            {meeting.joinMemberNum}/{meeting.roomMemberLimit}명
+                        </div>
                     </div>
                 </div>
             ))}
