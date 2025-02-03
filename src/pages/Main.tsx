@@ -80,7 +80,7 @@ const Main = () => {
     return (
         <div className="flex flex-col">
             {/* 검색창 */}
-            <SearchBar placeholder="축제, 공연, 모임을 검색해보세요" onSearch={() => {}} />
+            <SearchBar placeholder="축제, 공연, 모임을 검색해보세요" onChange={() => {}} />
             <div className="px-4 my-20">
                 {/* 메인 배너 */}
                 <Swiper

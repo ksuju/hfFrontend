@@ -8,7 +8,6 @@ import Festival from './pages/Festival'
 import Meeting from './pages/Meeting'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
-import Chat from "../websocket-app/src/components/Chat.tsx"
 import MyPage from './pages/MyPage'
 import Chat from "../websocket-app/src/components/Chat.tsx";
 import FestivalMap from "./pages/FestivalMap.tsx";
