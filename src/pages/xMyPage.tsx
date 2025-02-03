@@ -5,7 +5,6 @@ import googleSimpleIcon from '../assets/images/google_simple_icon.png';
 import naverSimpleIcon from '../assets/images/naver_simple_icon.png';
 import githubSimpleIcon from '../assets/images/github_simple_icon.png';
 
-
 // 성별 표시 변환 함수 추가
 const displayGender = (serverGender: string | null) => {
     if (serverGender === 'M') return '남성';
