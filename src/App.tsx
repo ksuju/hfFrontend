@@ -1,6 +1,6 @@
 // App.tsx
 import { useState, useEffect } from 'react'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import Header from './components/Header'
 import Footer from './components/Footer'
 import Main from './pages/Main'
@@ -12,7 +12,7 @@ import MyPage from './pages/MyPage'
 import Chat from "../websocket-app/src/components/Chat.tsx";
 import FestivalMap from "./pages/FestivalMap.tsx";
 
-function App() {
+const App = () => {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     console.log('App 컴포넌트 렌더링');
 
@@ -54,6 +54,10 @@ function App() {
         checkLoginStatus(); // 직접 체크 먼저 실행
     }, []);
 
+    // localStorage에서 memberId 가져오기 (채팅 테스트)
+    const userInfo = localStorage.getItem('userInfo') 
+        ? JSON.parse(localStorage.getItem('userInfo')!).data 
+        : null;
 
     return (
         <Router>
@@ -71,7 +75,16 @@ function App() {
                                             <Route path="/" element={<Main />} />
                                             <Route path="/posts" element={<Festival />} />
                                             <Route path="/chatroom" element={<Meeting />} />
-                                            <Route path="/chat" element={<Chat chatRoomId={1} memberId={1} />} />
+                                            <Route 
+                                                path="/chat" 
+                                                element={
+                                                    userInfo ? (
+                                                        <Chat chatRoomId={1} memberId={userInfo.id} />
+                                                    ) : (
+                                                        <Navigate to="/login" replace />
+                                                    )
+                                                } 
+                                            />
                                             <Route path="/mypage" element={<MyPage />} />
                                             <Route path="/chat" element={<Chat chatRoomId={1} memberId={1}/>}/>
                                             <Route path="/map" element={<FestivalMap />} />  {/* 공연 지도 페이지 추가 */}
