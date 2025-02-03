@@ -53,7 +53,7 @@ const App = () => {
         checkLoginStatus(); // 직접 체크 먼저 실행
     }, []);
 
-    // localStorage에서 memberId 가져오기
+    // localStorage에서 memberId 가져오기 (채팅 테스트)
     const userInfo = localStorage.getItem('userInfo') 
         ? JSON.parse(localStorage.getItem('userInfo')!).data 
         : null;
