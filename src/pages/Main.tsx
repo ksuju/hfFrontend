@@ -92,13 +92,15 @@ const Main = () => {
                     onInit={(swiper) => swiper.update()}
                 >
                     {mainPosts.map((mainPost) => (
-                        <SwiperSlide key={mainPost.festivalId} className="flex flex-col items-center">
-                            <div className="relative w-full">
-                                <img
-                                    src={mainPost.festivalUrl}
-                                    className="w-full h-full object-contain"
-                                    style={{ aspectRatio: "3 / 2" }}
-                                />
+                        <SwiperSlide key={mainPost.festivalId} className="flex justify-center items-center">
+                            <div className="w-full max-w-4xl bg-white rounded-lg shadow-md overflow-hidden">
+                                <div className="relative w-full h-[300px] bg-gray-100 flex justify-center items-center">
+                                    <img
+                                        src={mainPost.festivalUrl}
+                                        alt={mainPost.festivalName}
+                                        className="w-full h-full object-contain"
+                                    />
+                                </div>
                             </div>
                         </SwiperSlide>
                     ))}
@@ -116,21 +118,24 @@ const Main = () => {
                         <Swiper slidesPerView={3} spaceBetween={12} className="w-full pb-1" >
                             {genrePosts[index]?.map((genrePost) => (
                                 <SwiperSlide key={genrePost.festivalId}>
-                                    <div className="bg-white rounded-lg shadow-md overflow-hidden">
+                                    <div className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
                                         {/* 이미지 영역 */}
-                                        <div className="relative pb-[85%]">
+                                        <div className="relative pb-[90%]">
                                             <img
                                                 src={genrePost.festivalUrl || "https://via.placeholder.com/150"}
                                                 alt={genrePost.festivalName}
                                                 className="absolute inset-0 w-full h-full object-cover bg-gray-200"
                                             />
                                         </div>
-                                        {/* 텍스트 영역 (고정 높이 적용) */}
+                                        {/* 텍스트 영역 */}
                                         <div className="p-2">
-                                            <h3 className="text-sm font-medium leading-tight line-clamp-2 h-[18px] overflow-hidden">{genrePost.festivalName}</h3>
-                                            <p className="text-xs text-gray-500 mt-1">{genrePost.festivalArea}</p>
-                                            <p className="text-xs text-gray-500">
-                                                {genrePost.festivalStartDate?.slice(5)}~{genrePost.festivalEndDate?.slice(5)}
+                                            <h3 className="text-sm font-medium leading-tight line-clamp-2">{genrePost.festivalName}</h3>
+                                            <p className="text-xs text-gray-500 mt-1 mb-[-10px]">{genrePost.festivalArea}</p>
+                                        </div>
+                                        {/* 날짜 영역을 카드 하단에 고정 */}
+                                        <div className="p-2 text-xs text-gray-500 bg-white mt-auto">
+                                            <p>
+                                                {genrePost.festivalStartDate?.replace(/-/g, '.')} - {genrePost.festivalEndDate?.replace(/-/g, '.')}
                                             </p>
                                         </div>
                                     </div>

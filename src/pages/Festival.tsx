@@ -90,9 +90,9 @@ const Festival = () => {
         <div className="p-4 my-20">
           <div className="grid grid-cols-3 gap-3">
             {searchPosts.map((searchPost) => (
-                <div key={searchPost.festivalId} className="bg-white rounded-lg shadow-md overflow-hidden">
+                <div key={searchPost.festivalId} className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
                   {/* 이미지 영역 */}
-                  <div className="relative pb-[85%]">
+                  <div className="relative pb-[90%]">
                     <img
                         src={searchPost.festivalUrl || "https://via.placeholder.com/150"}
                         alt={searchPost.festivalName}
@@ -102,9 +102,12 @@ const Festival = () => {
                   {/* 텍스트 영역 */}
                   <div className="p-2">
                     <h3 className="text-sm font-medium leading-tight line-clamp-2">{searchPost.festivalName}</h3>
-                    <p className="text-xs text-gray-500 mt-1">{searchPost.festivalArea}</p>
-                    <p className="text-xs text-gray-500">
-                      {searchPost.festivalStartDate?.slice(5)}~{searchPost.festivalEndDate?.slice(5)}
+                    <p className="text-xs text-gray-500 mt-1 mb-[-10px]">{searchPost.festivalArea}</p>
+                  </div>
+                  {/* 날짜 영역을 카드 하단에 고정 */}
+                  <div className="p-2 text-xs text-gray-500 bg-white mt-auto">
+                    <p>
+                      {searchPost.festivalStartDate?.replace(/-/g, '.')} - {searchPost.festivalEndDate?.replace(/-/g, '.')}
                     </p>
                   </div>
                 </div>
