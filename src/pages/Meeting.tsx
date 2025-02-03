@@ -41,8 +41,8 @@ const Meeting = () => {
         setIsLoading(true);
         try {
             const url = keyword
-                ? `http://localhost:8090/api/v1/posts/chat-rooms/search?keyword=${encodeURIComponent(keyword)}&page=${pageNumber}&size=10`
-                : `http://localhost:8090/api/v1/posts/chat-rooms?page=${pageNumber}&size=10`;
+                ? import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/posts/chat-rooms/search?keyword=${encodeURIComponent(keyword)}&page=${pageNumber}&size=10`
+                : import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/posts/chat-rooms?page=${pageNumber}&size=10`;
 
             const response = await fetch(url);
             if (!response.ok) {
@@ -93,22 +93,26 @@ const Meeting = () => {
                     key={meeting.chatRoomId}
                     className="bg-white rounded-lg shadow-md p-4 border border-gray-100"
                 >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-medium text-base">
-                        {meeting.roomTitle}
-                      </h3>
-                      <p className="text-sm text-gray-500 mt-1">
-                        {meeting.festivalName}
-                      </p>
+                    {/* 제목 + 인원수 */}
+                    <div className="flex justify-between items-start">
+                        <h3 className="font-medium text-base flex-grow truncate max-w-[75%]">
+                            {meeting.roomTitle}
+                        </h3>
+                        <div className="text-sm text-gray-500 whitespace-nowrap">
+                            {meeting.joinMemberNum}/{meeting.roomMemberLimit}명
+                        </div>
                     </div>
-                    <div className="text-sm text-gray-500">
-                      {meeting.joinMemberNum}/{meeting.roomMemberLimit}명
+
+                    {/* 내용 */}
+                    <p className="text-sm text-gray-500 mt-1 truncate max-w-full">
+                        {meeting.roomContent}
+                    </p>
+                    <div className="flex justify-between text-xs text-gray-400 mt-2">
+                        {/* 생성 날짜 */}
+                        <p>{new Date(meeting.createDate).toISOString().slice(0, 10).replace(/-/g, '.')}</p>
+                        {/* 축제 이름 */}
+                        <p className="ml-2 text-xs text-gray-500">{meeting.festivalName}</p>
                     </div>
-                  </div>
-                  <div className="mt-2 text-xs text-gray-400">
-                      {new Date(meeting.createDate).toISOString().slice(0, 10).replace(/-/g, '.')}
-                  </div>
                 </div>
             ))}
           </div>

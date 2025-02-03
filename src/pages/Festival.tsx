@@ -36,8 +36,8 @@ const Festival = () => {
     setIsLoading(true);
     try {
       const url = keyword
-          ? `http://localhost:8090/api/v1/posts/search?keyword=${encodeURIComponent(keyword)}&page=${pageNumber}&size=15`
-          : `http://localhost:8090/api/v1/posts/select?genre=${encodeURIComponent(selectedGenre)}&page=${pageNumber}&size=15`;
+          ? import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/posts/search?keyword=${encodeURIComponent(keyword)}&page=${pageNumber}&size=15`
+          : import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/posts/select?genre=${encodeURIComponent(selectedGenre)}&page=${pageNumber}&size=15`;
 
       const response = await fetch(url);
       if (!response.ok) {

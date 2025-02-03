@@ -4,7 +4,7 @@ import 'swiper/css';
 import 'swiper/css/pagination';
 import SearchBar from '../components/SearchBar';
 import { useEffect, useState } from 'react';
-import {useNavigate} from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 // 게시글 데이터 타입 정의
 interface Festival {
@@ -29,9 +29,9 @@ const genres = [
 
 const Main = () => {
     const [mainPosts, setMainPosts] = useState<Festival[]>([]);
-    const [genrePosts, setGenrePosts] = useState<Festival[] []>([]);
+    const [genrePosts, setGenrePosts] = useState<Festival[][]>([]);
+    const [isLoading, setIsLoading] = useState(true); // 로딩 상태 추가
     const navigate = useNavigate(); // 👈 페이지 이동 함수
-
 
     // 메인 배너 게시글 가져오기 (서울 기준)
     const fetchMainPosts = async () => {
@@ -70,6 +70,7 @@ const Main = () => {
         );
 
         setGenrePosts(newGenrePosts);
+        setIsLoading(false); // 데이터 로딩 완료 후 로딩 상태 변경
     };
 
     useEffect(() => {
@@ -82,68 +83,78 @@ const Main = () => {
             {/* 검색창 */}
             <SearchBar placeholder="축제, 공연, 모임을 검색해보세요" onChange={() => {}} />
             <div className="px-4 my-20">
-                {/* 메인 배너 */}
-                <Swiper
-                    modules={[Pagination, Autoplay]}
-                    pagination={{ clickable: true }}
-                    autoplay={{ delay: 3000 }}
-                    loop={true}
-                    className="w-full mx-auto mt-3"
-                    onInit={(swiper) => swiper.update()}
-                >
-                    {mainPosts.map((mainPost) => (
-                        <SwiperSlide key={mainPost.festivalId} className="flex justify-center items-center">
-                            <div className="w-full max-w-4xl bg-white rounded-lg shadow-md overflow-hidden">
-                                <div className="relative w-full h-[300px] bg-gray-100 flex justify-center items-center">
-                                    <img
-                                        src={mainPost.festivalUrl}
-                                        alt={mainPost.festivalName}
-                                        className="w-full h-full object-contain"
-                                    />
-                                </div>
-                            </div>
-                        </SwiperSlide>
-                    ))}
-                </Swiper>
-
-                {/* 장르별 배너 섹션 */}
-                {genres.map((genre, index) => (
-                    <div key={genre} className="mt-4 lg:mt-12">
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-lg font-bold">{genre}</h2>
-                            <button className="text-sm text-primary"
-                                    onClick={() => navigate(`/posts?genre=${encodeURIComponent(genre)}`)}
-                            >더보기</button>
-                        </div>
-                        <Swiper slidesPerView={3} spaceBetween={12} className="w-full pb-1" >
-                            {genrePosts[index]?.map((genrePost) => (
-                                <SwiperSlide key={genrePost.festivalId}>
-                                    <div className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
-                                        {/* 이미지 영역 */}
-                                        <div className="relative pb-[90%]">
+                {/* 로딩 중 표시 */}
+                {isLoading ? (
+                    <div className="text-center text-gray-500 mt-4">Loading...</div>
+                ) : (
+                    <>
+                        {/* 메인 배너 */}
+                        <Swiper
+                            modules={[Pagination, Autoplay]}
+                            pagination={{ clickable: true }}
+                            autoplay={{ delay: 3000 }}
+                            loop={true}
+                            className="w-full mx-auto mt-3"
+                            onInit={(swiper) => swiper.update()}
+                        >
+                            {mainPosts.map((mainPost) => (
+                                <SwiperSlide key={mainPost.festivalId} className="flex justify-center items-center">
+                                    <div className="w-full max-w-4xl bg-white rounded-lg shadow-md overflow-hidden">
+                                        <div className="relative w-full h-[300px] bg-gray-100 flex justify-center items-center">
                                             <img
-                                                src={genrePost.festivalUrl || "https://via.placeholder.com/150"}
-                                                alt={genrePost.festivalName}
-                                                className="absolute inset-0 w-full h-full object-cover bg-gray-200"
+                                                src={mainPost.festivalUrl}
+                                                alt={mainPost.festivalName}
+                                                className="w-full h-full object-contain"
                                             />
-                                        </div>
-                                        {/* 텍스트 영역 */}
-                                        <div className="p-2">
-                                            <h3 className="text-sm font-medium leading-tight line-clamp-2">{genrePost.festivalName}</h3>
-                                            <p className="text-xs text-gray-500 mt-1 mb-[-10px]">{genrePost.festivalArea}</p>
-                                        </div>
-                                        {/* 날짜 영역을 카드 하단에 고정 */}
-                                        <div className="p-2 text-xs text-gray-500 bg-white mt-auto">
-                                            <p>
-                                                {genrePost.festivalStartDate?.replace(/-/g, '.')} - {genrePost.festivalEndDate?.replace(/-/g, '.')}
-                                            </p>
                                         </div>
                                     </div>
                                 </SwiperSlide>
                             ))}
                         </Swiper>
-                    </div>
-                ))}
+
+                        {/* 장르별 배너 섹션 */}
+                        {genres.map((genre, index) => (
+                            <div key={genre} className="mt-4 lg:mt-12">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h2 className="text-lg font-bold">{genre}</h2>
+                                    <button
+                                        className="text-sm text-primary"
+                                        onClick={() => navigate(`/posts?genre=${encodeURIComponent(genre)}`)}
+                                    >
+                                        더보기
+                                    </button>
+                                </div>
+                                <Swiper slidesPerView={3} spaceBetween={12} className="w-full pb-1">
+                                    {genrePosts[index]?.map((genrePost) => (
+                                        <SwiperSlide key={genrePost.festivalId}>
+                                            <div className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
+                                                {/* 이미지 영역 */}
+                                                <div className="relative pb-[90%]">
+                                                    <img
+                                                        src={genrePost.festivalUrl || "https://via.placeholder.com/150"}
+                                                        alt={genrePost.festivalName}
+                                                        className="absolute inset-0 w-full h-full object-cover bg-gray-200"
+                                                    />
+                                                </div>
+                                                {/* 텍스트 영역 */}
+                                                <div className="p-2">
+                                                    <h3 className="text-sm font-medium leading-tight line-clamp-2">{genrePost.festivalName}</h3>
+                                                    <p className="text-xs text-gray-500 mt-1 mb-[-10px]">{genrePost.festivalArea}</p>
+                                                </div>
+                                                {/* 날짜 영역을 카드 하단에 고정 */}
+                                                <div className="p-2 text-xs text-gray-500 bg-white mt-auto">
+                                                    <p>
+                                                        {genrePost.festivalStartDate?.replace(/-/g, '.')} - {genrePost.festivalEndDate?.replace(/-/g, '.')}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </SwiperSlide>
+                                    ))}
+                                </Swiper>
+                            </div>
+                        ))}
+                    </>
+                )}
             </div>
         </div>
     );
