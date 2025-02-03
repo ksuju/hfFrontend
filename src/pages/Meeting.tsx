@@ -41,8 +41,8 @@ const Meeting = () => {
         setIsLoading(true);
         try {
             const url = keyword
-                ? `http://localhost:8090/api/v1/posts/chat-rooms/search?keyword=${encodeURIComponent(keyword)}&page=${pageNumber}&size=15`
-                : `http://localhost:8090/api/v1/posts/chat-rooms?page=${pageNumber}&size=15`;
+                ? `http://localhost:8090/api/v1/posts/chat-rooms/search?keyword=${encodeURIComponent(keyword)}&page=${pageNumber}&size=10`
+                : `http://localhost:8090/api/v1/posts/chat-rooms?page=${pageNumber}&size=10`;
 
             const response = await fetch(url);
             if (!response.ok) {
