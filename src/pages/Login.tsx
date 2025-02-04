@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import AuthHeader from '../components/AuthHeader';
 import { SiKakao, SiNaver, SiGoogle, SiGithub } from 'react-icons/si';
+import { Link } from 'react-router-dom';
 
 interface LoginProps {
     setIsLoggedIn: React.Dispatch<React.SetStateAction<boolean>>;
@@ -78,23 +79,35 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
 
                     {/* 로그인 폼 */}
                     <form className="space-y-4" onSubmit={handleLogin}>
-                        <div>
+                        <div className="relative">
                             <input
                                 type="email"
                                 placeholder="이메일"
-                                className="w-full h-12 px-4 border border-gray-200 rounded-lg focus:outline-none focus:border-primary"
+                                className="w-full h-12 px-4 border border-gray-200 rounded-lg focus:outline-none focus:border-primary pr-32"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                             />
+                            <Link
+                                to="/find-account"
+                                className="absolute right-0 top-0 h-full px-4 flex items-center text-sm text-gray-500 hover:text-primary"
+                            >
+                                아이디를 잊었나요?
+                            </Link>
                         </div>
-                        <div>
+                        <div className="relative">
                             <input
                                 type="password"
                                 placeholder="비밀번호"
-                                className="w-full h-12 px-4 border border-gray-200 rounded-lg focus:outline-none focus:border-primary"
+                                className="w-full h-12 px-4 border border-gray-200 rounded-lg focus:outline-none focus:border-primary pr-32"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                             />
+                            <Link
+                                to="/reset-password"
+                                className="absolute right-0 top-0 h-full px-4 flex items-center text-sm text-gray-500 hover:text-primary"
+                            >
+                                비밀번호를 잊었나요?
+                            </Link>
                         </div>
                         <div className="flex items-center">
                             <input
@@ -115,7 +128,6 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
                             로그인
                         </button>
                     </form>
-
 
                     {/* 회원가입 링크 */}
                     <div className="mt-6 text-center">

@@ -1,5 +1,5 @@
 // src/pages/MyPage/index.tsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ProfileSection from './components/ProfileSection';
 import SocialAccounts from './components/SocialAccounts';
@@ -12,18 +12,56 @@ const MyPage = () => {
     const navigate = useNavigate();
     const [isEditing, setIsEditing] = useState(false);
     const [isPasswordVerified, setIsPasswordVerified] = useState(false);
-    const userInfo = localStorage.getItem('userInfo') ? JSON.parse(localStorage.getItem('userInfo')!).data : null;
 
-    const [editForm, setEditForm] = useState<EditFormData>({
-        phoneNumber: userInfo?.phoneNumber || '',
-        location: userInfo?.location || '',
-        gender: userInfo?.gender || '',
-        birthday: userInfo?.birthday || '',
-        mkAlarm: userInfo?.mkAlarm || false,
-        nickname: userInfo?.nickname || ''
+    // userInfo 상태 관리 수정
+    const [userInfo, setUserInfo] = useState(() => {
+        const stored = localStorage.getItem('userInfo');
+        if (!stored) return null;
+        try {
+            const parsed = JSON.parse(stored);
+            // 데이터 구조 로깅
+            console.log('Parsed userInfo:', parsed);
+
+            // socialAccounts가 없다면 기본값 설정
+            if (parsed.data && !parsed.data.socialAccounts) {
+                parsed.data.socialAccounts = {
+                    KAKAO: { active: false, createDate: '' },
+                    NAVER: { active: false, createDate: '' },
+                    GOOGLE: { active: false, createDate: '' },
+                    GITHUB: { active: false, createDate: '' }
+                };
+            }
+            return parsed.data;
+        } catch (e) {
+            console.error('userInfo 파싱 에러:', e);
+            return null;
+        }
     });
 
-    // 회원정보 수정
+    // editForm 의존성 수정
+    const [editForm, setEditForm] = useState<EditFormData>({
+        phoneNumber: '',
+        location: '',
+        gender: null,
+        birthday: '',
+        mkAlarm: false,
+        nickname: ''
+    });
+
+    // useEffect 수정
+    useEffect(() => {
+        if (userInfo) {
+            setEditForm({
+                phoneNumber: userInfo.phoneNumber || '',
+                location: userInfo.location || '',
+                gender: userInfo.gender || null,
+                birthday: userInfo.birthday || '',
+                mkAlarm: userInfo.mkAlarm || false,
+                nickname: userInfo.nickname || ''
+            });
+        }
+    }, [userInfo]);
+
     const handleUpdate = async () => {
         try {
             const response = await fetch(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/members/me/profile`, {
@@ -33,20 +71,34 @@ const MyPage = () => {
                 body: JSON.stringify(editForm)
             });
 
-            if (response.ok) {
-                const updatedUserInfo = await response.json();
-                localStorage.setItem('userInfo', JSON.stringify(updatedUserInfo));
+            const responseData = await response.json();
+            console.log('Update response:', responseData); // 응답 데이터 로깅
+
+            if (response.ok && responseData.data) {
+                // socialAccounts 데이터 보존
+                const newUserInfo = {
+                    ...responseData.data,
+                    socialAccounts: userInfo?.socialAccounts || {
+                        KAKAO: { active: false, createDate: '' },
+                        NAVER: { active: false, createDate: '' },
+                        GOOGLE: { active: false, createDate: '' },
+                        GITHUB: { active: false, createDate: '' }
+                    }
+                };
+
+                localStorage.setItem('userInfo', JSON.stringify({ data: newUserInfo }));
+                setUserInfo(newUserInfo);
                 setIsEditing(false);
-                window.location.reload();
+                alert('회원정보가 수정되었습니다.');
             } else {
-                const errorData = await response.json();
-                alert(errorData.msg || '회원정보 수정에 실패했습니다.');
+                alert(responseData.msg || '회원정보 수정에 실패했습니다.');
             }
         } catch (error) {
             console.error('수정 에러:', error);
             alert('서버 연결에 실패했습니다.');
         }
     };
+
 
     // 회원 탈퇴
     const handleDelete = async () => {
@@ -96,7 +148,9 @@ const MyPage = () => {
             if (response.ok) {
                 const updatedUserInfo = await response.json();
                 localStorage.setItem('userInfo', JSON.stringify(updatedUserInfo));
-                window.location.reload();
+                // 상태 직접 업데이트
+                setUserInfo(updatedUserInfo.data);
+                alert('프로필 이미지가 변경되었습니다.');
             } else {
                 const errorData = await response.json();
                 alert(errorData.msg || '이미지 업로드에 실패했습니다.');
@@ -139,6 +193,7 @@ const MyPage = () => {
                 <PasswordVerification
                     userInfo={userInfo}
                     setIsPasswordVerified={setIsPasswordVerified}
+                    setUserInfo={setUserInfo} // setUserInfo prop 전달
                 />
             )}
         </div>
