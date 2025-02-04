@@ -24,6 +24,12 @@ interface ChatResponse {    // RsData 형식에 맞춰서 수정
     }
 }
 
+interface MemberStatusResponse {
+    resultCode: string;
+    msg: string;
+    data: MemberStatus[];
+}
+
 interface MemberStatus {
     nickname: string;
     userLoginStatus: string;
@@ -102,14 +108,11 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
     // 채팅방 멤버의 로그인 상태 가져오기
     const updateMemberLoginStatus = async () => {
         try {
-            const response = await axios.get<MemberStatus[]>(
+            const response = await axios.get<MemberStatusResponse>(
                 import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/chatRooms/${chatRoomId}/members`,
-                {
-                    params: { chatRoomId: chatRoomId },   // 쿼리 파라미터로 chatRoomId 전달
-                    withCredentials: true   // 인증 정보 포함
-                }
-            )
-            setMemberStatusList(response.data);  // 받아온 데이터 상태에 저장
+                { withCredentials: true }
+            );
+            setMemberStatusList(response.data.data); // data 필드에서 멤버 상태 배열 추출
         } catch (error) {
             console.error('유저 로그인 상태 업데이트 실패:', error);
         }
