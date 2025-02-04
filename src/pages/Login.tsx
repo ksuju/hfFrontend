@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import AuthHeader from '../components/AuthHeader';
-import { SiKakao, SiNaver, SiGoogle, SiGithub } from 'react-icons/si';
+import kakaoSimpleIcon from '../assets/images/kakaotalk_simple_icon2.png';
+import googleSimpleIcon from '../assets/images/google_simple_icon.png';
+import naverSimpleIcon from '../assets/images/naver_simple_icon.png';
+import githubSimpleIcon from '../assets/images/github_simple_icon.png';
 import { Link } from 'react-router-dom';
 
 interface LoginProps {
@@ -154,30 +157,30 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
                         <div className="mt-6 flex justify-center space-x-4">
                             <a
                                 href={`${socialLoginForKakaoUrl}?redirectUrl=${redirectUrlAfterSocialLogin}`}
-                                className="w-12 h-12 flex items-center justify-center rounded-full bg-yellow-300 hover:bg-opacity-90 transition-colors"
+                                className="w-14 h-14 flex items-center justify-center hover:opacity-80 transition-opacity"
                             >
-                                <SiKakao className="w-6 h-6 text-brown-500" />
+                                <img src={kakaoSimpleIcon} alt="카카오 로그인" className="w-14 h-14" />
                             </a>
 
                             <a
                                 href={`${socialLoginForNaverUrl}?redirectUrl=${redirectUrlAfterSocialLogin}`}
-                                className="w-12 h-12 flex items-center justify-center rounded-full bg-green-500 hover:bg-opacity-90 transition-colors"
+                                className="w-14 h-14 flex items-center justify-center hover:opacity-80 transition-opacity"
                             >
-                                <SiNaver className="w-6 h-6 text-white" />
+                                <img src={naverSimpleIcon} alt="네이버 로그인" className="w-14 h-14" />
                             </a>
 
                             <a
                                 href={`${socialLoginForGoogleUrl}?redirectUrl=${redirectUrlAfterSocialLogin}`}
-                                className="w-12 h-12 flex items-center justify-center rounded-full bg-white border border-gray-200 hover:bg-gray-50 transition-colors"
+                                className="w-14 h-14 flex items-center justify-center hover:opacity-80 transition-opacity"
                             >
-                                <SiGoogle className="w-6 h-6 text-gray-600" />
+                                <img src={googleSimpleIcon} alt="구글 로그인" className="w-14 h-14" />
                             </a>
 
                             <a
                                 href={`${socialLoginForGithubUrl}?redirectUrl=${redirectUrlAfterSocialLogin}`}
-                                className="w-12 h-12 flex items-center justify-center rounded-full bg-gray-800 hover:bg-opacity-90 transition-colors"
+                                className="w-14 h-14 flex items-center justify-center hover:opacity-80 transition-opacity"
                             >
-                                <SiGithub className="w-6 h-6 text-white" />
+                                <img src={githubSimpleIcon} alt="깃허브 로그인" className="w-14 h-14" />
                             </a>
                         </div>
                     </div>

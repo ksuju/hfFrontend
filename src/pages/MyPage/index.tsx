@@ -12,6 +12,7 @@ const MyPage = () => {
     const navigate = useNavigate();
     const [isEditing, setIsEditing] = useState(false);
     const [isPasswordVerified, setIsPasswordVerified] = useState(false);
+    const [activeTab, setActiveTab] = useState('social');
 
     // userInfo 상태 관리 수정
     const [userInfo, setUserInfo] = useState(() => {
@@ -166,34 +167,78 @@ const MyPage = () => {
     }
 
     return (
-        <div className="p-4">
+        <div className="flex flex-col min-h-screen">
             {isPasswordVerified ? (
                 <>
-                    <ActionButtons
-                        isEditing={isEditing}
-                        setIsEditing={setIsEditing}
-                        onUpdate={handleUpdate}
-                        onDelete={handleDelete}
-                    />
-                    <ProfileSection
-                        userInfo={userInfo}
-                        isEditing={isEditing}
-                        editForm={editForm}
-                        setEditForm={setEditForm}
-                        onImageUpload={handleImageUpload}
-                    />
-                    <SocialAccounts userInfo={userInfo} />
-                    <UserInfoForm
-                        isEditing={isEditing}
-                        editForm={editForm}
-                        setEditForm={setEditForm}
-                    />
+                    <div className="flex-none px-8 pt-8 pb-6">
+                        <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-sm p-6">
+                            <ProfileSection
+                                userInfo={userInfo}
+                                editForm={editForm}
+                                setEditForm={setEditForm}
+                                onImageUpload={handleImageUpload}
+                                onUpdate={handleUpdate}
+                                isEditing={isEditing}
+                            />
+                        </div>
+                    </div>
+
+                    <div className="flex-1 overflow-auto">
+                        <nav className="border-t border-gray-200 bg-white shadow-sm sticky top-0 z-10">
+                            <div className="max-w-4xl mx-auto">
+                                <div className="grid grid-cols-3 text-center">
+                                    <button
+                                        className={`py-4 px-6 font-bold transition-all duration-200 ${activeTab === 'social'
+                                            ? 'text-primary border-b-2 border-primary bg-blue-50'
+                                            : 'text-gray-500 hover:text-primary hover:bg-blue-50'
+                                            }`}
+                                        onClick={() => setActiveTab('social')}
+                                    >
+                                        계정 연동
+                                    </button>
+                                    <button
+                                        className={`py-4 px-6 font-bold transition-all duration-200 ${activeTab === 'info'
+                                            ? 'text-primary border-b-2 border-primary bg-blue-50'
+                                            : 'text-gray-500 hover:text-primary hover:bg-blue-50'
+                                            }`}
+                                        onClick={() => setActiveTab('info')}
+                                    >
+                                        회원 정보
+                                    </button>
+                                    <button
+                                        className={`py-4 px-6 font-bold transition-all duration-200 ${activeTab === 'meetings'
+                                            ? 'text-primary border-b-2 border-primary bg-blue-50'
+                                            : 'text-gray-500 hover:text-primary hover:bg-blue-50'
+                                            }`}
+                                        onClick={() => setActiveTab('meetings')}
+                                    >
+                                        완료 모임
+                                    </button>
+                                </div>
+                            </div>
+                        </nav>
+
+                        <div className="max-w-4xl mx-auto p-8">
+                            {activeTab === 'social' && <SocialAccounts userInfo={userInfo} />}
+                            {activeTab === 'info' && (
+                                <div className="bg-white rounded-xl shadow-sm p-6">
+                                    <UserInfoForm
+                                        userInfo={userInfo}
+                                        editForm={editForm}
+                                        setEditForm={setEditForm}
+                                        onUpdate={handleUpdate}
+                                    />
+                                </div>
+                            )}
+                            {activeTab === 'meetings' && <div>완료된 모임 목록이 표시될 영역</div>}
+                        </div>
+                    </div>
                 </>
             ) : (
                 <PasswordVerification
                     userInfo={userInfo}
                     setIsPasswordVerified={setIsPasswordVerified}
-                    setUserInfo={setUserInfo} // setUserInfo prop 전달
+                    setUserInfo={setUserInfo}
                 />
             )}
         </div>
