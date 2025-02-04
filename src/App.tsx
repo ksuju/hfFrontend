@@ -86,7 +86,6 @@ const App = () => {
                                                 } 
                                             />
                                             <Route path="/mypage" element={<MyPage />} />
-                                            <Route path="/chat" element={<Chat chatRoomId={1} memberId={1}/>}/>
                                             <Route path="/map" element={<FestivalMap />} />  {/* 공연 지도 페이지 추가 */}
                                         </Routes>
                                     </div>
