@@ -164,7 +164,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
     // 채팅 내용 검색
     const messageSearch = async (keyword: string, nickname: string, page: number = 0) => {
         try {
-            const response = await axios.get(
+            const response = await axios.get<ChatResponse>(
                 `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/chatRooms/${chatRoomId}/messages/search`,
                 {
                     params: {
