@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { Client } from '@stomp/stompjs';
 import axios from 'axios';
+import hamburger from '..../src/assets/images/icon-hamburger.png';
 
 interface ChatMessage {
     messageId?: number;
@@ -52,6 +53,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
     const [isSearchMode, setIsSearchMode] = useState(false);
     const [currentSearchKeyword, setCurrentSearchKeyword] = useState('');
     const [currentSearchNickname, setCurrentSearchNickname] = useState('');
+    const [isParticipantsVisible, setIsParticipantsVisible] = useState(false);
 
     const scrollToBottom = () => {
         if (messagesListRef.current) {
@@ -119,6 +121,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                 { withCredentials: true }
             );
             setMemberStatusList(response.data.data); // data 필드에서 멤버 상태 배열 추출
+            console.log(memberStatusList);
         } catch (error) {
             console.error('유저 로그인 상태 조회 실패:', error);
         }
@@ -134,7 +137,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
             );
         } catch (error) {
             console.error('유저 로그아웃 상태 업데이트 실패:', error);
-        };
+        }
     }
 
     // 채팅방 멤버의 로그인 상태 로그인으로 변경하기
@@ -147,7 +150,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
             );
         } catch (error) {
             console.error('유저 로그인 상태 업데이트 실패:', error);
-        };
+        }
     }
 
     // 키워드 하이라이트 함수
@@ -404,6 +407,18 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
     };
 
     return (
+    <div className="chat-container" style={{ position: "relative" }}>
+        {/* 메뉴바 */}
+        <div className="menu-bar" style={{
+            display: "flex", justifyContent: "space-between", alignItems: "center",
+            padding: "10px 15px", backgroundColor: "#F26A2E", color: "white"
+        }}>
+            <h2 style={{ margin: 0, fontSize: "1.2rem" }}>채팅</h2>
+            <button onClick={() => setIsParticipantsVisible(true)}
+                    style={{ background: "none", border: "none", cursor: "pointer" }}>
+                <img src={hamburger} alt="참여자 리스트" style={{ width: "24px", height: "24px" }} />
+            </button>
+        </div>
         <div className="messages-container">
             <ChatSearch onSearch={(keyword, nickname) => messageSearch(keyword, nickname, 0)} />
             <div
@@ -529,98 +544,33 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                 </button>
             </div>
             {/* 참여자 리스트 섹션 */}
-            <div style={{
-                marginTop: "20px",
-                padding: "15px",
-                borderTop: "1px solid #ddd",
-                backgroundColor: "#fff",
-                borderRadius: "8px"
-            }}>
-                <h3 style={{
-                    fontSize: "1rem",
-                    color: "#333",
-                    marginBottom: "12px",
-                    fontWeight: "600"
-                }}>참여자 리스트</h3>
-
-                {/* 온라인 멤버 */}
-                <div style={{ marginBottom: "16px" }}>
-                    <h4 style={{
-                        fontSize: "0.9rem",
-                        color: "#4CAF50",
-                        marginBottom: "8px"
-                    }}>
-                        온라인
-                    </h4>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-                        {memberStatusList
-                            .filter(status => status.userLoginStatus === "LOGIN")
-                            .map((status, index) => (
-                                <div key={index} style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    padding: "8px 12px",
-                                    backgroundColor: "#f8f9fa",
-                                    borderRadius: "20px",
-                                    gap: "8px",
-                                    fontSize: "0.9rem",
-                                    border: "1px solid #e9ecef"
-                                }}>
-                                    <span style={{
-                                        width: "8px",
-                                        height: "8px",
-                                        borderRadius: "50%",
-                                        backgroundColor: "#4CAF50",
-                                        display: "inline-block",
-                                        boxShadow: "0 0 0 2px rgba(76, 175, 80, 0.2)"
-                                    }} />
-                                    <span style={{ fontWeight: "500", color: "#424242" }}>
-                                        {status.nickname}
-                                    </span>
-                                </div>
-                            ))}
+            {isParticipantsVisible && (
+                <div className="participants-modal" style={{
+                    position: "fixed", top: 0, right: 0, width: "75%", height: "100%",
+                    backgroundColor: "white", boxShadow: "-2px 0 5px rgba(0,0,0,0.2)",
+                    display: "flex", flexDirection: "column", padding: "20px"
+                }}>
+                    <button onClick={() => setIsParticipantsVisible(false)}
+                            style={{ alignSelf: "flex-end", background: "none", border: "none", fontSize: "1.5rem" }}>
+                        ✕
+                    </button>
+                    <h3 style={{ fontSize: "1.2rem", marginBottom: "12px" }}>참여자 리스트</h3>
+                    <div>
+                        <h4 style={{ color: "#4CAF50" }}>온라인</h4>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                            {/* 온라인 참여자 목록 */}
+                        </div>
+                    </div>
+                    <div style={{ marginTop: "16px" }}>
+                        <h4 style={{ color: "#9e9e9e" }}>오프라인</h4>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                            {/* 오프라인 참여자 목록 */}
+                        </div>
                     </div>
                 </div>
-
-                {/* 오프라인 멤버 */}
-                <div>
-                    <h4 style={{
-                        fontSize: "0.9rem",
-                        color: "#9e9e9e",
-                        marginBottom: "8px"
-                    }}>
-                        오프라인
-                    </h4>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-                        {memberStatusList
-                            .filter(status => status.userLoginStatus !== "LOGIN")
-                            .map((status, index) => (
-                                <div key={index} style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    padding: "8px 12px",
-                                    backgroundColor: "#f8f9fa",
-                                    borderRadius: "20px",
-                                    gap: "8px",
-                                    fontSize: "0.9rem",
-                                    border: "1px solid #e9ecef"
-                                }}>
-                                    <span style={{
-                                        width: "8px",
-                                        height: "8px",
-                                        borderRadius: "50%",
-                                        backgroundColor: "#9e9e9e",
-                                        display: "inline-block"
-                                    }} />
-                                    <span style={{ fontWeight: "500", color: "#424242" }}>
-                                        {status.nickname}
-                                    </span>
-                                </div>
-                            ))}
-                    </div>
-                </div>
-            </div>
+            )}
         </div>
+    </div>
     );
 };
 

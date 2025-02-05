@@ -1,15 +1,14 @@
 // src/pages/MyPage/index.tsx
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom';
 import ProfileSection from './components/ProfileSection';
 import SocialAccounts from './components/SocialAccounts';
 import UserInfoForm from './components/UserInfoForm';
 import PasswordVerification from './components/PasswordVerification';
-import ActionButtons from './components/ActionButtons';
 import { EditFormData } from './types';
 
 const MyPage = () => {
-    const navigate = useNavigate();
+    // const navigate = useNavigate();
     const [isEditing, setIsEditing] = useState(false);
     const [isPasswordVerified, setIsPasswordVerified] = useState(false);
     const [activeTab, setActiveTab] = useState('social');
@@ -144,35 +143,35 @@ const MyPage = () => {
     };
 
 
-    // 회원 탈퇴
-    const handleDelete = async () => {
-        const confirmed = window.confirm('정말로 탈퇴하시겠습니까?');
-        if (!confirmed) return;
-
-        try {
-            const response = await fetch(
-                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/members/me/deactivate`,
-                {
-                    method: 'PATCH',
-                    credentials: 'include',
-                }
-            );
-
-            if (response.ok) {
-                const data = await response.json();
-                alert(data.msg || '회원 탈퇴가 완료되었습니다.');
-                localStorage.removeItem('isLoggedIn');
-                localStorage.removeItem('userInfo');
-                navigate('/');
-            } else {
-                const errorData = await response.json();
-                alert(errorData.msg || '회원 탈퇴에 실패했습니다.');
-            }
-        } catch (error) {
-            console.error('탈퇴 에러:', error);
-            alert('서버 연결에 실패했습니다.');
-        }
-    };
+    // // 회원 탈퇴
+    // const handleDelete = async () => {
+    //     const confirmed = window.confirm('정말로 탈퇴하시겠습니까?');
+    //     if (!confirmed) return;
+    //
+    //     try {
+    //         const response = await fetch(
+    //             `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/members/me/deactivate`,
+    //             {
+    //                 method: 'PATCH',
+    //                 credentials: 'include',
+    //             }
+    //         );
+    //
+    //         if (response.ok) {
+    //             const data = await response.json();
+    //             alert(data.msg || '회원 탈퇴가 완료되었습니다.');
+    //             localStorage.removeItem('isLoggedIn');
+    //             localStorage.removeItem('userInfo');
+    //             navigate('/');
+    //         } else {
+    //             const errorData = await response.json();
+    //             alert(errorData.msg || '회원 탈퇴에 실패했습니다.');
+    //         }
+    //     } catch (error) {
+    //         console.error('탈퇴 에러:', error);
+    //         alert('서버 연결에 실패했습니다.');
+    //     }
+    // };
 
     // 이미지 업로드
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
