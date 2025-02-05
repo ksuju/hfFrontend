@@ -1,6 +1,74 @@
+import { useState, useEffect } from 'react';
 import AuthHeader from '../components/AuthHeader';
+import kakaoSimpleIcon from '../assets/images/kakaotalk_simple_icon2.png';
+import googleSimpleIcon from '../assets/images/google_simple_icon.png';
+import naverSimpleIcon from '../assets/images/naver_simple_icon.png';
+import githubSimpleIcon from '../assets/images/github_simple_icon.png';
+import { Link } from 'react-router-dom';
 
-const Login = () => {
+interface LoginProps {
+    setIsLoggedIn: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
+    const socialLoginForKakaoUrl = import.meta.env.VITE_CORE_API_BASE_URL + `/oauth2/authorization/kakao`; // 카카오 로그인 요청 URL
+    const socialLoginForGoogleUrl = import.meta.env.VITE_CORE_API_BASE_URL + `/oauth2/authorization/google`; // 구글 로그인 요청 URL
+    const socialLoginForNaverUrl = import.meta.env.VITE_CORE_API_BASE_URL + `/oauth2/authorization/naver`;  // 네이버 로그인 요청 URL
+    const socialLoginForGithubUrl = import.meta.env.VITE_CORE_API_BASE_URL + `/oauth2/authorization/github`;  // 깃허브 로그인 요청 URL
+    const redirectUrlAfterSocialLogin = import.meta.env.VITE_CORE_FRONT_BASE_URL; // 카카오 로그인 후 리다이렉트 URL
+
+
+    // 로그인 폼 입력 값 상태 관리
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [saveEmail, setSaveEmail] = useState(false);
+
+    useEffect(() => {
+        const savedEmail = localStorage.getItem('savedEmail');
+        if (savedEmail) {
+            setEmail(savedEmail);
+            setSaveEmail(true);
+        }
+    }, []);
+
+    const handleLogin = async (e: React.FormEvent) => {
+        console.log(import.meta.env.VITE_CORE_API_BASE_URL);
+
+        e.preventDefault();
+        try {
+            const response = await fetch(import.meta.env.VITE_CORE_API_BASE_URL + '/api/v1/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email,
+                    password
+                }),
+                credentials: 'include', // 쿠키 포함
+            });
+
+            console.log("API URL:", import.meta.env.VITE_CORE_API_BASE_URL + '/api/v1/auth/login');
+
+            if (response.ok) {
+                if (saveEmail) {
+                    localStorage.setItem('savedEmail', email);
+                } else {
+                    localStorage.removeItem('savedEmail');
+                }
+                setIsLoggedIn(true);
+                window.location.href = '/'; // 홈 페이지
+            } else {
+                const errorData = await response.json();
+                alert(errorData.msg || '로그인에 실패했습니다.');
+                console.error('로그인 실패', errorData);
+            }
+        } catch (error) {
+            alert('서버와의 통신에 실패했습니다.');
+            console.error('로그인 실패:', error);
+        }
+    };
+
     return (
         <div className="min-h-screen flex flex-col bg-white lg:bg-gray-100">
             <AuthHeader />
@@ -11,21 +79,50 @@ const Login = () => {
                         <p className="text-gray-500 mt-2">환영합니다</p>
                     </div>
 
+
                     {/* 로그인 폼 */}
-                    <form className="space-y-4">
-                        <div>
+                    <form className="space-y-4" onSubmit={handleLogin}>
+                        <div className="relative">
                             <input
                                 type="email"
                                 placeholder="이메일"
-                                className="w-full h-12 px-4 border border-gray-200 rounded-lg focus:outline-none focus:border-primary"
+                                className="w-full h-12 px-4 border border-gray-200 rounded-lg focus:outline-none focus:border-primary pr-32"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
                             />
+                            <Link
+                                to="/find-account"
+                                className="absolute right-0 top-0 h-full px-4 flex items-center text-sm text-gray-500 hover:text-primary"
+                            >
+                                아이디를 잊었나요?
+                            </Link>
                         </div>
-                        <div>
+                        <div className="relative">
                             <input
                                 type="password"
                                 placeholder="비밀번호"
-                                className="w-full h-12 px-4 border border-gray-200 rounded-lg focus:outline-none focus:border-primary"
+                                className="w-full h-12 px-4 border border-gray-200 rounded-lg focus:outline-none focus:border-primary pr-32"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
                             />
+                            <Link
+                                to="/reset-password"
+                                className="absolute right-0 top-0 h-full px-4 flex items-center text-sm text-gray-500 hover:text-primary"
+                            >
+                                비밀번호를 잊었나요?
+                            </Link>
+                        </div>
+                        <div className="flex items-center">
+                            <input
+                                type="checkbox"
+                                id="saveEmail"
+                                checked={saveEmail}
+                                onChange={(e) => setSaveEmail(e.target.checked)}
+                                className="mr-2"
+                            />
+                            <label htmlFor="saveEmail" className="text-sm text-gray-600">
+                                이메일 저장
+                            </label>
                         </div>
                         <button
                             type="submit"
@@ -45,6 +142,7 @@ const Login = () => {
                         </p>
                     </div>
 
+
                     {/* 소셜 로그인 */}
                     <div className="mt-8">
                         <div className="relative">
@@ -56,10 +154,34 @@ const Login = () => {
                             </div>
                         </div>
 
-                        <div className="mt-6">
-                            <button className="w-full h-12 border border-gray-200 rounded-lg font-medium hover:border-primary transition-colors">
-                                카카오
-                            </button>
+                        <div className="mt-6 flex justify-center space-x-4">
+                            <a
+                                href={`${socialLoginForKakaoUrl}?redirectUrl=${redirectUrlAfterSocialLogin}`}
+                                className="w-14 h-14 flex items-center justify-center hover:opacity-80 transition-opacity"
+                            >
+                                <img src={kakaoSimpleIcon} alt="카카오 로그인" className="w-14 h-14" />
+                            </a>
+
+                            <a
+                                href={`${socialLoginForNaverUrl}?redirectUrl=${redirectUrlAfterSocialLogin}`}
+                                className="w-14 h-14 flex items-center justify-center hover:opacity-80 transition-opacity"
+                            >
+                                <img src={naverSimpleIcon} alt="네이버 로그인" className="w-14 h-14" />
+                            </a>
+
+                            <a
+                                href={`${socialLoginForGoogleUrl}?redirectUrl=${redirectUrlAfterSocialLogin}`}
+                                className="w-14 h-14 flex items-center justify-center hover:opacity-80 transition-opacity"
+                            >
+                                <img src={googleSimpleIcon} alt="구글 로그인" className="w-14 h-14" />
+                            </a>
+
+                            <a
+                                href={`${socialLoginForGithubUrl}?redirectUrl=${redirectUrlAfterSocialLogin}`}
+                                className="w-14 h-14 flex items-center justify-center hover:opacity-80 transition-opacity"
+                            >
+                                <img src={githubSimpleIcon} alt="깃허브 로그인" className="w-14 h-14" />
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -68,4 +190,4 @@ const Login = () => {
     );
 };
 
-export default Login; 
+export default Login;
