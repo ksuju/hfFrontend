@@ -35,7 +35,7 @@ interface MemberStatus {
     userLoginStatus: string;
 }
 
-const WEBSOCKET_URL = `ws://${import.meta.env.WEBSOCKET_URL}/ws/chat`;
+const WEBSOCKET_URL = `${import.meta.env.WEBSOCKET_URL}/ws/chat`;
 const request_URL = import.meta.env.VITE_CORE_API_BASE_URL;
 
 const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
