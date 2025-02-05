@@ -7,9 +7,10 @@ import githubSimpleIcon from '../../../../assets/images/github_simple_icon.png';
 
 interface SocialAccountsProps {
     userInfo: UserInfo;
+    onUpdate: () => void;
 }
 
-const SocialAccounts = ({ userInfo }: SocialAccountsProps) => {
+const SocialAccounts = ({ userInfo, onUpdate }: SocialAccountsProps) => {
     const socialAccounts = [
         {
             provider: 'KAKAO' as const,
@@ -37,10 +38,15 @@ const SocialAccounts = ({ userInfo }: SocialAccountsProps) => {
         }
     ];
 
+    const handleSocialLink = () => {
+        window.sessionStorage.setItem('needsUpdate', 'true');
+        onUpdate();
+    };
+
     return (
         <div className="mt-6 space-y-4">
             <p className="text-base font-bold text-primary mb-2">소셜 계정 연동</p>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-4">
                 {socialAccounts.map(({ provider, icon, name, account }) => (
                     <SocialAccountCard
                         key={provider}
@@ -48,6 +54,7 @@ const SocialAccounts = ({ userInfo }: SocialAccountsProps) => {
                         icon={icon}
                         name={name}
                         account={account}
+                        onSocialLink={handleSocialLink}
                     />
                 ))}
             </div>
