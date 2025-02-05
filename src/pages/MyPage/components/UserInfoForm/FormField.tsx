@@ -1,6 +1,6 @@
 interface FormFieldProps {
     label: string;
-    value: string;
+    value: string | null;
     onChange?: (value: string) => void;
     isEditing?: boolean;
     type?: 'text' | 'select' | 'date' | 'checkbox';
@@ -16,7 +16,7 @@ const FormField = ({ label, value, onChange, isEditing, type = 'text', options }
             {isEditing ? (
                 type === 'select' ? (
                     <select
-                        value={value}
+                        value={value || ''}
                         onChange={(e) => onChange?.(e.target.value)}
                         className="w-full h-10 px-3 border border-gray-300 rounded-lg focus:outline-none focus:border-primary"
                     >
@@ -30,14 +30,14 @@ const FormField = ({ label, value, onChange, isEditing, type = 'text', options }
                 ) : type === 'date' ? (
                     <input
                         type="date"
-                        value={value}
+                        value={value || ''}
                         onChange={(e) => onChange?.(e.target.value)}
                         className="w-full h-10 px-3 border border-gray-300 rounded-lg focus:outline-none focus:border-primary"
                     />
                 ) : (
                     <input
                         type={type}
-                        value={value}
+                        value={value || ''}
                         onChange={(e) => onChange?.(e.target.value)}
                         className="w-full h-10 px-3 border border-gray-300 rounded-lg focus:outline-none focus:border-primary"
                     />
