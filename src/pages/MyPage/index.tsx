@@ -14,23 +14,28 @@ const MyPage = () => {
     const [isPasswordVerified, setIsPasswordVerified] = useState(false);
     const [activeTab, setActiveTab] = useState('social');
 
+    const defaultSocialAccount = {
+        active: false,
+        createDate: '',
+        email: null
+    };
+
     // userInfo 상태 관리 수정
     const [userInfo, setUserInfo] = useState(() => {
         const stored = localStorage.getItem('userInfo');
         if (!stored) return null;
         try {
             const parsed = JSON.parse(stored);
-            // 데이터 구조 로깅
-            console.log('Parsed userInfo:', parsed);
-
-            // socialAccounts가 없다면 기본값 설정
-            if (parsed.data && !parsed.data.socialAccounts) {
+            // socialAccounts가 없거나 각 계정이 undefined인 경우 기본값 설정
+            if (parsed.data) {
                 parsed.data.socialAccounts = {
-                    KAKAO: { active: false, createDate: '' },
-                    NAVER: { active: false, createDate: '' },
-                    GOOGLE: { active: false, createDate: '' },
-                    GITHUB: { active: false, createDate: '' }
+                    KAKAO: { ...defaultSocialAccount, ...parsed.data.socialAccounts?.KAKAO },
+                    NAVER: { ...defaultSocialAccount, ...parsed.data.socialAccounts?.NAVER },
+                    GOOGLE: { ...defaultSocialAccount, ...parsed.data.socialAccounts?.GOOGLE },
+                    GITHUB: { ...defaultSocialAccount, ...parsed.data.socialAccounts?.GITHUB }
                 };
+                // profilePath가 null이면 기본값 설정
+                parsed.data.profilePath = parsed.data.profilePath || 'default.png';
             }
             return parsed.data;
         } catch (e) {
@@ -62,6 +67,43 @@ const MyPage = () => {
             });
         }
     }, [userInfo]);
+
+    const fetchUserInfo = async () => {
+        try {
+            const response = await fetch(
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/auth/me`,
+                {
+                    credentials: 'include'
+                }
+            );
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.data) {
+                    // socialAccounts가 없다면 기본값 설정
+                    if (!data.data.socialAccounts) {
+                        data.data.socialAccounts = {
+                            KAKAO: { active: false, createDate: '' },
+                            NAVER: { active: false, createDate: '' },
+                            GOOGLE: { active: false, createDate: '' },
+                            GITHUB: { active: false, createDate: '' }
+                        };
+                    }
+                    localStorage.setItem('userInfo', JSON.stringify(data));
+                    setUserInfo(data.data);
+                }
+            }
+        } catch (error) {
+            console.error('회원 정보 조회 실패:', error);
+        }
+    };
+
+    useEffect(() => {
+        if (window.sessionStorage.getItem('needsUpdate') === 'true') {
+            fetchUserInfo();  // 회원 정보 다시 불러오기
+            window.sessionStorage.removeItem('needsUpdate');
+        }
+    }, []);
 
     const handleUpdate = async () => {
         try {
@@ -219,7 +261,7 @@ const MyPage = () => {
                         </nav>
 
                         <div className="max-w-4xl mx-auto p-8">
-                            {activeTab === 'social' && <SocialAccounts userInfo={userInfo} />}
+                            {activeTab === 'social' && <SocialAccounts userInfo={userInfo} onUpdate={fetchUserInfo} />}
                             {activeTab === 'info' && (
                                 <div className="bg-white rounded-xl shadow-sm p-6">
                                     <UserInfoForm

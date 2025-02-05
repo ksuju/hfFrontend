@@ -33,10 +33,6 @@ interface VerificationState {
 }
 
 const UserInfoForm = ({ userInfo, editForm, setEditForm, onUpdate }: UserInfoFormProps) => {
-    const redirectUrl = import.meta.env.VITE_CORE_FRONT_BASE_URL;
-    const confmKey = 'devU01TX0FVVEgyMDI1MDIwNTEwNTIzNzExNTQ0ODE=';
-    const addressLookupUrl = `https://business.juso.go.kr/addrlink/addrLinkUrl.do?confmKey=${encodeURIComponent(confmKey)}&returnUrl=${encodeURIComponent(`${redirectUrl}/mypage`)}&resultType=4`;
-
     const [editingField, setEditingField] = useState<keyof EditFormData | null>(null);
     const [isPasswordChanging, setIsPasswordChanging] = useState(false);
     const [passwordForm, setPasswordForm] = useState<PasswordForm>({
