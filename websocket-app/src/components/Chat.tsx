@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useParams } from 'react-router-dom';
 import { Client } from '@stomp/stompjs';
 import axios from 'axios';
-
 
 interface ChatMessage {
     messageId?: number;
@@ -37,7 +37,7 @@ interface MemberStatus {
 
 const WEBSOCKET_URL = 'ws://localhost:8090/ws/chat';
 
-const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, memberId }) => {
+const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [messageInput, setMessageInput] = useState('');
     const [currentPage, setCurrentPage] = useState(0);
@@ -46,6 +46,7 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
     const messagesListRef = useRef<HTMLDivElement>(null);
     const [currentUserNickname, setCurrentUserNickname] = useState<string>('');
     const [memberStatusList, setMemberStatusList] = useState<MemberStatus[]>([]);
+    const { chatRoomId } = useParams();
 
     const scrollToBottom = () => {
         if (messagesListRef.current) {
@@ -125,7 +126,7 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
             // connectHeaders에 멤버ID와 채팅방ID 추가
             connectHeaders: {
                 memberId: memberId.toString(),
-                chatRoomId: chatRoomId.toString()
+                chatRoomId: String(chatRoomId)
             },
             debug: (str) => {
                 console.log('STOMP: ', str);

@@ -1,6 +1,7 @@
 // Meeting.tsx
 import { useEffect, useState } from 'react';
 import SearchBar from '../components/SearchBar';
+import {useNavigate} from "react-router-dom";
 
 interface MeetingPost {
   memberId: string;
@@ -9,9 +10,7 @@ interface MeetingPost {
   roomContent: string;
   festivalName: string;
   roomMemberLimit: string;
-  joinMemberIdList: string[];
   joinMemberNum: string;
-  waitingMemberIdList: string[];
   createDate: string;
 }
 
@@ -168,6 +167,16 @@ const Meeting = () => {
         return currentUser?.joinRoomIdList.includes(chatRoomIdStr) || false;
     };
 
+    // 페이지 이동을 위한 훅
+    const navigate = useNavigate();
+
+    // 채팅방 클릭 시 이동 메서드
+    const handleChatRoomClick = (chatRoomId: string, isUserJoined: boolean) => {
+        if (isUserJoined) {
+            navigate(`/chat/${chatRoomId}`); // 참여한 채팅방만 이동 가능
+        }
+    };
+
     return (
         <div className="max-w-[600px] mx-auto">
             <SearchBar placeholder="모임을 검색해보세요" onChange={handleSearch} />
@@ -179,21 +188,33 @@ const Meeting = () => {
                         const isUserJoined = isUserInJoinRoom(meeting.chatRoomId);
 
                         return (
-                            <div key={meeting.chatRoomId} className="bg-white rounded-lg shadow-md p-4 border border-gray-100">
+                            <div
+                                key={meeting.chatRoomId}
+                                className="bg-white rounded-lg shadow-md p-4 border border-gray-100 cursor-pointer"
+                                onClick={() => {
+                                    if (!isUserJoined) {
+                                        console.log("채팅방에 참여해야 이동할 수 있습니다.");
+                                        return; // 클릭 가능하지만 동작 안 함
+                                    }
+                                    handleChatRoomClick(meeting.chatRoomId, isUserJoined);
+                                }}
+                            >
                                 {/* 제목 + 버튼 */}
                                 <div className="flex justify-between items-start">
                                     <h3 className="font-medium text-base flex-grow truncate max-w-[75%]">
                                         {meeting.roomTitle}
                                     </h3>
-                                    {/* 참여 상태 표시 */}                                    {isUserJoined ? (
-                                        <span className="text-primary text-xs">●</span>
+                                    {/* 참여 상태 표시 */}
+                                    {isUserJoined ? (<span className="text-primary text-xs">●</span>
                                     ) : (
                                         <button
                                             className={`text-sm font-medium px-3 py-1 rounded-md ${
                                                 isUserWaiting ? "text-gray-500 border-gray-400" : "text-primary border-primary"
                                             }`}
-                                            onClick={() => handleJoinClick(meeting.chatRoomId, isUserWaiting)}
-                                        >
+                                            onClick={(e) => {
+                                                e.stopPropagation(); // 클릭 시 채팅방 이동 방지
+                                                handleJoinClick(meeting.chatRoomId, isUserWaiting);
+                                            }}                                        >
                                             {isUserWaiting ? "취소" : "참여하기"}
                                         </button>
                                     )}
