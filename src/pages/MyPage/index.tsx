@@ -5,7 +5,6 @@ import ProfileSection from './components/ProfileSection';
 import SocialAccounts from './components/SocialAccounts';
 import UserInfoForm from './components/UserInfoForm';
 import PasswordVerification from './components/PasswordVerification';
-import ActionButtons from './components/ActionButtons';
 import { EditFormData } from './types';
 
 const MyPage = () => {
