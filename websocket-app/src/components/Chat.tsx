@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Client } from '@stomp/stompjs';
 import axios from 'axios';
 
-
 interface ChatMessage {
     messageId?: number;
     nickname?: string;
@@ -24,17 +23,6 @@ interface ChatResponse {    // RsData 형식에 맞춰서 수정
     }
 }
 
-interface MemberStatusResponse {
-    resultCode: string;
-    msg: string;
-    data: MemberStatus[];
-}
-
-interface MemberStatus {
-    nickname: string;
-    userLoginStatus: string;
-}
-
 const WEBSOCKET_URL = 'ws://localhost:8090/ws/chat';
 
 const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, memberId }) => {
@@ -45,7 +33,6 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
     const stompClientRef = useRef<Client | null>(null);
     const messagesListRef = useRef<HTMLDivElement>(null);
     const [currentUserNickname, setCurrentUserNickname] = useState<string>('');
-    const [memberStatusList, setMemberStatusList] = useState<MemberStatus[]>([]);
 
     const scrollToBottom = () => {
         if (messagesListRef.current) {
@@ -56,7 +43,7 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
     const fetchPreviousMessages = async (page: number) => {
         try {
             const response = await axios.get<ChatResponse>(
-                import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/chatRooms/${chatRoomId}/messages?page=${page}`,
+                `http://localhost:8090/api/v1/chatRooms/${chatRoomId}/messages?page=${page}`,
                 { withCredentials: true }  // 인증 정보 포함
             );
 
@@ -69,7 +56,6 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
                         updateMessageReadStatus(latestMessage.messageId);
                     }
                 }
-                updateMemberLoginStatus();    // 채팅방 멤버의 로그인 상태 가져오기
                 setTimeout(() => scrollToBottom(), 100);
             } else {
                 setMessages(prev => [...prev, ...response.data.data.content]);
@@ -96,7 +82,7 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
             };
 
             await axios.put(
-                import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/chatRooms/${chatRoomId}/messages/readStatus`,
+                `http://localhost:8090/api/v1/chatRooms/${chatRoomId}/messages/readStatus`,
                 messageReadStatus,
                 { withCredentials: true }  // 인증 정보 포함
             );
@@ -105,28 +91,10 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
         }
     };
 
-    // 채팅방 멤버의 로그인 상태 가져오기
-    const updateMemberLoginStatus = async () => {
-        try {
-            const response = await axios.get<MemberStatusResponse>(
-                import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/chatRooms/${chatRoomId}/members`,
-                { withCredentials: true }
-            );
-            setMemberStatusList(response.data.data); // data 필드에서 멤버 상태 배열 추출
-        } catch (error) {
-            console.error('유저 로그인 상태 업데이트 실패:', error);
-        }
-    }
-
     useEffect(() => {
         const client = new Client({
             brokerURL: WEBSOCKET_URL,
             reconnectDelay: 5000,
-            // connectHeaders에 멤버ID와 채팅방ID 추가
-            connectHeaders: {
-                memberId: memberId.toString(),
-                chatRoomId: chatRoomId.toString()
-            },
             debug: (str) => {
                 console.log('STOMP: ', str);
             },
@@ -143,7 +111,7 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
                             messageTimestamp: receivedMessage.createDate
                         };
                         setMessages(prev => [chatMessage, ...prev]);
-
+                        
                         // 새 메시지가 도착하면 읽음 상태 업데이트
                         if (receivedMessage.id) {
                             updateMessageReadStatus(receivedMessage.id);
@@ -159,36 +127,10 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
         client.activate();
         stompClientRef.current = client;
 
-        // 컴포넌트 언마운트 시 정리
         return () => {
-            if (stompClientRef.current) {
-                console.log('WebSocket 연결 정리 중...');
-                stompClientRef.current.deactivate();
-                stompClientRef.current = null;
-            }
+            client.deactivate();
         };
-    }, [chatRoomId, memberId]);
-
-    // 컴포넌트 마운트 시 데이터 가져오기
-    useEffect(() => {
-        updateMemberLoginStatus();
-    }, [chatRoomId]);  // chatRoomId가 바뀔 때마다 데이터 업데이트
-
-    // 페이지 이동/브라우저 종료 시 추가 처리
-    useEffect(() => {
-        const handleBeforeUnload = () => {
-            if (stompClientRef.current) {
-                stompClientRef.current.deactivate();
-                stompClientRef.current = null;
-            }
-        };
-
-        window.addEventListener('beforeunload', handleBeforeUnload);
-
-        return () => {
-            window.removeEventListener('beforeunload', handleBeforeUnload);
-        };
-    }, []);
+    }, [chatRoomId]);
 
     useEffect(() => {
         const fetchUserInfo = async () => {
@@ -218,9 +160,9 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
                 destination: `/app/chat/${chatRoomId}`,
                 body: JSON.stringify(messageToSend),
             });
-            console.log(import.meta.env.VITE_CORE_API_BASE_URL)
+
             await axios.post(
-                import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/chatRooms/${chatRoomId}/messages`,
+                `http://localhost:8090/api/v1/chatRooms/${chatRoomId}/messages`,
                 messageToSend,
                 { withCredentials: true }  // 인증 정보 포함
             );
@@ -268,11 +210,11 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
                     {messages.slice().reverse().map((msg, index, array) => {
                         const isMyMessage = msg.nickname === currentUserNickname;
                         const prevMessage = array[index - 1];
-                        const showNickname = !isMyMessage &&
+                        const showNickname = !isMyMessage && 
                             (!prevMessage || prevMessage.nickname !== msg.nickname);
-
+                        
                         return (
-                            <div key={index}
+                            <div key={index} 
                                 style={{
                                     display: 'flex',
                                     flexDirection: 'column',
@@ -335,13 +277,10 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
                         flex: 1,
                         padding: '8px',
                         borderRadius: '4px',
-                        border: '1px solid #ddd',
-                        outline: 'none' // 기본 포커스 테두리 제거
+                        border: '1px solid #ddd'
                     }}
-                    onFocus={(e) => e.target.style.border = '1px solid #F26A2E'} // 포커스 시 테두리 색상
-                    onBlur={(e) => e.target.style.border = '1px solid #ddd'} // 포커스 해제 시 원래 색상
                 />
-                <button
+                <button 
                     onClick={sendMessage}
                     style={{
                         padding: '8px',
@@ -354,110 +293,18 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
                         justifyContent: 'center'
                     }}
                 >
-                    <img
+                    <img 
                         src="src/assets/images/send.png"
                         alt="전송"
                         style={{
                             width: '24px',
                             height: '24px',
-                            filter: messageInput.trim()
-                                ? 'invert(47%) sepia(82%) saturate(2604%) hue-rotate(337deg) brightness(97%) contrast(92%)'
+                            filter: messageInput.trim() 
+                                ? 'invert(47%) sepia(82%) saturate(2604%) hue-rotate(337deg) brightness(97%) contrast(92%)' 
                                 : 'opacity(0.5)'
                         }}
                     />
                 </button>
-            </div>
-            {/* 참여자 리스트 섹션 */}
-            <div style={{
-                marginTop: "20px",
-                padding: "15px",
-                borderTop: "1px solid #ddd",
-                backgroundColor: "#fff",
-                borderRadius: "8px"
-            }}>
-                <h3 style={{
-                    fontSize: "1rem",
-                    color: "#333",
-                    marginBottom: "12px",
-                    fontWeight: "600"
-                }}>참여자 리스트</h3>
-
-                {/* 온라인 멤버 */}
-                <div style={{ marginBottom: "16px" }}>
-                    <h4 style={{
-                        fontSize: "0.9rem",
-                        color: "#4CAF50",
-                        marginBottom: "8px"
-                    }}>
-                        온라인
-                    </h4>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-                        {memberStatusList
-                            .filter(status => status.userLoginStatus === "LOGIN")
-                            .map((status, index) => (
-                                <div key={index} style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    padding: "8px 12px",
-                                    backgroundColor: "#f8f9fa",
-                                    borderRadius: "20px",
-                                    gap: "8px",
-                                    fontSize: "0.9rem",
-                                    border: "1px solid #e9ecef"
-                                }}>
-                                    <span style={{
-                                        width: "8px",
-                                        height: "8px",
-                                        borderRadius: "50%",
-                                        backgroundColor: "#4CAF50",
-                                        display: "inline-block",
-                                        boxShadow: "0 0 0 2px rgba(76, 175, 80, 0.2)"
-                                    }} />
-                                    <span style={{ fontWeight: "500", color: "#424242" }}>
-                                        {status.nickname}
-                                    </span>
-                                </div>
-                            ))}
-                    </div>
-                </div>
-
-                {/* 오프라인 멤버 */}
-                <div>
-                    <h4 style={{
-                        fontSize: "0.9rem",
-                        color: "#9e9e9e",
-                        marginBottom: "8px"
-                    }}>
-                        오프라인
-                    </h4>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-                        {memberStatusList
-                            .filter(status => status.userLoginStatus !== "LOGIN")
-                            .map((status, index) => (
-                                <div key={index} style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    padding: "8px 12px",
-                                    backgroundColor: "#f8f9fa",
-                                    borderRadius: "20px",
-                                    gap: "8px",
-                                    fontSize: "0.9rem",
-                                    border: "1px solid #e9ecef"
-                                }}>
-                                    <span style={{
-                                        width: "8px",
-                                        height: "8px",
-                                        borderRadius: "50%",
-                                        backgroundColor: "#9e9e9e",
-                                        display: "inline-block"
-                                    }} />
-                                    <span style={{ fontWeight: "500", color: "#424242" }}>
-                                        {status.nickname}
-                                    </span>
-                                </div>
-                            ))}
-                    </div>
-                </div>
             </div>
         </div>
     );
