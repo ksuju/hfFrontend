@@ -1,25 +1,37 @@
 import { SocialAccount } from '../../types';
 import { useState } from 'react';
+import kakaoIcon from '../../../../assets/images/kakaotalk_simple_icon.png';
+import googleIcon from '../../../../assets/images/google_simple_icon.png';
+import naverIcon from '../../../../assets/images/naver_simple_icon.png';
+import githubIcon from '../../../../assets/images/github_simple_icon.png';
 
 interface SocialAccountCardProps {
-    provider: 'KAKAO' | 'NAVER' | 'GOOGLE' | 'GITHUB';
-    icon: string;
-    name: string;
+    type: 'KAKAO' | 'NAVER' | 'GOOGLE' | 'GITHUB';
     account: SocialAccount;
-    onSocialLink: () => void;
+    onSocialAction: () => void;
 }
 
-const SocialAccountCard = ({ provider, icon, name, account, onSocialLink }: SocialAccountCardProps) => {
+const getSocialIcon = (type: string) => {
+    const icons = {
+        KAKAO: kakaoIcon,
+        GOOGLE: googleIcon,
+        NAVER: naverIcon,
+        GITHUB: githubIcon
+    };
+    return icons[type as keyof typeof icons];
+};
+
+const SocialAccountCard = ({ type, account, onSocialAction }: SocialAccountCardProps) => {
     const [isLoading, setIsLoading] = useState(false);
 
     // 소셜 로그인 URL 설정
-    const socialLoginUrl = `${import.meta.env.VITE_CORE_API_BASE_URL}/oauth2/authorization/${provider.toLowerCase()}`;
+    const socialLoginUrl = `${import.meta.env.VITE_CORE_API_BASE_URL}/oauth2/authorization/${type.toLowerCase()}`;
     const redirectUrl = "http://localhost:5173/mypage";
 
     const handleSocialLink = async () => {
         try {
             const response = await fetch(
-                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/members/me/social/${provider.toLowerCase()}/validate`,
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/members/me/social/${type.toLowerCase()}/validate`,
                 {
                     method: 'GET',
                     credentials: 'include',
@@ -51,7 +63,7 @@ const SocialAccountCard = ({ provider, icon, name, account, onSocialLink }: Soci
                 );
 
                 if (response.ok) {
-                    onSocialLink();
+                    onSocialAction();
                     return true;
                 }
 
@@ -71,7 +83,7 @@ const SocialAccountCard = ({ provider, icon, name, account, onSocialLink }: Soci
 
         if (account.active) {
             // 연동 해제 전 확인
-            if (!window.confirm(`${name} 계정 연동을 해제하시겠습니까?`)) {
+            if (!window.confirm(`${type} 계정 연동을 해제하시겠습니까?`)) {
                 return;
             }
         }
@@ -81,7 +93,7 @@ const SocialAccountCard = ({ provider, icon, name, account, onSocialLink }: Soci
         if (account.active) {
             try {
                 const response = await fetch(
-                    `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/members/me/social/${provider.toLowerCase()}`,
+                    `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/members/me/social/${type.toLowerCase()}`,
                     {
                         method: 'DELETE',
                         credentials: 'include',
@@ -106,48 +118,35 @@ const SocialAccountCard = ({ provider, icon, name, account, onSocialLink }: Soci
     };
 
     return (
-        <div className="flex items-center justify-between p-4 border rounded-lg">
-            <div className="flex items-center gap-3">
-                <img src={icon} alt={name} className="w-8 h-8" />
-                <span className="font-medium">{name}</span>
+        <div className="flex items-center justify-between p-4 bg-white rounded-lg shadow-sm">
+            <div className="flex items-center gap-4">
+                <img src={getSocialIcon(type)} alt={type} className="w-8 h-8" />
             </div>
-            <div className="flex items-center gap-6">
-                {account.active ? (
+            <div className="flex items-center gap-20 mr-2">
+                {account?.active && (
                     <>
-                        <div className="flex flex-col items-end gap-1">
-                            <span className="text-sm text-gray-500">
-                                연동일: {new Date(account.createDate).toLocaleDateString()}
-                            </span>
-                            {account.email && (
-                                <span className="text-sm text-gray-500">
-                                    이메일: {account.email}
-                                </span>
-                            )}
+                        <div className="text-gray-600">
+                            <span className="text-gray-500 font-medium">이메일: </span>
+                            {account.email || '연동된 이메일 없음'}
                         </div>
-                        <button
-                            onClick={handleSocialAction}
-                            disabled={isLoading}
-                            className={`px-3 py-1.5 text-sm ${isLoading
-                                ? 'bg-gray-400 cursor-not-allowed'
-                                : 'bg-red-500 hover:bg-red-600'
-                                } text-white rounded`}
-                        >
-                            {isLoading ? '처리 중...' : '연동해제'}
-                        </button>
+                        {account.createDate && (
+                            <div className="text-gray-600">
+                                <span className="text-gray-500 font-medium">연동일: </span>
+                                {new Date(account.createDate).toLocaleDateString()}
+                            </div>
+                        )}
                     </>
-                ) : (
-                    <button
-                        onClick={handleSocialAction}
-                        disabled={isLoading}
-                        className={`px-3 py-1.5 text-sm ${isLoading
-                            ? 'bg-gray-300 cursor-not-allowed'
-                            : 'bg-primary hover:bg-primary/90'
-                            } text-white rounded`}
-                    >
-                        {isLoading ? '처리 중...' : '연동하기'}
-                    </button>
                 )}
             </div>
+            <button
+                onClick={handleSocialAction}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${account?.active
+                    ? 'bg-red-500 text-white hover:bg-red-600'
+                    : 'bg-blue-500 text-white hover:bg-blue-600'
+                    }`}
+            >
+                {account?.active ? '연동 해제' : '연동하기'}
+            </button>
         </div>
     );
 };
