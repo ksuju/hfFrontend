@@ -22,7 +22,7 @@ export interface UserInfo {
 export interface EditFormData {
     phoneNumber: string;
     location: string;
-    gender: string;
+    gender: string | null;
     birthday: string;
     mkAlarm: boolean;
     nickname: string;
