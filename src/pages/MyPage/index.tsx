@@ -5,14 +5,19 @@ import ProfileSection from './components/ProfileSection';
 import SocialAccounts from './components/SocialAccounts';
 import UserInfoForm from './components/UserInfoForm';
 import PasswordVerification from './components/PasswordVerification';
-import ActionButtons from './components/ActionButtons';
-import { EditFormData } from './types';
+import { EditFormData, UserInfo } from './types';
 
 const MyPage = () => {
     const navigate = useNavigate();
-    const [isEditing, setIsEditing] = useState(false);
     const [isPasswordVerified, setIsPasswordVerified] = useState(false);
     const [activeTab, setActiveTab] = useState('social');
+
+    const defaultSocialAccount = {
+        active: false,
+        createDate: '',
+        email: null
+    };
+
 
     // userInfo 상태 관리 수정
     const [userInfo, setUserInfo] = useState(() => {
@@ -20,17 +25,16 @@ const MyPage = () => {
         if (!stored) return null;
         try {
             const parsed = JSON.parse(stored);
-            // 데이터 구조 로깅
-            console.log('Parsed userInfo:', parsed);
-
-            // socialAccounts가 없다면 기본값 설정
-            if (parsed.data && !parsed.data.socialAccounts) {
+            // socialAccounts가 없거나 각 계정이 undefined인 경우 기본값 설정
+            if (parsed.data) {
                 parsed.data.socialAccounts = {
-                    KAKAO: { active: false, createDate: '' },
-                    NAVER: { active: false, createDate: '' },
-                    GOOGLE: { active: false, createDate: '' },
-                    GITHUB: { active: false, createDate: '' }
+                    KAKAO: { ...defaultSocialAccount, ...parsed.data.socialAccounts?.KAKAO },
+                    NAVER: { ...defaultSocialAccount, ...parsed.data.socialAccounts?.NAVER },
+                    GOOGLE: { ...defaultSocialAccount, ...parsed.data.socialAccounts?.GOOGLE },
+                    GITHUB: { ...defaultSocialAccount, ...parsed.data.socialAccounts?.GITHUB }
                 };
+                // profilePath가 null이면 기본값 설정
+                parsed.data.profilePath = parsed.data.profilePath || 'default.png';
             }
             return parsed.data;
         } catch (e) {
@@ -41,10 +45,10 @@ const MyPage = () => {
 
     // editForm 의존성 수정
     const [editForm, setEditForm] = useState<EditFormData>({
-        phoneNumber: '',
-        location: '',
+        phoneNumber: null,
+        location: null,
         gender: null,
-        birthday: '',
+        birthday: null,
         mkAlarm: false,
         nickname: ''
     });
@@ -53,15 +57,52 @@ const MyPage = () => {
     useEffect(() => {
         if (userInfo) {
             setEditForm({
-                phoneNumber: userInfo.phoneNumber || '',
-                location: userInfo.location || '',
+                phoneNumber: userInfo.phoneNumber || null,
+                location: userInfo.location || null,
                 gender: userInfo.gender || null,
-                birthday: userInfo.birthday || '',
+                birthday: userInfo.birthday || null,
                 mkAlarm: userInfo.mkAlarm || false,
                 nickname: userInfo.nickname || ''
             });
         }
     }, [userInfo]);
+
+    const fetchUserInfo = async () => {
+        try {
+            const response = await fetch(
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/auth/me`,
+                {
+                    credentials: 'include'
+                }
+            );
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.data) {
+                    // socialAccounts가 없다면 기본값 설정
+                    if (!data.data.socialAccounts) {
+                        data.data.socialAccounts = {
+                            KAKAO: { active: false, createDate: '' },
+                            NAVER: { active: false, createDate: '' },
+                            GOOGLE: { active: false, createDate: '' },
+                            GITHUB: { active: false, createDate: '' }
+                        };
+                    }
+                    localStorage.setItem('userInfo', JSON.stringify(data));
+                    setUserInfo(data.data);
+                }
+            }
+        } catch (error) {
+            console.error('회원 정보 조회 실패:', error);
+        }
+    };
+
+    useEffect(() => {
+        if (window.sessionStorage.getItem('needsUpdate') === 'true') {
+            fetchUserInfo();  // 회원 정보 다시 불러오기
+            window.sessionStorage.removeItem('needsUpdate');
+        }
+    }, []);
 
     const handleUpdate = async () => {
         try {
@@ -89,7 +130,6 @@ const MyPage = () => {
 
                 localStorage.setItem('userInfo', JSON.stringify({ data: newUserInfo }));
                 setUserInfo(newUserInfo);
-                setIsEditing(false);
                 alert('회원정보가 수정되었습니다.');
             } else {
                 alert(responseData.msg || '회원정보 수정에 실패했습니다.');
@@ -148,9 +188,13 @@ const MyPage = () => {
 
             if (response.ok) {
                 const updatedUserInfo = await response.json();
-                localStorage.setItem('userInfo', JSON.stringify(updatedUserInfo));
-                // 상태 직접 업데이트
-                setUserInfo(updatedUserInfo.data);
+                // 기존 userInfo의 모든 정보를 유지하면서 profilePath만 업데이트
+                const newUserInfo = {
+                    ...userInfo,
+                    profilePath: updatedUserInfo.data.profilePath
+                };
+                localStorage.setItem('userInfo', JSON.stringify({ data: newUserInfo }));
+                setUserInfo(newUserInfo);
                 alert('프로필 이미지가 변경되었습니다.');
             } else {
                 const errorData = await response.json();
@@ -159,6 +203,23 @@ const MyPage = () => {
         } catch (error) {
             console.error('이미지 업로드 에러:', error);
             alert('서버 연결에 실패했습니다.');
+        }
+    };
+
+    // 이미지 삭제
+    const handleResetImage = async () => {
+        try {
+            const response = await fetch(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/members/me/profile-image`, {
+                method: 'DELETE',
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                setUserInfo((prev: UserInfo | null) => prev ? { ...prev, profilePath: 'default.png' } : prev);
+                alert('프로필 이미지가 삭제되었습니다.');
+            }
+        } catch (error) {
+            console.error('이미지 삭제 에러:', error);
         }
     };
 
@@ -178,7 +239,8 @@ const MyPage = () => {
                                 setEditForm={setEditForm}
                                 onImageUpload={handleImageUpload}
                                 onUpdate={handleUpdate}
-                                isEditing={isEditing}
+                                handleResetImage={handleResetImage}
+                                handleDelete={handleDelete}
                             />
                         </div>
                     </div>
@@ -219,7 +281,7 @@ const MyPage = () => {
                         </nav>
 
                         <div className="max-w-4xl mx-auto p-8">
-                            {activeTab === 'social' && <SocialAccounts userInfo={userInfo} />}
+                            {activeTab === 'social' && <SocialAccounts userInfo={userInfo} onUpdate={fetchUserInfo} />}
                             {activeTab === 'info' && (
                                 <div className="bg-white rounded-xl shadow-sm p-6">
                                     <UserInfoForm

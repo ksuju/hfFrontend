@@ -35,7 +35,8 @@ interface MemberStatus {
     userLoginStatus: string;
 }
 
-const WEBSOCKET_URL = 'ws://localhost:8090/ws/chat';
+const WEBSOCKET_URL = `${import.meta.env.VITE_CORE_WEBSOCKET_BASE_URL}/ws/chat`;
+const request_URL = import.meta.env.VITE_CORE_API_BASE_URL;
 
 const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -63,7 +64,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
     const fetchPreviousMessages = async (page: number) => {
         try {
             const response = await axios.get<ChatResponse>(
-                import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/chatRooms/${chatRoomId}/messages?page=${page}`,
+                request_URL + `/api/v1/chatRooms/${chatRoomId}/messages?page=${page}`,
                 { withCredentials: true }  // 인증 정보 포함
             );
 
@@ -102,7 +103,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
             };
 
             await axios.put(
-                import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/chatRooms/${chatRoomId}/messages/readStatus`,
+                request_URL + `/api/v1/chatRooms/${chatRoomId}/messages/readStatus`,
                 messageReadStatus,
                 { withCredentials: true }  // 인증 정보 포함
             );
@@ -128,7 +129,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
     const updateLogout = async () => {
         try {
             await axios.patch(
-                import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/chatRooms/${chatRoomId}/members/logout`,
+                request_URL + `/api/v1/chatRooms/${chatRoomId}/members/logout`,
                 {},
                 { withCredentials: true }
             );
@@ -141,7 +142,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
     const updateLogin = async () => {
         try {
             await axios.patch(
-                import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/chatRooms/${chatRoomId}/members/login`,
+                request_URL + `/api/v1/chatRooms/${chatRoomId}/members/login`,
                 {},
                 { withCredentials: true }
             );
@@ -165,7 +166,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
     const messageSearch = async (keyword: string, nickname: string, page: number = 0) => {
         try {
             const response = await axios.get<ChatResponse>(
-                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/chatRooms/${chatRoomId}/messages/search`,
+                `${request_URL}/api/v1/chatRooms/${chatRoomId}/messages/search`,
                 {
                     params: {
                         keyword,
@@ -211,6 +212,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
             // },
             debug: (str) => {
                 console.log('STOMP: ', str);
+                console.log("web_url", import.meta.env)
             },
             onConnect: () => {
                 console.log('STOMP 연결 성공');
@@ -276,7 +278,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
             });
             console.log(import.meta.env.VITE_CORE_API_BASE_URL)
             await axios.post(
-                import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/chatRooms/${chatRoomId}/messages`,
+                request_URL + `/api/v1/chatRooms/${chatRoomId}/messages`,
                 messageToSend,
                 { withCredentials: true }  // 인증 정보 포함
             );

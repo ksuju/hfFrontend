@@ -1,15 +1,15 @@
 export interface UserInfo {
     id: number;
-    email: string;
-    nickname: string;
-    profilePath: string;
-    phoneNumber: string;
-    location: string;
-    gender: string;
-    birthday: string;
+    email: string | null;
+    nickname: string | null;
+    profilePath: string | null | undefined;
+    phoneNumber: string | null;
+    location: string | null;
+    gender: string | null;
+    birthday: string | null;
     mkAlarm: boolean;
-    createDate: string;
-    loginType: string;
+    createDate: string | null;
+    loginType: string | null;
     onlySocialAccount: boolean;
     socialAccounts: {
         KAKAO: SocialAccount;
@@ -20,10 +20,10 @@ export interface UserInfo {
 }
 
 export interface EditFormData {
-    phoneNumber: string;
-    location: string;
+    phoneNumber: string | null;
+    location: string | null;
     gender: string | null;
-    birthday: string;
+    birthday: string | null;
     mkAlarm: boolean;
     nickname: string;
 }
@@ -31,4 +31,5 @@ export interface EditFormData {
 export interface SocialAccount {
     active: boolean;
     createDate: string;
+    email: string | null;
 }
