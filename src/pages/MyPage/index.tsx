@@ -20,6 +20,7 @@ const MyPage = () => {
         email: null
     };
 
+
     // userInfo 상태 관리 수정
     const [userInfo, setUserInfo] = useState(() => {
         const stored = localStorage.getItem('userInfo');
