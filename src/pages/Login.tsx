@@ -15,7 +15,7 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
     const socialLoginForGoogleUrl = import.meta.env.VITE_CORE_API_BASE_URL + `/oauth2/authorization/google`; // 구글 로그인 요청 URL
     const socialLoginForNaverUrl = import.meta.env.VITE_CORE_API_BASE_URL + `/oauth2/authorization/naver`;  // 네이버 로그인 요청 URL
     const socialLoginForGithubUrl = import.meta.env.VITE_CORE_API_BASE_URL + `/oauth2/authorization/github`;  // 깃허브 로그인 요청 URL
-    const redirectUrlAfterSocialLogin = "http://localhost:5173"; // 카카오 로그인 후 리다이렉트 URL
+    const redirectUrlAfterSocialLogin = import.meta.env.VITE_CORE_FRONT_BASE_URL; // 카카오 로그인 후 리다이렉트 URL
 
 
     // 로그인 폼 입력 값 상태 관리

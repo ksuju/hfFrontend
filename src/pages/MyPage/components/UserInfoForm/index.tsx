@@ -3,6 +3,12 @@ import { useState } from 'react';
 import { FiEdit2 } from 'react-icons/fi';
 import { UserInfo, EditFormData } from '../../types';
 
+declare global {
+    interface Window {
+        jusoCallBack: (roadAddr: string, jibunAddr: string) => void;
+    }
+}
+
 interface UserInfoFormProps {
     userInfo: UserInfo;
     editForm: EditFormData;
@@ -25,6 +31,10 @@ interface VerificationState {
 }
 
 const UserInfoForm = ({ userInfo, editForm, setEditForm, onUpdate }: UserInfoFormProps) => {
+    const redirectUrl = import.meta.env.VITE_CORE_FRONT_BASE_URL;
+    const confmKey = 'devU01TX0FVVEgyMDI1MDIwNDIxNDEyMDExNTQ0NzA=';
+    const addressLookupUrl = `https://business.juso.go.kr/addrlink/addrLinkUrl.do?confmKey=${encodeURIComponent(confmKey)}&returnUrl=${encodeURIComponent(`${redirectUrl}/mypage`)}&resultType=4`;
+
     const [editingField, setEditingField] = useState<keyof EditFormData | null>(null);
     const [isPasswordChanging, setIsPasswordChanging] = useState(false);
     const [passwordForm, setPasswordForm] = useState<PasswordForm>({
@@ -173,6 +183,35 @@ const UserInfoForm = ({ userInfo, editForm, setEditForm, onUpdate }: UserInfoFor
         }
     };
 
+    // 주소 검색 팝업 열기
+    const openAddressPopup = () => {
+        const width = 500;
+        const height = 600;
+        const left = window.screen.width / 2 - width / 2;
+        const top = window.screen.height / 2 - height / 2;
+
+        const popup = window.open(
+            `https://business.juso.go.kr/addrlink/addrMobileLinkUrl.do?confmKey=${confmKey}&returnUrl=javascript:close()&resultType=4`,
+            'addressPopup',
+            `width=${width},height=${height},left=${left},top=${top}`
+        );
+
+        // 팝업 창에서 결과를 받는 이벤트 리스너
+        const handleAddressMessage = (e: MessageEvent) => {
+            const address = e.data;
+            if (address && address.roadAddr) {
+                const fullAddress = `${address.roadAddr} (${address.jibunAddr})`;
+                setEditForm({
+                    ...editForm,
+                    location: fullAddress
+                });
+                window.removeEventListener('message', handleAddressMessage);
+            }
+        };
+
+        window.addEventListener('message', handleAddressMessage);
+    };
+
     const renderField = (field: keyof EditFormData, label: string, type: string = 'text') => {
         const isEditing = editingField === field;
 
@@ -284,6 +323,58 @@ const UserInfoForm = ({ userInfo, editForm, setEditForm, onUpdate }: UserInfoFor
                         )}
                         {verification.error && (
                             <p className="text-red-500 text-sm text-right">{verification.error}</p>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        if (field === 'location' && isEditing) {
+            return (
+                <div className="flex items-center justify-between p-4 border-b border-gray-100 hover:bg-gray-50 min-h-[64px]">
+                    <span className="font-bold text-gray-700 w-24">{label}</span>
+                    <div className="flex flex-col gap-2 min-w-[300px]">
+                        <div className="flex items-center gap-2 justify-end">
+                            <input
+                                type="text"
+                                value={editForm.location || ''}
+                                readOnly
+                                className="w-48 h-9 px-3 border border-gray-300 rounded-lg focus:outline-none focus:border-primary text-sm bg-gray-50"
+                                placeholder="주소 검색을 클릭하세요"
+                            />
+                            <button
+                                onClick={openAddressPopup}
+                                className="h-9 px-3 bg-primary text-white rounded-lg hover:bg-opacity-90 text-sm font-medium"
+                            >
+                                주소 검색
+                            </button>
+                        </div>
+                        {editForm.location && (
+                            <div className="flex items-center gap-2 justify-end">
+                                <div className="flex items-center gap-2 w-[120px]">
+                                    <button
+                                        onClick={() => {
+                                            onUpdate();
+                                            setEditingField(null);
+                                        }}
+                                        className="h-9 px-3 bg-primary text-white rounded-lg hover:bg-opacity-90 text-sm font-medium"
+                                    >
+                                        저장
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setEditingField(null);
+                                            setEditForm({
+                                                ...editForm,
+                                                location: userInfo.location
+                                            });
+                                        }}
+                                        className="h-9 px-3 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300 text-sm font-medium"
+                                    >
+                                        취소
+                                    </button>
+                                </div>
+                            </div>
                         )}
                     </div>
                 </div>
