@@ -43,13 +43,13 @@ const Header = ({ isLoggedIn, setIsLoggedIn }: HeaderProps) => {
                         <>
                             <Link
                                 to="/login"
-                                className="px-4 py-2 text-sm text-gray-600 hover:text-primary transition-colors lg:text-base"
+                                className="px-4 py-1.5 text-sm font-medium text-primary hover:text-white hover:bg-primary rounded-full transition-all duration-200"
                             >
                                 로그인
                             </Link>
                             <Link
                                 to="/signup"
-                                className="px-4 py-2 text-sm text-white bg-primary rounded-full hover:bg-opacity-90 transition-colors lg:text-base"
+                                className="px-4 py-1.5 text-sm font-medium text-primary bg-white hover:text-white hover:bg-red-500 rounded-full transition-all duration-200"
                             >
                                 회원가입
                             </Link>
@@ -78,7 +78,7 @@ const Header = ({ isLoggedIn, setIsLoggedIn }: HeaderProps) => {
                             </div>
                             <button
                                 onClick={handleLogout}
-                                className="px-4 py-2 text-sm text-gray-600 hover:text-primary transition-colors lg:text-base"
+                                className="px-4 py-1.5 text-sm font-medium text-primary hover:text-white hover:bg-red-500 rounded-full transition-all duration-200"
                             >
                                 로그아웃
                             </button>

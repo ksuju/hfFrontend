@@ -88,20 +88,9 @@ const UserInfoForm = ({ userInfo, editForm, setEditForm, onUpdate }: UserInfoFor
         }
     };
 
-    // 전화번호 형식화 함수 추가
-    const formatPhoneNumber = (value: string) => {
-        const numbers = value.replace(/[^\d]/g, '');
-        if (numbers.length <= 3) return numbers;
-        if (numbers.length <= 7) return `${numbers.slice(0, 3)}-${numbers.slice(3)}`;
-        return `${numbers.slice(0, 3)}-${numbers.slice(3, 7)}-${numbers.slice(7, 11)}`;
-    };
-
-    // 숫자만 추출하는 함수 추가
-    const getOnlyNumbers = (value: string) => value.replace(/[^\d]/g, '');
-
     // SMS 인증코드 요청 함수 수정
     const requestVerificationCode = async (phoneNumber: string) => {
-        const numberOnly = getOnlyNumbers(phoneNumber);
+        const numberOnly = phoneNumber.replace(/[^\d]/g, '');
         if (numberOnly.length !== 11) {
             setVerification(prev => ({ ...prev, error: '올바른 휴대폰 번호를 입력해주세요.' }));
             return;
@@ -146,7 +135,7 @@ const UserInfoForm = ({ userInfo, editForm, setEditForm, onUpdate }: UserInfoFor
 
     // 인증코드 확인 함수 수정
     const verifyCode = async (phoneNumber: string, code: string) => {
-        const numberOnly = getOnlyNumbers(phoneNumber);
+        const numberOnly = phoneNumber.replace(/[^\d]/g, '');
         try {
             const response = await fetch(
                 `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/members/me/phone/verify`,
@@ -197,7 +186,6 @@ const UserInfoForm = ({ userInfo, editForm, setEditForm, onUpdate }: UserInfoFor
         }).open();
     };
 
-
     const renderField = (field: keyof EditFormData, label: string, type: string = 'text') => {
         const isEditing = editingField === field;
 
@@ -209,13 +197,11 @@ const UserInfoForm = ({ userInfo, editForm, setEditForm, onUpdate }: UserInfoFor
                         <div className="flex items-center gap-2 justify-end">
                             <input
                                 type="tel"
-                                value={editForm.phoneNumber}
-                                onChange={(e) => {
-                                    const formatted = formatPhoneNumber(e.target.value);
-                                    if (formatted.length <= 13) {
-                                        setEditForm({ ...editForm, phoneNumber: formatted });
-                                    }
-                                }}
+                                value={editForm.phoneNumber || ''}
+                                onChange={(e) => setEditForm({
+                                    ...editForm,
+                                    phoneNumber: e.target.value ? e.target.value : null  // 빈 문자열을 null로 변환
+                                })}
                                 className="w-48 h-9 px-3 border border-gray-300 rounded-lg focus:outline-none focus:border-primary text-sm"
                                 placeholder="010-0000-0000"
                                 maxLength={13}
@@ -223,8 +209,8 @@ const UserInfoForm = ({ userInfo, editForm, setEditForm, onUpdate }: UserInfoFor
                             />
                             {!verification.isVerified && (
                                 <button
-                                    onClick={() => requestVerificationCode(editForm.phoneNumber)}
-                                    disabled={verification.isSending || getOnlyNumbers(editForm.phoneNumber).length !== 11}
+                                    onClick={() => requestVerificationCode(editForm.phoneNumber || '')}
+                                    disabled={verification.isSending || editForm.phoneNumber?.replace(/[^\d]/g, '').length !== 11}
                                     className="h-9 px-3 bg-primary text-white rounded-lg hover:bg-opacity-90 text-sm font-medium disabled:bg-gray-300"
                                 >
                                     {verification.isSending ? '전송 중...' : '인증번호 전송'}
@@ -242,7 +228,7 @@ const UserInfoForm = ({ userInfo, editForm, setEditForm, onUpdate }: UserInfoFor
                                 />
                                 <div className="flex items-center gap-2 w-[120px]">
                                     <button
-                                        onClick={() => verifyCode(editForm.phoneNumber, verification.code)}
+                                        onClick={() => verifyCode(editForm.phoneNumber || '', verification.code)}
                                         className="h-9 px-3 bg-primary text-white rounded-lg hover:bg-opacity-90 text-sm font-medium"
                                     >
                                         확인
@@ -270,7 +256,7 @@ const UserInfoForm = ({ userInfo, editForm, setEditForm, onUpdate }: UserInfoFor
                                 <div className="flex items-center gap-2 w-[120px]">
                                     <button
                                         onClick={() => {
-                                            const numberOnly = getOnlyNumbers(editForm.phoneNumber);
+                                            const numberOnly = editForm.phoneNumber?.replace(/[^\d]/g, '') || null;
                                             setEditForm({
                                                 ...editForm,
                                                 phoneNumber: numberOnly
@@ -402,6 +388,48 @@ const UserInfoForm = ({ userInfo, editForm, setEditForm, onUpdate }: UserInfoFor
                             </button>
                             <button
                                 onClick={() => setEditingField(null)}
+                                className="h-9 px-3 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300 text-sm font-medium"
+                            >
+                                취소
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        if (field === 'birthday' && isEditing) {
+            return (
+                <div className="flex items-center justify-between p-4 border-b border-gray-100 hover:bg-gray-50 min-h-[64px]">
+                    <span className="font-bold text-gray-700 w-24 shrink-0">{label}</span>
+                    <div className="flex items-center gap-2 min-w-[300px] justify-end">
+                        <input
+                            type="date"
+                            value={editForm.birthday || ''}
+                            onChange={(e) => setEditForm({
+                                ...editForm,
+                                birthday: e.target.value || null  // undefined 대신 null 사용
+                            })}
+                            className="w-48 h-9 px-3 border border-gray-300 rounded-lg focus:outline-none focus:border-primary text-sm"
+                        />
+                        <div className="flex items-center gap-2 w-[120px] shrink-0">
+                            <button
+                                onClick={() => {
+                                    onUpdate();
+                                    setEditingField(null);
+                                }}
+                                className="h-9 px-3 bg-primary text-white rounded-lg hover:bg-opacity-90 text-sm font-medium"
+                            >
+                                저장
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setEditingField(null);
+                                    setEditForm({
+                                        ...editForm,
+                                        birthday: userInfo.birthday
+                                    });
+                                }}
                                 className="h-9 px-3 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300 text-sm font-medium"
                             >
                                 취소
