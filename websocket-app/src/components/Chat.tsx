@@ -35,7 +35,7 @@ interface MemberStatus {
     userLoginStatus: string;
 }
 
-const WEBSOCKET_URL = `ws://localhost:8090/ws/chat`;
+const WEBSOCKET_URL = `${import.meta.env.VITE_CORE_WEBSOCKET_BASE_URL}/ws/chat`;
 const request_URL = import.meta.env.VITE_CORE_API_BASE_URL;
 
 const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
@@ -212,7 +212,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
             // },
             debug: (str) => {
                 console.log('STOMP: ', str);
-                console.log("web_url", WEBSOCKET_URL)
+                console.log("web_url", import.meta.env)
             },
             onConnect: () => {
                 console.log('STOMP 연결 성공');
