@@ -91,7 +91,6 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
     const updateMessageReadStatus = async (latestMessageId: number) => {
         try {
             const messageReadStatus = {
-                memberId: memberId,
                 messageId: latestMessageId
             };
 
@@ -213,7 +212,6 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
         if (!messageInput.trim() || !stompClientRef.current) return;
 
         const messageToSend = {
-            memberId,
             content: messageInput,
         };
 
