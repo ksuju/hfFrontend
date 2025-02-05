@@ -5,7 +5,9 @@ import { UserInfo, EditFormData } from '../../types';
 
 declare global {
     interface Window {
-        jusoCallBack: (roadAddr: string, jibunAddr: string) => void;
+        jusoCallBack: (roadAddr: string, jibunAddr: string, zipNo: string) => void;
+        setParent: (roadAddr: string, jibunAddr: string, zipNo: string) => void;
+        daum: any;  // daum 타입 추가
     }
 }
 
@@ -31,10 +33,6 @@ interface VerificationState {
 }
 
 const UserInfoForm = ({ userInfo, editForm, setEditForm, onUpdate }: UserInfoFormProps) => {
-    const redirectUrl = import.meta.env.VITE_CORE_FRONT_BASE_URL;
-    const confmKey = 'devU01TX0FVVEgyMDI1MDIwNDIxNDEyMDExNTQ0NzA=';
-    const addressLookupUrl = `https://business.juso.go.kr/addrlink/addrLinkUrl.do?confmKey=${encodeURIComponent(confmKey)}&returnUrl=${encodeURIComponent(`${redirectUrl}/mypage`)}&resultType=4`;
-
     const [editingField, setEditingField] = useState<keyof EditFormData | null>(null);
     const [isPasswordChanging, setIsPasswordChanging] = useState(false);
     const [passwordForm, setPasswordForm] = useState<PasswordForm>({
@@ -185,32 +183,20 @@ const UserInfoForm = ({ userInfo, editForm, setEditForm, onUpdate }: UserInfoFor
 
     // 주소 검색 팝업 열기
     const openAddressPopup = () => {
-        const width = 500;
-        const height = 600;
-        const left = window.screen.width / 2 - width / 2;
-        const top = window.screen.height / 2 - height / 2;
+        new window.daum.Postcode({
+            oncomplete: function (data: { roadAddress: string; jibunAddress?: string }) {
+                const fullAddress = data.jibunAddress ?
+                    `${data.roadAddress} (${data.jibunAddress})` :
+                    data.roadAddress;
 
-        const popup = window.open(
-            `https://business.juso.go.kr/addrlink/addrMobileLinkUrl.do?confmKey=${confmKey}&returnUrl=javascript:close()&resultType=4`,
-            'addressPopup',
-            `width=${width},height=${height},left=${left},top=${top}`
-        );
-
-        // 팝업 창에서 결과를 받는 이벤트 리스너
-        const handleAddressMessage = (e: MessageEvent) => {
-            const address = e.data;
-            if (address && address.roadAddr) {
-                const fullAddress = `${address.roadAddr} (${address.jibunAddr})`;
                 setEditForm({
                     ...editForm,
                     location: fullAddress
                 });
-                window.removeEventListener('message', handleAddressMessage);
             }
-        };
-
-        window.addEventListener('message', handleAddressMessage);
+        }).open();
     };
+
 
     const renderField = (field: keyof EditFormData, label: string, type: string = 'text') => {
         const isEditing = editingField === field;
@@ -218,7 +204,7 @@ const UserInfoForm = ({ userInfo, editForm, setEditForm, onUpdate }: UserInfoFor
         if (field === 'phoneNumber' && isEditing) {
             return (
                 <div className="flex items-center justify-between p-4 border-b border-gray-100 hover:bg-gray-50 min-h-[64px]">
-                    <span className="font-bold text-gray-700 w-24">{label}</span>
+                    <span className="font-bold text-gray-700 w-24 shrink-0">{label}</span>
                     <div className="flex flex-col gap-2 min-w-[300px]">
                         <div className="flex items-center gap-2 justify-end">
                             <input
@@ -332,9 +318,9 @@ const UserInfoForm = ({ userInfo, editForm, setEditForm, onUpdate }: UserInfoFor
         if (field === 'location' && isEditing) {
             return (
                 <div className="flex items-center justify-between p-4 border-b border-gray-100 hover:bg-gray-50 min-h-[64px]">
-                    <span className="font-bold text-gray-700 w-24">{label}</span>
-                    <div className="flex flex-col gap-2 min-w-[300px]">
-                        <div className="flex items-center gap-2 justify-end">
+                    <span className="font-bold text-gray-700 w-24 shrink-0">{label}</span>
+                    <div className="flex items-center gap-2 min-w-[300px] justify-end">
+                        <div className="flex items-center gap-2">
                             <input
                                 type="text"
                                 value={editForm.location || ''}
@@ -344,36 +330,34 @@ const UserInfoForm = ({ userInfo, editForm, setEditForm, onUpdate }: UserInfoFor
                             />
                             <button
                                 onClick={openAddressPopup}
-                                className="h-9 px-3 bg-primary text-white rounded-lg hover:bg-opacity-90 text-sm font-medium"
+                                className="h-9 px-3 bg-primary text-white rounded-lg hover:bg-opacity-90 text-sm font-medium shrink-0"
                             >
                                 주소 검색
                             </button>
                         </div>
                         {editForm.location && (
-                            <div className="flex items-center gap-2 justify-end">
-                                <div className="flex items-center gap-2 w-[120px]">
-                                    <button
-                                        onClick={() => {
-                                            onUpdate();
-                                            setEditingField(null);
-                                        }}
-                                        className="h-9 px-3 bg-primary text-white rounded-lg hover:bg-opacity-90 text-sm font-medium"
-                                    >
-                                        저장
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            setEditingField(null);
-                                            setEditForm({
-                                                ...editForm,
-                                                location: userInfo.location
-                                            });
-                                        }}
-                                        className="h-9 px-3 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300 text-sm font-medium"
-                                    >
-                                        취소
-                                    </button>
-                                </div>
+                            <div className="flex items-center gap-2 w-[120px] shrink-0">
+                                <button
+                                    onClick={() => {
+                                        onUpdate();
+                                        setEditingField(null);
+                                    }}
+                                    className="h-9 px-3 bg-primary text-white rounded-lg hover:bg-opacity-90 text-sm font-medium"
+                                >
+                                    저장
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setEditingField(null);
+                                        setEditForm({
+                                            ...editForm,
+                                            location: userInfo.location
+                                        });
+                                    }}
+                                    className="h-9 px-3 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300 text-sm font-medium"
+                                >
+                                    취소
+                                </button>
                             </div>
                         )}
                     </div>
@@ -381,19 +365,71 @@ const UserInfoForm = ({ userInfo, editForm, setEditForm, onUpdate }: UserInfoFor
             );
         }
 
+        if (field === 'gender' && isEditing) {
+            return (
+                <div className="flex items-center justify-between p-4 border-b border-gray-100 hover:bg-gray-50 min-h-[64px]">
+                    <span className="font-bold text-gray-700 w-24 shrink-0">{label}</span>
+                    <div className="flex items-center gap-2 min-w-[300px] justify-end">
+                        <div className="flex items-center gap-4 w-48">
+                            <label className="flex items-center gap-2">
+                                <input
+                                    type="radio"
+                                    checked={editForm.gender === 'M'}
+                                    onChange={() => setEditForm({ ...editForm, gender: 'M' })}
+                                    className="w-4 h-4 text-primary"
+                                />
+                                <span>남자</span>
+                            </label>
+                            <label className="flex items-center gap-2">
+                                <input
+                                    type="radio"
+                                    checked={editForm.gender === 'W'}
+                                    onChange={() => setEditForm({ ...editForm, gender: 'W' })}
+                                    className="w-4 h-4 text-primary"
+                                />
+                                <span>여자</span>
+                            </label>
+                        </div>
+                        <div className="flex items-center gap-2 w-[120px] shrink-0">
+                            <button
+                                onClick={() => {
+                                    onUpdate();
+                                    setEditingField(null);
+                                }}
+                                className="h-9 px-3 bg-primary text-white rounded-lg hover:bg-opacity-90 text-sm font-medium"
+                            >
+                                저장
+                            </button>
+                            <button
+                                onClick={() => setEditingField(null)}
+                                className="h-9 px-3 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300 text-sm font-medium"
+                            >
+                                취소
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // 위치 필드일 때만 넓은 너비 적용
+        const isLocationField = field === 'location';
+        const containerWidth = isLocationField ? 'min-w-[400px]' : 'min-w-[300px]';
+        const inputWidth = isLocationField ? 'w-[300px]' : 'w-48';
+
         return (
             <div className="flex items-center justify-between p-4 border-b border-gray-100 hover:bg-gray-50 min-h-[64px]">
-                <span className="font-bold text-gray-700 w-24">{label}</span>
-                <div className="flex items-center gap-2 min-w-[300px] justify-end">
+                <span className="font-bold text-gray-700 w-24 shrink-0">{label}</span>
+                <div className={`flex items-center gap-2 ${containerWidth} justify-end`}>
                     {isEditing ? (
                         <>
                             <input
                                 type={type}
                                 value={typeof editForm[field] === 'boolean' ? '' : (editForm[field] || '')}
                                 onChange={(e) => setEditForm({ ...editForm, [field]: e.target.value })}
-                                className="w-48 h-9 px-3 border border-gray-300 rounded-lg focus:outline-none focus:border-primary text-sm"
+                                className={`${inputWidth} h-9 px-3 border border-gray-300 rounded-lg focus:outline-none focus:border-primary text-sm`}
                             />
-                            <div className="flex items-center gap-2 w-[120px]">
+                            <div className="flex items-center gap-2 w-[120px] shrink-0">
                                 <button
                                     onClick={() => {
                                         onUpdate();
@@ -412,11 +448,15 @@ const UserInfoForm = ({ userInfo, editForm, setEditForm, onUpdate }: UserInfoFor
                             </div>
                         </>
                     ) : (
-                        <div className="flex items-center gap-2 justify-end w-48 h-9">
-                            <span className="text-gray-600 leading-9">{userInfo[field] || '미설정'}</span>
+                        <div className={`flex items-center gap-2 justify-end ${inputWidth} h-9`}>
+                            <span className="text-gray-600 leading-9 truncate">
+                                {field === 'gender' ?
+                                    (userInfo[field] === 'M' ? '남자' : userInfo[field] === 'W' ? '여자' : '미설정') :
+                                    (userInfo[field] || '미설정')}
+                            </span>
                             <button
                                 onClick={() => setEditingField(field)}
-                                className="h-9 px-1 text-gray-400 hover:text-primary"
+                                className="h-9 px-1 text-gray-400 hover:text-primary shrink-0"
                             >
                                 <FiEdit2 size={16} />
                             </button>
@@ -491,9 +531,34 @@ const UserInfoForm = ({ userInfo, editForm, setEditForm, onUpdate }: UserInfoFor
                 <input
                     type="checkbox"
                     checked={editForm.mkAlarm}
-                    onChange={(e) => {
-                        setEditForm({ ...editForm, mkAlarm: e.target.checked });
-                        onUpdate();
+                    onChange={async (e) => {
+                        const newValue = e.target.checked;
+                        console.log('체크박스 변경:', newValue);
+
+                        // 직접 API 호출
+                        try {
+                            const response = await fetch(
+                                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/members/me/profile`,
+                                {
+                                    method: 'PUT',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    credentials: 'include',
+                                    body: JSON.stringify({
+                                        ...editForm,
+                                        mkAlarm: newValue
+                                    })
+                                }
+                            );
+
+                            if (response.ok) {
+                                setEditForm({
+                                    ...editForm,
+                                    mkAlarm: newValue
+                                });
+                            }
+                        } catch (error) {
+                            console.error('업데이트 실패:', error);
+                        }
                     }}
                     className="w-5 h-5 text-primary rounded"
                 />
