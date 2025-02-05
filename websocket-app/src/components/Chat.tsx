@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useParams } from 'react-router-dom';
 import { Client } from '@stomp/stompjs';
 import axios from 'axios';
-
 
 interface ChatMessage {
     messageId?: number;
@@ -37,7 +37,7 @@ interface MemberStatus {
 
 const WEBSOCKET_URL = 'ws://localhost:8090/ws/chat';
 
-const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, memberId }) => {
+const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [messageInput, setMessageInput] = useState('');
     const [currentPage, setCurrentPage] = useState(0);
@@ -46,6 +46,7 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
     const messagesListRef = useRef<HTMLDivElement>(null);
     const [currentUserNickname, setCurrentUserNickname] = useState<string>('');
     const [memberStatusList, setMemberStatusList] = useState<MemberStatus[]>([]);
+    const { chatRoomId } = useParams();
     const [searchKeyword, setSearchKeyword] = useState<string>('');
     const [searchPage, setSearchPage] = useState(0);
     const [isSearchMode, setIsSearchMode] = useState(false);
@@ -153,9 +154,9 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
     const highlightKeyword = (text: string, keyword: string) => {
         if (!keyword.trim()) return text;
         const parts = text.split(new RegExp(`(${keyword})`, 'gi'));
-        return parts.map((part, i) => 
-            part.toLowerCase() === keyword.toLowerCase() ? 
-                <span key={i} style={{ backgroundColor: '#ffeb3b', padding: '0 2px' }}>{part}</span> 
+        return parts.map((part, i) =>
+            part.toLowerCase() === keyword.toLowerCase() ?
+                <span key={i} style={{ backgroundColor: '#ffeb3b', padding: '0 2px' }}>{part}</span>
                 : part
         );
     };
@@ -163,18 +164,18 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
     // 채팅 내용 검색
     const messageSearch = async (keyword: string, nickname: string, page: number = 0) => {
         try {
-            const response = await axios.get(
+            const response = await axios.get<ChatResponse>(
                 `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/chatRooms/${chatRoomId}/messages/search`,
-                { 
-                    params: { 
-                        keyword, 
+                {
+                    params: {
+                        keyword,
                         nickname,
-                        page 
+                        page
                     },
-                    withCredentials: true 
+                    withCredentials: true
                 }
             );
-    
+
             if (response.data && response.data.data) {
                 if (page === 0) {
                     setMessages(response.data.data.content);
