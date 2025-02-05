@@ -39,7 +39,6 @@ const Header = ({ isLoggedIn, setIsLoggedIn }: HeaderProps) => {
                     <span className="text-primary font-bold ml-2">숨은사람친구</span>
                 </Link>
                 <div className="flex items-center gap-4">
-                    <Link to="/chat">채팅 테스트</Link>
                     {!isLoggedIn ? (
                         <>
                             <Link

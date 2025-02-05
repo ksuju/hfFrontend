@@ -58,8 +58,8 @@ const App = () => {
     }, []);
 
     // localStorage에서 memberId 가져오기 (채팅 테스트)
-    const userInfo = localStorage.getItem('userInfo')
-        ? JSON.parse(localStorage.getItem('userInfo')!).data
+    const userInfo = localStorage.getItem('userInfo') 
+        ? JSON.parse(localStorage.getItem('userInfo')!).data 
         : null;
 
     return (
@@ -80,18 +80,12 @@ const App = () => {
                                             <Route path="/" element={<Main />} />
                                             <Route path="/posts" element={<Festival />} />
                                             <Route path="/chatroom" element={<Meeting />} />
-                                            <Route
-                                                path="/chat"
-                                                element={
-                                                    userInfo ? (
-                                                        <Chat chatRoomId={1} memberId={userInfo.id} />
-                                                    ) : (
-                                                        <Navigate to="/login" replace />
-                                                    )
-                                                }
-                                            />
+                                            <Route path="/chat/:chatRoomId" element={userInfo ? (
+                                                <Chat memberId={userInfo.id} />
+                                            ) : (
+                                                <Navigate to="/login" replace />
+                                            )} />
                                             <Route path="/mypage" element={<MyPage />} />
-                                            <Route path="/chat" element={<Chat chatRoomId={1} memberId={1} />} />
                                             <Route path="/map" element={<FestivalMap />} />  {/* 공연 지도 페이지 추가 */}
                                         </Routes>
                                     </div>
