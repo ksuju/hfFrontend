@@ -22,7 +22,7 @@ export interface UserInfo {
 export interface EditFormData {
     phoneNumber: string;
     location: string;
-    gender: string | null;
+    gender: string;
     birthday: string;
     mkAlarm: boolean;
     nickname: string;
@@ -31,5 +31,4 @@ export interface EditFormData {
 export interface SocialAccount {
     active: boolean;
     createDate: string;
-    email: string | null;
 }

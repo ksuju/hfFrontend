@@ -1,10 +1,6 @@
 import { useState, useEffect } from 'react';
 import AuthHeader from '../components/AuthHeader';
-import kakaoSimpleIcon from '../assets/images/kakaotalk_simple_icon2.png';
-import googleSimpleIcon from '../assets/images/google_simple_icon.png';
-import naverSimpleIcon from '../assets/images/naver_simple_icon.png';
-import githubSimpleIcon from '../assets/images/github_simple_icon.png';
-import { Link } from 'react-router-dom';
+import { SiKakao, SiNaver, SiGoogle, SiGithub } from 'react-icons/si';
 
 interface LoginProps {
     setIsLoggedIn: React.Dispatch<React.SetStateAction<boolean>>;
@@ -15,7 +11,7 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
     const socialLoginForGoogleUrl = import.meta.env.VITE_CORE_API_BASE_URL + `/oauth2/authorization/google`; // 구글 로그인 요청 URL
     const socialLoginForNaverUrl = import.meta.env.VITE_CORE_API_BASE_URL + `/oauth2/authorization/naver`;  // 네이버 로그인 요청 URL
     const socialLoginForGithubUrl = import.meta.env.VITE_CORE_API_BASE_URL + `/oauth2/authorization/github`;  // 깃허브 로그인 요청 URL
-    const redirectUrlAfterSocialLogin = import.meta.env.VITE_CORE_FRONT_BASE_URL; // 카카오 로그인 후 리다이렉트 URL
+    const redirectUrlAfterSocialLogin = "http://localhost:5173"; // 카카오 로그인 후 리다이렉트 URL
 
 
     // 로그인 폼 입력 값 상태 관리
@@ -82,35 +78,23 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
 
                     {/* 로그인 폼 */}
                     <form className="space-y-4" onSubmit={handleLogin}>
-                        <div className="relative">
+                        <div>
                             <input
                                 type="email"
                                 placeholder="이메일"
-                                className="w-full h-12 px-4 border border-gray-200 rounded-lg focus:outline-none focus:border-primary pr-32"
+                                className="w-full h-12 px-4 border border-gray-200 rounded-lg focus:outline-none focus:border-primary"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                             />
-                            <Link
-                                to="/find-account"
-                                className="absolute right-0 top-0 h-full px-4 flex items-center text-sm text-gray-500 hover:text-primary"
-                            >
-                                아이디를 잊었나요?
-                            </Link>
                         </div>
-                        <div className="relative">
+                        <div>
                             <input
                                 type="password"
                                 placeholder="비밀번호"
-                                className="w-full h-12 px-4 border border-gray-200 rounded-lg focus:outline-none focus:border-primary pr-32"
+                                className="w-full h-12 px-4 border border-gray-200 rounded-lg focus:outline-none focus:border-primary"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                             />
-                            <Link
-                                to="/reset-password"
-                                className="absolute right-0 top-0 h-full px-4 flex items-center text-sm text-gray-500 hover:text-primary"
-                            >
-                                비밀번호를 잊었나요?
-                            </Link>
                         </div>
                         <div className="flex items-center">
                             <input
@@ -131,6 +115,7 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
                             로그인
                         </button>
                     </form>
+
 
                     {/* 회원가입 링크 */}
                     <div className="mt-6 text-center">
@@ -157,30 +142,30 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
                         <div className="mt-6 flex justify-center space-x-4">
                             <a
                                 href={`${socialLoginForKakaoUrl}?redirectUrl=${redirectUrlAfterSocialLogin}`}
-                                className="w-14 h-14 flex items-center justify-center hover:opacity-80 transition-opacity"
+                                className="w-12 h-12 flex items-center justify-center rounded-full bg-yellow-300 hover:bg-opacity-90 transition-colors"
                             >
-                                <img src={kakaoSimpleIcon} alt="카카오 로그인" className="w-14 h-14" />
+                                <SiKakao className="w-6 h-6 text-brown-500" />
                             </a>
 
                             <a
                                 href={`${socialLoginForNaverUrl}?redirectUrl=${redirectUrlAfterSocialLogin}`}
-                                className="w-14 h-14 flex items-center justify-center hover:opacity-80 transition-opacity"
+                                className="w-12 h-12 flex items-center justify-center rounded-full bg-green-500 hover:bg-opacity-90 transition-colors"
                             >
-                                <img src={naverSimpleIcon} alt="네이버 로그인" className="w-14 h-14" />
+                                <SiNaver className="w-6 h-6 text-white" />
                             </a>
 
                             <a
                                 href={`${socialLoginForGoogleUrl}?redirectUrl=${redirectUrlAfterSocialLogin}`}
-                                className="w-14 h-14 flex items-center justify-center hover:opacity-80 transition-opacity"
+                                className="w-12 h-12 flex items-center justify-center rounded-full bg-white border border-gray-200 hover:bg-gray-50 transition-colors"
                             >
-                                <img src={googleSimpleIcon} alt="구글 로그인" className="w-14 h-14" />
+                                <SiGoogle className="w-6 h-6 text-gray-600" />
                             </a>
 
                             <a
                                 href={`${socialLoginForGithubUrl}?redirectUrl=${redirectUrlAfterSocialLogin}`}
-                                className="w-14 h-14 flex items-center justify-center hover:opacity-80 transition-opacity"
+                                className="w-12 h-12 flex items-center justify-center rounded-full bg-gray-800 hover:bg-opacity-90 transition-colors"
                             >
-                                <img src={githubSimpleIcon} alt="깃허브 로그인" className="w-14 h-14" />
+                                <SiGithub className="w-6 h-6 text-white" />
                             </a>
                         </div>
                     </div>
