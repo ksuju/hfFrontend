@@ -12,10 +12,20 @@ const Header = ({ isLoggedIn, setIsLoggedIn }: HeaderProps) => {
 
     const handleLogout = async () => {
         try {
-            const response = await fetch(import.meta.env.VITE_CORE_API_BASE_URL + '/api/v1/auth/logout', {
-                method: 'POST',
-                credentials: 'include',
-            });
+            const memberId = userInfo?.data?.id; // userInfo에서 사용자 ID 추출
+            
+            const response = await fetch(
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/auth/logout`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        memberId: memberId 
+                    })
+                }
+            );
 
             if (response.ok) {
                 setIsLoggedIn(false);
