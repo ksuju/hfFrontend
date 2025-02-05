@@ -114,26 +114,65 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
             );
             setMemberStatusList(response.data.data); // data 필드에서 멤버 상태 배열 추출
         } catch (error) {
-            console.error('유저 로그인 상태 업데이트 실패:', error);
+            console.error('유저 로그인 상태 조회 실패:', error);
         }
     }
+
+    // 채팅방 멤버의 로그인 상태 로그아웃으로 변경하기
+    const updateLogout = async () => {
+        try {
+            await axios.patch(
+                import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/chatRooms/${chatRoomId}/members/logout`,
+                {},
+                { withCredentials: true }
+            );
+        } catch (error) {
+            console.error('유저 로그아웃 상태 업데이트 실패:', error);
+        };
+    }
+
+        // 채팅방 멤버의 로그인 상태 로그인으로 변경하기
+        const updateLogin = async () => {
+            try {
+                await axios.patch(
+                    import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/chatRooms/${chatRoomId}/members/login`,
+                    {},
+                    { withCredentials: true }
+                );
+            } catch (error) {
+                console.error('유저 로그인 상태 업데이트 실패:', error);
+            };
+        }
+
+    // 채팅 내용 검색 구현 필요
+
 
     useEffect(() => {
         const client = new Client({
             brokerURL: WEBSOCKET_URL,
             reconnectDelay: 5000,
-            // connectHeaders에 멤버ID와 채팅방ID 추가
-            connectHeaders: {
-                memberId: memberId.toString(),
-                chatRoomId: chatRoomId.toString()
-            },
+            // // connectHeaders에 멤버ID와 채팅방ID 추가
+            // connectHeaders: {
+            //     memberId: memberId.toString(),
+            //     chatRoomId: chatRoomId.toString()
+            // },
             debug: (str) => {
                 console.log('STOMP: ', str);
             },
             onConnect: () => {
                 console.log('STOMP 연결 성공');
+                updateLogin();
+                // updateMemberLoginStatus();
                 fetchPreviousMessages(0);
 
+                // 멤버 상태 변경 구독 추가
+                client.subscribe(`/topic/members/${chatRoomId}`, () => {
+                    setTimeout(() => {
+                        updateMemberLoginStatus(); // 멤버 상태 변경 시 업데이트
+                    }, 500); // 0.5초 딜레이 (연속된 요청으로 인한 에러 방지)
+                });
+
+                // 채팅 메시지 구독
                 client.subscribe(`/topic/chat/${chatRoomId}`, (message) => {
                     if (message.body) {
                         const receivedMessage = JSON.parse(message.body);
@@ -152,6 +191,7 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
                 });
             },
             onDisconnect: () => {
+                updateLogout();
                 console.log('STOMP 연결 종료');
             },
         });
@@ -169,12 +209,57 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
         };
     }, [chatRoomId, memberId]);
 
+    const sendMessage = async () => {
+        if (!messageInput.trim() || !stompClientRef.current) return;
+
+        const messageToSend = {
+            memberId,
+            content: messageInput,
+        };
+
+        try {
+            stompClientRef.current.publish({
+                destination: `/app/chat/${chatRoomId}`,
+                body: JSON.stringify(messageToSend),
+            });
+            console.log(import.meta.env.VITE_CORE_API_BASE_URL)
+            await axios.post(
+                import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/chatRooms/${chatRoomId}/messages`,
+                messageToSend,
+                { withCredentials: true }  // 인증 정보 포함
+            );
+
+            setMessageInput('');
+            scrollToBottom();
+        } catch (error) {
+            console.error('메시지 전송 실패:', error);
+        }
+    };
+
+
+    const formatMessageTime = (timestamp: string) => {
+        const date = new Date(timestamp);
+        if (isNaN(date.getTime())) {
+            console.error('Invalid timestamp:', timestamp);
+            return '';
+        }
+
+        const hours = date.getHours();
+        const minutes = date.getMinutes();
+        const ampm = hours >= 12 ? '오후' : '오전';
+        const formattedHours = hours % 12 || 12;
+        const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
+
+        return `${ampm} ${formattedHours}:${formattedMinutes}`;
+    };
+
+
     // 컴포넌트 마운트 시 데이터 가져오기
     useEffect(() => {
-        updateMemberLoginStatus();
+        // updateMemberLoginStatus();
     }, [chatRoomId]);  // chatRoomId가 바뀔 때마다 데이터 업데이트
 
-    // 페이지 이동/브라우저 종료 시 추가 처리
+    // 페이지 이동/브라우저 종료 시
     useEffect(() => {
         const handleBeforeUnload = () => {
             if (stompClientRef.current) {
@@ -205,48 +290,6 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
         fetchUserInfo();
     }, []);
 
-    const sendMessage = async () => {
-        if (!messageInput.trim() || !stompClientRef.current) return;
-
-        const messageToSend = {
-            memberId,
-            content: messageInput,
-        };
-
-        try {
-            stompClientRef.current.publish({
-                destination: `/app/chat/${chatRoomId}`,
-                body: JSON.stringify(messageToSend),
-            });
-            console.log(import.meta.env.VITE_CORE_API_BASE_URL)
-            await axios.post(
-                import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/chatRooms/${chatRoomId}/messages`,
-                messageToSend,
-                { withCredentials: true }  // 인증 정보 포함
-            );
-
-            setMessageInput('');
-            scrollToBottom();
-        } catch (error) {
-            console.error('메시지 전송 실패:', error);
-        }
-    };
-
-    const formatMessageTime = (timestamp: string) => {
-        const date = new Date(timestamp);
-        if (isNaN(date.getTime())) {
-            console.error('Invalid timestamp:', timestamp);
-            return '';
-        }
-
-        const hours = date.getHours();
-        const minutes = date.getMinutes();
-        const ampm = hours >= 12 ? '오후' : '오전';
-        const formattedHours = hours % 12 || 12;
-        const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
-
-        return `${ampm} ${formattedHours}:${formattedMinutes}`;
-    };
 
     return (
         <div className="messages-container">
