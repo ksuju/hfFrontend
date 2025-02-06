@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { Client } from '@stomp/stompjs';
 import axios from 'axios';
+import send from "../assets/images/send.png"
 
 interface ChatMessage {
     messageId?: number;
@@ -519,7 +520,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                     }}
                 >
                     <img
-                        src="src/assets/images/send.png"
+                        src={send}
                         alt="전송"
                         style={{
                             width: '24px',
