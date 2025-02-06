@@ -120,6 +120,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                 { withCredentials: true }
             );
             setMemberStatusList(response.data.data); // data 필드에서 멤버 상태 배열 추출
+            console.log(memberStatusList);
         } catch (error) {
             console.error('유저 로그인 상태 조회 실패:', error);
         }
