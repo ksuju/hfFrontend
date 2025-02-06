@@ -16,6 +16,15 @@ interface Festival {
     festivalArea: string;
 }
 
+// API 응답 전체 구조
+interface FestivalApiResponse {
+    content: Festival[];
+    page: {
+        totalPages: number;
+        number: number; // 현재 페이지 (0부터 시작)
+    };
+}
+
 // 사용할 장르 목록
 const genres = [
     "축제",
@@ -52,12 +61,16 @@ const Main = () => {
     const [genrePosts, setGenrePosts] = useState<Festival[][]>([]);
     const [isLoading, setIsLoading] = useState(true); // 로딩 상태 추가
     const navigate = useNavigate(); // 👈 페이지 이동 함수
+    const [searchPosts, setSearchPosts] = useState<Festival[]>([]);
     const [meetingPosts, setMeetingPosts] = useState<MeetingPost[]>([]);
     const [searchKeyword, setSearchKeyword] = useState("");
     const [currentUser, setCurrentUser] = useState<Member | null>(null);
+    const [isSearching, setIsSearching] = useState(false);
 
     const handleSearch = async (keyword: string) => {
         setSearchKeyword(keyword);
+        // 검색 결과가 존재하면 isSearching 상태를 true로 설정
+        setIsSearching(keyword.length > 0);
     };
 
     // 메인 배너 게시글 가져오기 (서울 기준)
@@ -100,6 +113,27 @@ const Main = () => {
         setIsLoading(false); // 데이터 로딩 완료 후 로딩 상태 변경
     };
 
+    // 축제 데이터 가져오기 (페이지 스크롤링 기준 요청)
+    const fetchFestivalPosts = async (keyword = "") => {
+        setIsLoading(true);
+        try {
+            const url = import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/posts/search?keyword=${encodeURIComponent(keyword)}&page=0&size=9`
+
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            const data: FestivalApiResponse = await response.json();
+            console.log("Fetched Festival Posts:", data); // 👈 여기에서 콘솔 확인
+
+            setSearchPosts(data.content);
+        } catch (error) {
+            console.error("Error fetching festival posts:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     // 모임 데이터 가져오기
     const fetchMeetingPosts = async (keyword = "") => {
         setIsLoading(true);
@@ -125,6 +159,7 @@ const Main = () => {
     // 검색어 변경 시 자동 검색 (디바운스 적용)
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
+            fetchFestivalPosts(searchKeyword);
             fetchMeetingPosts(searchKeyword);
         }, 100);
 
@@ -213,74 +248,122 @@ const Main = () => {
                     <div className="text-center text-gray-500 mt-4">Loading...</div>
                 ) : (
                     <>
-                        {/* 메인 배너 */}
-                        <Swiper
-                            modules={[Pagination, Autoplay]}
-                            pagination={{ clickable: true }}
-                            autoplay={{ delay: 3000 }}
-                            loop={true}
-                            className="w-full mx-auto mt-3"
-                            onInit={(swiper) => swiper.update()}
-                        >
-                            {mainPosts.map((mainPost) => (
-                                <SwiperSlide key={mainPost.festivalId} className="flex justify-center items-center">
-                                    <div className="w-full max-w-4xl bg-white rounded-lg shadow-md overflow-hidden">
-                                        <div className="relative w-full h-[300px] bg-gray-100 flex justify-center items-center">
-                                            <img
-                                                src={mainPost.festivalUrl}
-                                                alt={mainPost.festivalName}
-                                                className="w-full h-full object-contain"
-                                            />
-                                        </div>
-                                    </div>
-                                </SwiperSlide>
-                            ))}
-                        </Swiper>
-
-                        {/* 장르별 배너 섹션 */}
-                        {genres.map((genre, index) => (
-                            <div key={genre} className="mt-4 lg:mt-12">
-                                <div className="flex justify-between items-center mb-4">
-                                    <h2 className="text-lg font-bold">{genre}</h2>
-                                    <button
-                                        className="text-sm text-primary"
-                                        onClick={() => navigate(`/posts?genre=${encodeURIComponent(genre)}`)}
-                                    >
-                                        더보기
-                                    </button>
-                                </div>
-                                <Swiper slidesPerView={3} spaceBetween={12} className="w-full pb-1">
-                                    {genrePosts[index]?.map((genrePost) => (
-                                        <SwiperSlide key={genrePost.festivalId}>
-                                            <div className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
-                                                {/* 이미지 영역 */}
-                                                <div className="relative pb-[90%]">
+                        {/* 메인 배너 & 장르별 배너 (검색 중이 아닐 때만 표시) */}
+                        {!isSearching && (
+                            <>
+                                {/* 메인 배너 */}
+                                <Swiper
+                                    modules={[Pagination, Autoplay]}
+                                    pagination={{ clickable: true }}
+                                    autoplay={{ delay: 3000 }}
+                                    loop={true}
+                                    className="w-full mx-auto mt-3"
+                                    onInit={(swiper) => swiper.update()}
+                                >
+                                    {mainPosts.map((mainPost) => (
+                                        <SwiperSlide key={mainPost.festivalId} className="flex justify-center items-center">
+                                            <div className="w-full max-w-4xl bg-white rounded-lg shadow-md overflow-hidden">
+                                                <div className="relative w-full h-[300px] bg-gray-100 flex justify-center items-center">
                                                     <img
-                                                        src={genrePost.festivalUrl || "https://via.placeholder.com/150"}
-                                                        alt={genrePost.festivalName}
-                                                        className="absolute inset-0 w-full h-full object-cover bg-gray-200"
+                                                        src={mainPost.festivalUrl}
+                                                        alt={mainPost.festivalName}
+                                                        className="w-full h-full object-contain"
                                                     />
-                                                </div>
-                                                {/* 텍스트 영역 */}
-                                                <div className="p-2">
-                                                    <h3 className="text-sm font-medium leading-tight line-clamp-2">{genrePost.festivalName}</h3>
-                                                    <p className="text-xs text-gray-500 mt-1 mb-[-10px]">{genrePost.festivalArea}</p>
-                                                </div>
-                                                {/* 날짜 영역을 카드 하단에 고정 */}
-                                                <div className="p-2 text-xs text-gray-500 bg-white mt-auto">
-                                                    <p>
-                                                        {genrePost.festivalStartDate?.replace(/-/g, '.')} - {genrePost.festivalEndDate?.replace(/-/g, '.')}
-                                                    </p>
                                                 </div>
                                             </div>
                                         </SwiperSlide>
                                     ))}
                                 </Swiper>
-                            </div>
-                        ))}
+
+                                {/* 장르별 배너 섹션 */}
+                                {genres.map((genre, index) => (
+                                    <div key={genre} className="mt-4 lg:mt-12">
+                                        <div className="flex justify-between items-center mb-4">
+                                            <h2 className="text-lg font-bold">{genre}</h2>
+                                            <button
+                                                className="text-sm text-primary"
+                                                onClick={() => navigate(`/posts?genre=${encodeURIComponent(genre)}`)}
+                                            >
+                                                더보기
+                                            </button>
+                                        </div>
+                                        <Swiper slidesPerView={3} spaceBetween={12} className="w-full pb-1">
+                                            {genrePosts[index]?.map((genrePost) => (
+                                                <SwiperSlide key={genrePost.festivalId}>
+                                                    <div className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
+                                                        {/* 이미지 영역 */}
+                                                        <div className="relative pb-[90%]">
+                                                            <img
+                                                                src={genrePost.festivalUrl || "https://via.placeholder.com/150"}
+                                                                alt={genrePost.festivalName}
+                                                                className="absolute inset-0 w-full h-full object-cover bg-gray-200"
+                                                            />
+                                                        </div>
+                                                        {/* 텍스트 영역 */}
+                                                        <div className="p-2">
+                                                            <h3 className="text-sm font-medium leading-tight line-clamp-2">{genrePost.festivalName}</h3>
+                                                            <p className="text-xs text-gray-500 mt-1 mb-[-10px]">{genrePost.festivalArea}</p>
+                                                        </div>
+                                                        {/* 날짜 영역을 카드 하단에 고정 */}
+                                                        <div className="p-2 text-xs text-gray-500 bg-white mt-auto">
+                                                            <p>
+                                                                {genrePost.festivalStartDate?.replace(/-/g, '.')} - {genrePost.festivalEndDate?.replace(/-/g, '.')}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </SwiperSlide>
+                                            ))}
+                                        </Swiper>
+                                    </div>
+                                ))}
+                            </>
+                        )}
                     </>
                 )}
             </div>
+
+            {/* 축제/공연 검색 섹션 */}
+            {isSearching && (
+                <>
+            <div className="p-4 mb-6">
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-lg font-bold">축제/공연</h2>
+                    <button
+                        className="text-sm text-primary"
+                        onClick={() => navigate(`/posts`)}
+                    >
+                        더보기
+                    </button>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                    {searchPosts.map((searchPost) => (
+                        <div key={searchPost.festivalId} className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
+                            {/* 이미지 영역 */}
+                            <div className="relative pb-[90%]">
+                                <img
+                                    src={searchPost.festivalUrl || "https://via.placeholder.com/150"}
+                                    alt={searchPost.festivalName}
+                                    className="absolute inset-0 w-full h-full object-cover bg-gray-200"
+                                />
+                            </div>
+                            {/* 텍스트 영역 */}
+                            <div className="p-2">
+                                <h3 className="text-sm font-medium leading-tight line-clamp-2">{searchPost.festivalName}</h3>
+                                <p className="text-xs text-gray-500 mt-1 mb-[-10px]">{searchPost.festivalArea}</p>
+                            </div>
+                            {/* 날짜 영역을 카드 하단에 고정 */}
+                            <div className="p-2 text-xs text-gray-500 bg-white mt-auto">
+                                <p>
+                                    {searchPost.festivalStartDate?.replace(/-/g, '.')} - {searchPost.festivalEndDate?.replace(/-/g, '.')}
+                                </p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+                {isLoading && <p className="text-center text-gray-500 mt-4">Loading...</p>}
+            </div>
+            </>
+            )}
 
             {/* 모임 채팅방 섹션 */}
             <div className="p-4 mb-6">
