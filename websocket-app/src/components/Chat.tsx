@@ -107,6 +107,9 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                     const latestMessage = response.data.data.content[0]; // 가장 최신 메시지
                     if (latestMessage.messageId) {  // id 필드 추가 필요
                         updateMessageReadStatus(latestMessage.messageId);
+                        setTimeout(() => {
+                            fetchMessageCount();
+                        }, 100); // 0.1초 딜레이 (연속된 요청으로 인한 에러 방지)
                     }
                 }
                 updateMemberLoginStatus();    // 채팅방 멤버의 로그인 상태 가져오기
