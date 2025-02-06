@@ -281,10 +281,10 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                                 // 새 메시지가 도착하면 읽음 상태 업데이트
                                 if (receivedData.data.id) {
                                     updateMessageReadStatus(receivedData.data.id);
-                                    setTimeout(() => {
-                                        fetchMessageCount();
-                                    }, 100); // 0.1초 딜레이 (연속된 요청으로 인한 에러 방지)
                                 }
+                                setTimeout(() => {
+                                    fetchMessageCount();
+                                }, 100); // 0.1초 딜레이 (연속된 요청으로 인한 에러 방지)
                                 break;
 
                             case 'COUNT':
@@ -511,7 +511,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                                         maxWidth: '70%',
                                         wordBreak: 'break-word'
                                     }}>
-                                        {msg.chatMessageContent}
+                                        {highlightKeyword(msg.chatMessageContent, searchKeyword)}
                                     </div>
                                     <div style={{
                                         fontSize: '0.75rem',
