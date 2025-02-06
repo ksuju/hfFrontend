@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useParams } from 'react-router-dom';
 import { Client } from '@stomp/stompjs';
 import axios from 'axios';
-
+import send from "../assets/images/send.png"
 
 interface ChatMessage {
     messageId?: number;
@@ -35,9 +36,10 @@ interface MemberStatus {
     userLoginStatus: string;
 }
 
-const WEBSOCKET_URL = 'ws://localhost:8090/ws/chat';
+const WEBSOCKET_URL = `${import.meta.env.VITE_CORE_WEBSOCKET_BASE_URL}/ws/chat`;
+const request_URL = import.meta.env.VITE_CORE_API_BASE_URL;
 
-const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, memberId }) => {
+const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [messageInput, setMessageInput] = useState('');
     const [currentPage, setCurrentPage] = useState(0);
@@ -46,6 +48,7 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
     const messagesListRef = useRef<HTMLDivElement>(null);
     const [currentUserNickname, setCurrentUserNickname] = useState<string>('');
     const [memberStatusList, setMemberStatusList] = useState<MemberStatus[]>([]);
+    const { chatRoomId } = useParams();
     const [searchKeyword, setSearchKeyword] = useState<string>('');
     const [searchPage, setSearchPage] = useState(0);
     const [isSearchMode, setIsSearchMode] = useState(false);
@@ -62,7 +65,7 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
     const fetchPreviousMessages = async (page: number) => {
         try {
             const response = await axios.get<ChatResponse>(
-                import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/chatRooms/${chatRoomId}/messages?page=${page}`,
+                request_URL + `/api/v1/chatRooms/${chatRoomId}/messages?page=${page}`,
                 { withCredentials: true }  // 인증 정보 포함
             );
 
@@ -101,7 +104,7 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
             };
 
             await axios.put(
-                import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/chatRooms/${chatRoomId}/messages/readStatus`,
+                request_URL + `/api/v1/chatRooms/${chatRoomId}/messages/readStatus`,
                 messageReadStatus,
                 { withCredentials: true }  // 인증 정보 포함
             );
@@ -118,6 +121,7 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
                 { withCredentials: true }
             );
             setMemberStatusList(response.data.data); // data 필드에서 멤버 상태 배열 추출
+            console.log(memberStatusList);
         } catch (error) {
             console.error('유저 로그인 상태 조회 실패:', error);
         }
@@ -127,7 +131,7 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
     const updateLogout = async () => {
         try {
             await axios.patch(
-                import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/chatRooms/${chatRoomId}/members/logout`,
+                request_URL + `/api/v1/chatRooms/${chatRoomId}/members/logout`,
                 {},
                 { withCredentials: true }
             );
@@ -140,7 +144,7 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
     const updateLogin = async () => {
         try {
             await axios.patch(
-                import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/chatRooms/${chatRoomId}/members/login`,
+                request_URL + `/api/v1/chatRooms/${chatRoomId}/members/login`,
                 {},
                 { withCredentials: true }
             );
@@ -153,9 +157,9 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
     const highlightKeyword = (text: string, keyword: string) => {
         if (!keyword.trim()) return text;
         const parts = text.split(new RegExp(`(${keyword})`, 'gi'));
-        return parts.map((part, i) => 
-            part.toLowerCase() === keyword.toLowerCase() ? 
-                <span key={i} style={{ backgroundColor: '#ffeb3b', padding: '0 2px' }}>{part}</span> 
+        return parts.map((part, i) =>
+            part.toLowerCase() === keyword.toLowerCase() ?
+                <span key={i} style={{ backgroundColor: '#ffeb3b', padding: '0 2px' }}>{part}</span>
                 : part
         );
     };
@@ -163,18 +167,18 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
     // 채팅 내용 검색
     const messageSearch = async (keyword: string, nickname: string, page: number = 0) => {
         try {
-            const response = await axios.get(
-                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/chatRooms/${chatRoomId}/messages/search`,
-                { 
-                    params: { 
-                        keyword, 
+            const response = await axios.get<ChatResponse>(
+                `${request_URL}/api/v1/chatRooms/${chatRoomId}/messages/search`,
+                {
+                    params: {
+                        keyword,
                         nickname,
-                        page 
+                        page
                     },
-                    withCredentials: true 
+                    withCredentials: true
                 }
             );
-    
+
             if (response.data && response.data.data) {
                 if (page === 0) {
                     setMessages(response.data.data.content);
@@ -210,6 +214,7 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
             // },
             debug: (str) => {
                 console.log('STOMP: ', str);
+                console.log("web_url", import.meta.env)
             },
             onConnect: () => {
                 console.log('STOMP 연결 성공');
@@ -275,7 +280,7 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
             });
             console.log(import.meta.env.VITE_CORE_API_BASE_URL)
             await axios.post(
-                import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/chatRooms/${chatRoomId}/messages`,
+                request_URL + `/api/v1/chatRooms/${chatRoomId}/messages`,
                 messageToSend,
                 { withCredentials: true }  // 인증 정보 포함
             );
@@ -515,7 +520,7 @@ const Chat: React.FC<{ chatRoomId: number; memberId: number }> = ({ chatRoomId, 
                     }}
                 >
                     <img
-                        src="src/assets/images/send.png"
+                        src={send}
                         alt="전송"
                         style={{
                             width: '24px',
