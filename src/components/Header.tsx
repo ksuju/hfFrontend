@@ -12,10 +12,20 @@ const Header = ({ isLoggedIn, setIsLoggedIn }: HeaderProps) => {
 
     const handleLogout = async () => {
         try {
-            const response = await fetch(import.meta.env.VITE_CORE_API_BASE_URL + '/api/v1/auth/logout', {
-                method: 'POST',
-                credentials: 'include',
-            });
+            const memberId = userInfo?.data?.id; // userInfo에서 사용자 ID 추출
+            
+            const response = await fetch(
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/auth/logout`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        memberId: memberId 
+                    })
+                }
+            );
 
             if (response.ok) {
                 setIsLoggedIn(false);
@@ -39,18 +49,17 @@ const Header = ({ isLoggedIn, setIsLoggedIn }: HeaderProps) => {
                     <span className="text-primary font-bold ml-2">숨은사람친구</span>
                 </Link>
                 <div className="flex items-center gap-4">
-                    <Link to="/chat">채팅 테스트</Link>
                     {!isLoggedIn ? (
                         <>
                             <Link
                                 to="/login"
-                                className="px-4 py-2 text-sm text-gray-600 hover:text-primary transition-colors lg:text-base"
+                                className="px-4 py-1.5 text-sm font-medium text-primary hover:text-white hover:bg-primary rounded-full transition-all duration-200"
                             >
                                 로그인
                             </Link>
                             <Link
                                 to="/signup"
-                                className="px-4 py-2 text-sm text-white bg-primary rounded-full hover:bg-opacity-90 transition-colors lg:text-base"
+                                className="px-4 py-1.5 text-sm font-medium text-primary bg-white hover:text-white hover:bg-red-500 rounded-full transition-all duration-200"
                             >
                                 회원가입
                             </Link>
@@ -79,7 +88,7 @@ const Header = ({ isLoggedIn, setIsLoggedIn }: HeaderProps) => {
                             </div>
                             <button
                                 onClick={handleLogout}
-                                className="px-4 py-2 text-sm text-gray-600 hover:text-primary transition-colors lg:text-base"
+                                className="px-4 py-1.5 text-sm font-medium text-primary hover:text-white hover:bg-red-500 rounded-full transition-all duration-200"
                             >
                                 로그아웃
                             </button>
