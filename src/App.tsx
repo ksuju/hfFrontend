@@ -13,6 +13,8 @@ import Chat from "../websocket-app/src/components/Chat.tsx";
 import FestivalMap from "./pages/FestivalMap.tsx";
 import FindAccount from './pages/FindAccount';
 import ResetPassword from './pages/ResetPassword';
+import Notice from './pages/Notice';
+import NoticeDetail from './pages/NoticeDetail';
 
 
 const App = () => {
@@ -70,6 +72,7 @@ const App = () => {
                     <Route path="/signup" element={<Signup />} />
                     <Route path="/find-account" element={<FindAccount />} />
                     <Route path="/reset-password" element={<ResetPassword />} />
+                    <Route path="/notice/:id" element={<NoticeDetail />} />
                     <Route path="/*" element={
                         <div className="flex flex-col min-h-screen">
                             <Header isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />
@@ -80,13 +83,14 @@ const App = () => {
                                             <Route path="/" element={<Main />} />
                                             <Route path="/posts" element={<Festival />} />
                                             <Route path="/chatroom" element={<Meeting />} />
+                                            <Route path="/notice" element={<Notice />} />
                                             <Route path="/chat/:chatRoomId" element={userInfo ? (
                                                 <Chat memberId={userInfo.id} />
                                             ) : (
                                                 <Navigate to="/login" replace />
                                             )} />
                                             <Route path="/mypage" element={<MyPage />} />
-                                            <Route path="/map" element={<FestivalMap />} />  {/* 공연 지도 페이지 추가 */}
+                                            <Route path="/map" element={<FestivalMap />} />
                                         </Routes>
                                     </div>
                                 </div>
