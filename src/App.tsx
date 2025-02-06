@@ -14,6 +14,7 @@ import FestivalMap from "./pages/FestivalMap.tsx";
 import FindAccount from './pages/FindAccount';
 import ResetPassword from './pages/ResetPassword';
 import Notice from './pages/Notice';
+import NoticeDetail from './pages/NoticeDetail';
 
 
 const App = () => {
@@ -71,6 +72,7 @@ const App = () => {
                     <Route path="/signup" element={<Signup />} />
                     <Route path="/find-account" element={<FindAccount />} />
                     <Route path="/reset-password" element={<ResetPassword />} />
+                    <Route path="/notice/:id" element={<NoticeDetail />} />
                     <Route path="/*" element={
                         <div className="flex flex-col min-h-screen">
                             <Header isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />

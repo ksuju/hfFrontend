@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import SearchBar from '../components/SearchBar';
 import Footer from '../components/Footer';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 interface NoticeItem {
     id: number;
@@ -30,6 +31,7 @@ const Notice = () => {
     const [totalPages, setTotalPages] = useState(0);
     const [searchKeyword, setSearchKeyword] = useState("");
     const [error, setError] = useState<string | null>(null);
+    const navigate = useNavigate();
 
     const fetchNotices = async (pageNumber: number, keyword = "") => {
         setIsLoading(true);
@@ -115,6 +117,7 @@ const Notice = () => {
                                     <div 
                                         key={notice.id === -1 ? `empty-${index}` : notice.id} 
                                         className={`py-5 ${notice.id === -1 ? 'opacity-0' : 'cursor-pointer hover:bg-gray-50'} transition-colors`}
+                                        onClick={() => notice.id !== -1 && navigate(`/notice/${notice.id}`)}
                                     >
                                         <div className="flex justify-between items-center">
                                             <h3 className="font-medium text-base flex-grow truncate pr-12">
