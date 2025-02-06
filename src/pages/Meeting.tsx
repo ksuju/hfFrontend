@@ -1,35 +1,20 @@
-// Meeting.tsx
 import { useEffect, useState } from 'react';
 import SearchBar from '../components/SearchBar';
 import {useNavigate} from "react-router-dom";
 
 interface MeetingPost {
-  memberId: string;
-  chatRoomId: string;
-  roomTitle: string;
-  roomContent: string;
-  festivalName: string;
-  roomMemberLimit: string;
-  joinMemberNum: string;
-  createDate: string;
+    chatRoomId: string;
+    roomTitle: string;
+    roomContent: string;
+    festivalName: string;
+    roomMemberLimit: string;
+    joinMemberNum: string;
+    createDate: string;
 }
 
 interface Member {
-    id: string;
-    nickname: string;
-    email: string;
     joinRoomIdList: string[];
     waitRoomIdList: string[];
-    createDate: string;
-    gender: string | null;
-    birthday: string | null;
-    location: string | null;
-    phoneNumber: string | null;
-    profilePath: string | null;
-    socialAccounts: Record<string, string | boolean>;
-    loginType: string;
-    onlySocialAccount: boolean;
-    mkAlarm: boolean;
 }
 
 // API 응답 전체 구조
@@ -44,6 +29,7 @@ interface MeetingApiResponse {
 const Meeting = () => {
     const [meetingPosts, setMeetingPosts] = useState<MeetingPost[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const navigate = useNavigate(); // 페이지 이동을 위한 훅
     const [hasMore, setHasMore] = useState(true);
     const [page, setPage] = useState(0);
     const [searchKeyword, setSearchKeyword] = useState("");
@@ -63,7 +49,6 @@ const Meeting = () => {
             const url = keyword
                 ? import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/posts/chat-rooms/search?keyword=${encodeURIComponent(keyword)}&page=${pageNumber}&size=10`
                 : import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/posts/chat-rooms?page=${pageNumber}&size=10`;
-
             const response = await fetch(url);
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
@@ -111,7 +96,6 @@ const Meeting = () => {
                     "Content-Type": "application/json",
                 },
             });
-
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
@@ -133,7 +117,6 @@ const Meeting = () => {
         try {
             const url = import.meta.env.VITE_CORE_API_BASE_URL +
                 (isUserWaiting ? `/api/v1/posts/cancel-apply-chat-room/${chatRoomId}` : `/api/v1/posts/apply-chat-room/${chatRoomId}`);
-
             const response = await fetch(url, {
                 method: "GET",
                 credentials: "include",
@@ -142,14 +125,12 @@ const Meeting = () => {
                     "Content-Type": "application/json",
                 },
             });
-
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
 
             // 최신 참여 채팅방 리스트 가져오기
             await fetchUserInfo();
-
         } catch (error) {
             console.error("Error toggling chat room participation:", error);
         }
@@ -166,9 +147,6 @@ const Meeting = () => {
         const chatRoomIdStr = String(chatRoomId); // 문자열 변환
         return currentUser?.joinRoomIdList.includes(chatRoomIdStr) || false;
     };
-
-    // 페이지 이동을 위한 훅
-    const navigate = useNavigate();
 
     // 채팅방 클릭 시 이동 메서드
     const handleChatRoomClick = (chatRoomId: string, isUserJoined: boolean) => {
