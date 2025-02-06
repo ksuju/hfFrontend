@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { Client } from '@stomp/stompjs';
 import axios from 'axios';
+import send from "../assets/images/send.png"
 
 interface ChatMessage {
     messageId?: number;
@@ -152,6 +153,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                 { withCredentials: true }
             );
             setMemberStatusList(response.data.data); // data 필드에서 멤버 상태 배열 추출
+            console.log(memberStatusList);
         } catch (error) {
             console.error('유저 로그인 상태 조회 실패:', error);
         }
@@ -569,7 +571,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                     }}
                 >
                     <img
-                        src="src/assets/images/send.png"
+                        src={send}
                         alt="전송"
                         style={{
                             width: '24px',
