@@ -9,6 +9,7 @@ interface ChatMessage {
     nickname?: string;
     chatMessageContent: string;
     messageTimestamp: string;
+    count?: number; // 읽지 않은 사람 수 추가
 }
 
 interface PageInfo {
@@ -36,6 +37,17 @@ interface MemberStatus {
     userLoginStatus: string;
 }
 
+interface messageCountResponse {
+    resultCode: string;
+    msg: string;
+    data: messageCount[];
+}
+
+interface messageCount {
+    messageId: number;
+    count: number;
+}
+
 const WEBSOCKET_URL = `${import.meta.env.VITE_CORE_WEBSOCKET_BASE_URL}/ws/chat`;
 const request_URL = import.meta.env.VITE_CORE_API_BASE_URL;
 
@@ -54,10 +66,29 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
     const [isSearchMode, setIsSearchMode] = useState(false);
     const [currentSearchKeyword, setCurrentSearchKeyword] = useState('');
     const [currentSearchNickname, setCurrentSearchNickname] = useState('');
+    // 메시지 읽음 카운트 상태 추가
+    const [messageReadCounts, setMessageReadCounts] = useState<{ [key: number]: number }>({});
 
     const scrollToBottom = () => {
         if (messagesListRef.current) {
             messagesListRef.current.scrollTop = messagesListRef.current.scrollHeight;
+        }
+    };
+
+    // 채팅 메시지 읽음 카운트 가져오기
+    const fetchMessageCount = async () => {
+        try {
+            const response = await axios.get<messageCountResponse>(
+                request_URL + `/api/v1/chatRooms/${chatRoomId}/messages/count`,
+                { withCredentials: true }
+            );
+            const counts = response.data.data.reduce((acc: { [key: number]: number }, curr) => {
+                acc[curr.messageId] = curr.count;
+                return acc;
+            }, {});
+            setMessageReadCounts(counts);
+        } catch (error) {
+            console.error('채팅 메시지 읽은 카운트 불러오기 실패', error);
         }
     };
 
@@ -76,6 +107,9 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                     const latestMessage = response.data.data.content[0]; // 가장 최신 메시지
                     if (latestMessage.messageId) {  // id 필드 추가 필요
                         updateMessageReadStatus(latestMessage.messageId);
+                        setTimeout(() => {
+                            fetchMessageCount();
+                        }, 100); // 0.1초 딜레이 (연속된 요청으로 인한 에러 방지)
                     }
                 }
                 updateMemberLoginStatus();    // 채팅방 멤버의 로그인 상태 가져오기
@@ -90,6 +124,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
         }
     };
 
+    // 메시지 페이징
     const loadMoreMessages = () => {
         const nextPage = currentPage + 1;
         setCurrentPage(nextPage);
@@ -221,6 +256,9 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                 updateLogin();
                 // updateMemberLoginStatus();
                 fetchPreviousMessages(0);
+                setTimeout(() => {
+                    fetchMessageCount();
+                }, 100); // 0.1초 딜레이 (연속된 요청으로 인한 에러 방지)
 
                 // 멤버 상태 변경 구독 추가
                 client.subscribe(`/topic/members/${chatRoomId}`, () => {
@@ -232,19 +270,37 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                 // 채팅 메시지 구독
                 client.subscribe(`/topic/chat/${chatRoomId}`, (message) => {
                     if (message.body) {
-                        const receivedMessage = JSON.parse(message.body);
-                        const chatMessage: ChatMessage = {
-                            nickname: receivedMessage.nickname,
-                            chatMessageContent: receivedMessage.chatMessageContent,
-                            messageTimestamp: receivedMessage.createDate
-                        };
-                        setMessages(prev => [chatMessage, ...prev]);
+                        const receivedData = JSON.parse(message.body);
+                        switch (receivedData.type) {
+                            case 'MESSAGE':
+                                const chatMessage: ChatMessage = {
+                                    messageId: receivedData.data.id,
+                                    nickname: receivedData.data.nickname,
+                                    chatMessageContent: receivedData.data.chatMessageContent, 
+                                    messageTimestamp: receivedData.data.createDate
+                                };
+                                setMessages(prev => [chatMessage, ...prev]);
 
-                        // 새 메시지가 도착하면 읽음 상태 업데이트
-                        if (receivedMessage.id) {
-                            updateMessageReadStatus(receivedMessage.id);
+                                // 새 메시지가 도착하면 읽음 상태 업데이트
+                                if (receivedData.data.id) {
+                                    updateMessageReadStatus(receivedData.data.id);
+                                }
+                                setTimeout(() => {
+                                    fetchMessageCount();
+                                }, 100); // 0.1초 딜레이 (연속된 요청으로 인한 에러 방지)
+                                break;
+
+                            case 'COUNT':
+                                // COUNT 타입으로 받은 데이터를 메시지 읽음 수에 반영
+                                const countMap = receivedData.data.reduce((acc: {[key: number]: number}, curr: messageCount) => {
+                                    acc[curr.messageId] = curr.count;
+                                    return acc;
+                                }, {});
+                                setMessageReadCounts(countMap);
+                                break;
                         }
                     }
+
                 });
             },
             onDisconnect: () => {
@@ -278,7 +334,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                 destination: `/app/chat/${chatRoomId}`,
                 body: JSON.stringify(messageToSend),
             });
-            console.log(import.meta.env.VITE_CORE_API_BASE_URL)
+            // console.log(import.meta.env.VITE_CORE_API_BASE_URL)
             await axios.post(
                 request_URL + `/api/v1/chatRooms/${chatRoomId}/messages`,
                 messageToSend,
@@ -432,12 +488,11 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                 <div style={{ flexGrow: 1 }}>
                     {messages.slice().reverse().map((msg, index, array) => {
                         const isMyMessage = msg.nickname === currentUserNickname;
-                        const prevMessage = array[index - 1];
-                        const showNickname = !isMyMessage &&
-                            (!prevMessage || prevMessage.nickname !== msg.nickname);
-
+                        const readCount = msg.messageId ? messageReadCounts[msg.messageId] || 0 : 0;
+                        
                         return (
-                            <div key={index}
+                            <div 
+                                key={index} 
                                 style={{
                                     display: 'flex',
                                     flexDirection: 'column',
@@ -445,16 +500,6 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                                     margin: '8px 0'
                                 }}
                             >
-                                {showNickname && (
-                                    <span style={{
-                                        fontSize: '0.8rem',
-                                        color: '#666',
-                                        marginBottom: '4px',
-                                        marginLeft: '8px'
-                                    }}>
-                                        {msg.nickname}
-                                    </span>
-                                )}
                                 <div style={{
                                     display: 'flex',
                                     flexDirection: isMyMessage ? 'row-reverse' : 'row',
@@ -462,7 +507,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                                     gap: '8px'
                                 }}>
                                     <div style={{
-                                        background: isMyMessage ? '#F26A2E' : '#e9ecef', // 내 메시지 말풍선 색
+                                        background: isMyMessage ? '#F26A2E' : '#e9ecef',
                                         color: isMyMessage ? 'white' : 'black',
                                         padding: '8px 12px',
                                         borderRadius: isMyMessage ? '15px 15px 0 15px' : '15px 15px 15px 0',
@@ -473,9 +518,18 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                                     </div>
                                     <div style={{
                                         fontSize: '0.75rem',
-                                        color: '#6c757d'
+                                        color: '#6c757d',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '2px',
+                                        alignItems: isMyMessage ? 'flex-end' : 'flex-start'
                                     }}>
-                                        {formatMessageTime(msg.messageTimestamp)}
+                                        {readCount > 0 && (
+                                            <span style={{color: '#F26A2E', fontSize: '0.7rem'}}>
+                                                {readCount}
+                                            </span>
+                                        )}
+                                        <span>{formatMessageTime(msg.messageTimestamp)}</span>
                                     </div>
                                 </div>
                             </div>
