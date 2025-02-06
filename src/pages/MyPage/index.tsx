@@ -1,5 +1,5 @@
 // src/pages/MyPage/index.tsx
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ProfileSection from './components/ProfileSection';
 import SocialAccounts from './components/SocialAccounts';
@@ -10,7 +10,7 @@ import { EditFormData, UserInfo } from './types';
 const MyPage = () => {
     const navigate = useNavigate();
     const [isPasswordVerified, setIsPasswordVerified] = useState(false);
-    const [activeTab, setActiveTab] = useState('social');
+    const userInfo = localStorage.getItem('userInfo') ? JSON.parse(localStorage.getItem('userInfo')!).data : null;
 
     const defaultSocialAccount = {
         active: false,
@@ -132,14 +132,14 @@ const MyPage = () => {
                 setUserInfo(newUserInfo);
                 alert('회원정보가 수정되었습니다.');
             } else {
-                alert(responseData.msg || '회원정보 수정에 실패했습니다.');
+                const errorData = await response.json();
+                alert(errorData.msg || '회원정보 수정에 실패했습니다.');
             }
         } catch (error) {
             console.error('수정 에러:', error);
             alert('서버 연결에 실패했습니다.');
         }
     };
-
 
     // 회원 탈퇴
     const handleDelete = async () => {
@@ -228,7 +228,7 @@ const MyPage = () => {
     }
 
     return (
-        <div className="flex flex-col min-h-screen">
+        <div className="p-4">
             {isPasswordVerified ? (
                 <>
                     <div className="flex-none px-8 pt-8 pb-6">
@@ -300,7 +300,6 @@ const MyPage = () => {
                 <PasswordVerification
                     userInfo={userInfo}
                     setIsPasswordVerified={setIsPasswordVerified}
-                    setUserInfo={setUserInfo}
                 />
             )}
         </div>

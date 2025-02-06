@@ -53,7 +53,6 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
     const [isSearchMode, setIsSearchMode] = useState(false);
     const [currentSearchKeyword, setCurrentSearchKeyword] = useState('');
     const [currentSearchNickname, setCurrentSearchNickname] = useState('');
-
     const scrollToBottom = () => {
         if (messagesListRef.current) {
             messagesListRef.current.scrollTop = messagesListRef.current.scrollHeight;
@@ -77,7 +76,6 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                         updateMessageReadStatus(latestMessage.messageId);
                     }
                 }
-                updateMemberLoginStatus();    // 채팅방 멤버의 로그인 상태 가져오기
                 setTimeout(() => scrollToBottom(), 100);
             } else {
                 setMessages(prev => [...prev, ...response.data.data.content]);
@@ -237,7 +235,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                             messageTimestamp: receivedMessage.createDate
                         };
                         setMessages(prev => [chatMessage, ...prev]);
-
+                        
                         // 새 메시지가 도착하면 읽음 상태 업데이트
                         if (receivedMessage.id) {
                             updateMessageReadStatus(receivedMessage.id);
@@ -254,13 +252,8 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
         client.activate();
         stompClientRef.current = client;
 
-        // 컴포넌트 언마운트 시 정리
         return () => {
-            if (stompClientRef.current) {
-                console.log('WebSocket 연결 정리 중...');
-                stompClientRef.current.deactivate();
-                stompClientRef.current = null;
-            }
+            client.deactivate();
         };
     }, [chatRoomId, memberId]);
 
@@ -276,7 +269,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                 destination: `/app/chat/${chatRoomId}`,
                 body: JSON.stringify(messageToSend),
             });
-            console.log(import.meta.env.VITE_CORE_API_BASE_URL)
+
             await axios.post(
                 request_URL + `/api/v1/chatRooms/${chatRoomId}/messages`,
                 messageToSend,
@@ -431,11 +424,11 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                     {messages.slice().reverse().map((msg, index, array) => {
                         const isMyMessage = msg.nickname === currentUserNickname;
                         const prevMessage = array[index - 1];
-                        const showNickname = !isMyMessage &&
+                        const showNickname = !isMyMessage && 
                             (!prevMessage || prevMessage.nickname !== msg.nickname);
-
+                        
                         return (
-                            <div key={index}
+                            <div key={index} 
                                 style={{
                                     display: 'flex',
                                     flexDirection: 'column',
@@ -498,13 +491,10 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                         flex: 1,
                         padding: '8px',
                         borderRadius: '4px',
-                        border: '1px solid #ddd',
-                        outline: 'none' // 기본 포커스 테두리 제거
+                        border: '1px solid #ddd'
                     }}
-                    onFocus={(e) => e.target.style.border = '1px solid #F26A2E'} // 포커스 시 테두리 색상
-                    onBlur={(e) => e.target.style.border = '1px solid #ddd'} // 포커스 해제 시 원래 색상
                 />
-                <button
+                <button 
                     onClick={sendMessage}
                     style={{
                         padding: '8px',
@@ -517,110 +507,18 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                         justifyContent: 'center'
                     }}
                 >
-                    <img
+                    <img 
                         src="src/assets/images/send.png"
                         alt="전송"
                         style={{
                             width: '24px',
                             height: '24px',
-                            filter: messageInput.trim()
-                                ? 'invert(47%) sepia(82%) saturate(2604%) hue-rotate(337deg) brightness(97%) contrast(92%)'
+                            filter: messageInput.trim() 
+                                ? 'invert(47%) sepia(82%) saturate(2604%) hue-rotate(337deg) brightness(97%) contrast(92%)' 
                                 : 'opacity(0.5)'
                         }}
                     />
                 </button>
-            </div>
-            {/* 참여자 리스트 섹션 */}
-            <div style={{
-                marginTop: "20px",
-                padding: "15px",
-                borderTop: "1px solid #ddd",
-                backgroundColor: "#fff",
-                borderRadius: "8px"
-            }}>
-                <h3 style={{
-                    fontSize: "1rem",
-                    color: "#333",
-                    marginBottom: "12px",
-                    fontWeight: "600"
-                }}>참여자 리스트</h3>
-
-                {/* 온라인 멤버 */}
-                <div style={{ marginBottom: "16px" }}>
-                    <h4 style={{
-                        fontSize: "0.9rem",
-                        color: "#4CAF50",
-                        marginBottom: "8px"
-                    }}>
-                        온라인
-                    </h4>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-                        {memberStatusList
-                            .filter(status => status.userLoginStatus === "LOGIN")
-                            .map((status, index) => (
-                                <div key={index} style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    padding: "8px 12px",
-                                    backgroundColor: "#f8f9fa",
-                                    borderRadius: "20px",
-                                    gap: "8px",
-                                    fontSize: "0.9rem",
-                                    border: "1px solid #e9ecef"
-                                }}>
-                                    <span style={{
-                                        width: "8px",
-                                        height: "8px",
-                                        borderRadius: "50%",
-                                        backgroundColor: "#4CAF50",
-                                        display: "inline-block",
-                                        boxShadow: "0 0 0 2px rgba(76, 175, 80, 0.2)"
-                                    }} />
-                                    <span style={{ fontWeight: "500", color: "#424242" }}>
-                                        {status.nickname}
-                                    </span>
-                                </div>
-                            ))}
-                    </div>
-                </div>
-
-                {/* 오프라인 멤버 */}
-                <div>
-                    <h4 style={{
-                        fontSize: "0.9rem",
-                        color: "#9e9e9e",
-                        marginBottom: "8px"
-                    }}>
-                        오프라인
-                    </h4>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-                        {memberStatusList
-                            .filter(status => status.userLoginStatus !== "LOGIN")
-                            .map((status, index) => (
-                                <div key={index} style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    padding: "8px 12px",
-                                    backgroundColor: "#f8f9fa",
-                                    borderRadius: "20px",
-                                    gap: "8px",
-                                    fontSize: "0.9rem",
-                                    border: "1px solid #e9ecef"
-                                }}>
-                                    <span style={{
-                                        width: "8px",
-                                        height: "8px",
-                                        borderRadius: "50%",
-                                        backgroundColor: "#9e9e9e",
-                                        display: "inline-block"
-                                    }} />
-                                    <span style={{ fontWeight: "500", color: "#424242" }}>
-                                        {status.nickname}
-                                    </span>
-                                </div>
-                            ))}
-                    </div>
-                </div>
             </div>
         </div>
     );
