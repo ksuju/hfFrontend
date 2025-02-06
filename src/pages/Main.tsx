@@ -32,11 +32,11 @@ const Main = () => {
     const [genrePosts, setGenrePosts] = useState<Festival[][]>([]);
     const [isLoading, setIsLoading] = useState(true); // 로딩 상태 추가
     const navigate = useNavigate(); // 👈 페이지 이동 함수
-    const siteUrl = import.meta.env.VITE_CORE_API_BASE_URL;
+
     // 메인 배너 게시글 가져오기 (서울 기준)
     const fetchMainPosts = async () => {
         try {
-            const response = await fetch(`${siteUrl}/api/v1/posts/view?area=서울&count=5`);
+            const response = await fetch(`http://localhost:8090/api/v1/posts/view?area=서울&count=5`);
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
@@ -54,7 +54,7 @@ const Main = () => {
         await Promise.all(
             genres.map(async (genre, index) => {
                 try {
-                    const response = await fetch(`${siteUrl}/api/v1/posts/select?genre=${encodeURIComponent(genre)}&page=0&size=10`);
+                    const response = await fetch(`http://localhost:8090/api/v1/posts/select?genre=${encodeURIComponent(genre)}&page=0&size=10`);
                     if (!response.ok) {
                         throw new Error(`HTTP error! Status: ${response.status}`);
                     }
