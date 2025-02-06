@@ -1,15 +1,14 @@
 // src/pages/MyPage/index.tsx
 import { useState, useEffect } from 'react';
-// import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import ProfileSection from './components/ProfileSection';
 import SocialAccounts from './components/SocialAccounts';
 import UserInfoForm from './components/UserInfoForm';
 import PasswordVerification from './components/PasswordVerification';
-import { EditFormData } from './types';
+import { EditFormData, UserInfo } from './types';
 
 const MyPage = () => {
-    // const navigate = useNavigate();
-    const [isEditing, setIsEditing] = useState(false);
+    const navigate = useNavigate();
     const [isPasswordVerified, setIsPasswordVerified] = useState(false);
     const [activeTab, setActiveTab] = useState('social');
 
@@ -46,10 +45,10 @@ const MyPage = () => {
 
     // editForm 의존성 수정
     const [editForm, setEditForm] = useState<EditFormData>({
-        phoneNumber: '',
-        location: '',
+        phoneNumber: null,
+        location: null,
         gender: null,
-        birthday: '',
+        birthday: null,
         mkAlarm: false,
         nickname: ''
     });
@@ -58,10 +57,10 @@ const MyPage = () => {
     useEffect(() => {
         if (userInfo) {
             setEditForm({
-                phoneNumber: userInfo.phoneNumber || '',
-                location: userInfo.location || '',
+                phoneNumber: userInfo.phoneNumber || null,
+                location: userInfo.location || null,
                 gender: userInfo.gender || null,
-                birthday: userInfo.birthday || '',
+                birthday: userInfo.birthday || null,
                 mkAlarm: userInfo.mkAlarm || false,
                 nickname: userInfo.nickname || ''
             });
@@ -131,7 +130,6 @@ const MyPage = () => {
 
                 localStorage.setItem('userInfo', JSON.stringify({ data: newUserInfo }));
                 setUserInfo(newUserInfo);
-                setIsEditing(false);
                 alert('회원정보가 수정되었습니다.');
             } else {
                 alert(responseData.msg || '회원정보 수정에 실패했습니다.');
@@ -143,35 +141,35 @@ const MyPage = () => {
     };
 
 
-    // // 회원 탈퇴
-    // const handleDelete = async () => {
-    //     const confirmed = window.confirm('정말로 탈퇴하시겠습니까?');
-    //     if (!confirmed) return;
-    //
-    //     try {
-    //         const response = await fetch(
-    //             `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/members/me/deactivate`,
-    //             {
-    //                 method: 'PATCH',
-    //                 credentials: 'include',
-    //             }
-    //         );
-    //
-    //         if (response.ok) {
-    //             const data = await response.json();
-    //             alert(data.msg || '회원 탈퇴가 완료되었습니다.');
-    //             localStorage.removeItem('isLoggedIn');
-    //             localStorage.removeItem('userInfo');
-    //             navigate('/');
-    //         } else {
-    //             const errorData = await response.json();
-    //             alert(errorData.msg || '회원 탈퇴에 실패했습니다.');
-    //         }
-    //     } catch (error) {
-    //         console.error('탈퇴 에러:', error);
-    //         alert('서버 연결에 실패했습니다.');
-    //     }
-    // };
+    // 회원 탈퇴
+    const handleDelete = async () => {
+        const confirmed = window.confirm('정말로 탈퇴하시겠습니까?');
+        if (!confirmed) return;
+
+        try {
+            const response = await fetch(
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/members/me/deactivate`,
+                {
+                    method: 'PATCH',
+                    credentials: 'include',
+                }
+            );
+
+            if (response.ok) {
+                const data = await response.json();
+                alert(data.msg || '회원 탈퇴가 완료되었습니다.');
+                localStorage.removeItem('isLoggedIn');
+                localStorage.removeItem('userInfo');
+                navigate('/');
+            } else {
+                const errorData = await response.json();
+                alert(errorData.msg || '회원 탈퇴에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('탈퇴 에러:', error);
+            alert('서버 연결에 실패했습니다.');
+        }
+    };
 
     // 이미지 업로드
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -190,9 +188,13 @@ const MyPage = () => {
 
             if (response.ok) {
                 const updatedUserInfo = await response.json();
-                localStorage.setItem('userInfo', JSON.stringify(updatedUserInfo));
-                // 상태 직접 업데이트
-                setUserInfo(updatedUserInfo.data);
+                // 기존 userInfo의 모든 정보를 유지하면서 profilePath만 업데이트
+                const newUserInfo = {
+                    ...userInfo,
+                    profilePath: updatedUserInfo.data.profilePath
+                };
+                localStorage.setItem('userInfo', JSON.stringify({ data: newUserInfo }));
+                setUserInfo(newUserInfo);
                 alert('프로필 이미지가 변경되었습니다.');
             } else {
                 const errorData = await response.json();
@@ -201,6 +203,23 @@ const MyPage = () => {
         } catch (error) {
             console.error('이미지 업로드 에러:', error);
             alert('서버 연결에 실패했습니다.');
+        }
+    };
+
+    // 이미지 삭제
+    const handleResetImage = async () => {
+        try {
+            const response = await fetch(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/members/me/profile-image`, {
+                method: 'DELETE',
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                setUserInfo((prev: UserInfo | null) => prev ? { ...prev, profilePath: 'default.png' } : prev);
+                alert('프로필 이미지가 삭제되었습니다.');
+            }
+        } catch (error) {
+            console.error('이미지 삭제 에러:', error);
         }
     };
 
@@ -220,7 +239,8 @@ const MyPage = () => {
                                 setEditForm={setEditForm}
                                 onImageUpload={handleImageUpload}
                                 onUpdate={handleUpdate}
-                                isEditing={isEditing}
+                                handleResetImage={handleResetImage}
+                                handleDelete={handleDelete}
                             />
                         </div>
                     </div>

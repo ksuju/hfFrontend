@@ -11,6 +11,9 @@ import Signup from './pages/Signup'
 import MyPage from './pages/MyPage'
 import Chat from "../websocket-app/src/components/Chat.tsx";
 import FestivalMap from "./pages/FestivalMap.tsx";
+import FindAccount from './pages/FindAccount';
+import ResetPassword from './pages/ResetPassword';
+
 
 const App = () => {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -65,6 +68,8 @@ const App = () => {
                 <Routes>
                     <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} />} />
                     <Route path="/signup" element={<Signup />} />
+                    <Route path="/find-account" element={<FindAccount />} />
+                    <Route path="/reset-password" element={<ResetPassword />} />
                     <Route path="/*" element={
                         <div className="flex flex-col min-h-screen">
                             <Header isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />

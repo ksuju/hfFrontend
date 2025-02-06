@@ -1,5 +1,4 @@
 import { SocialAccount } from '../../types';
-
 import { useState } from 'react';
 import kakaoIcon from '../../../../assets/images/kakaotalk_simple_icon.png';
 import googleIcon from '../../../../assets/images/google_simple_icon.png';
@@ -25,14 +24,16 @@ const getSocialIcon = (type: string) => {
 const SocialAccountCard = ({ type, account, onSocialAction }: SocialAccountCardProps) => {
     const [isLoading, setIsLoading] = useState(false);
 
+    const apiUrl = import.meta.env.VITE_CORE_API_BASE_URL;
+
     // 소셜 로그인 URL 설정
-    const socialLoginUrl = `${import.meta.env.VITE_CORE_API_BASE_URL}/oauth2/authorization/${type.toLowerCase()}`;
-    const redirectUrl = "http://localhost:5173/mypage";
+    const socialLoginUrl = `${apiUrl}/oauth2/authorization/${type.toLowerCase()}`;
+    const redirectUrl = `${import.meta.env.VITE_CORE_FRONT_BASE_URL}/mypage`;
 
     const handleSocialLink = async () => {
         try {
             const response = await fetch(
-                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/members/me/social/${type.toLowerCase()}/validate`,
+                `${apiUrl}/api/v1/members/me/social/${type.toLowerCase()}/validate`,
                 {
                     method: 'GET',
                     credentials: 'include',
@@ -40,6 +41,8 @@ const SocialAccountCard = ({ type, account, onSocialAction }: SocialAccountCardP
             );
 
             if (response.ok) {
+                // 소셜 연동 페이지로 이동하기 전에 콜백 등록
+                window.sessionStorage.setItem('needsUpdate', 'true');
                 window.location.href = `${socialLoginUrl}?redirectUrl=${redirectUrl}`;
             } else {
                 const errorData = await response.json();
@@ -55,7 +58,7 @@ const SocialAccountCard = ({ type, account, onSocialAction }: SocialAccountCardP
         for (let i = 0; i < retries; i++) {
             try {
                 const response = await fetch(
-                    `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/auth/me`,  // /members/me 대신 /auth/me 사용
+                    `${apiUrl}/api/v1/auth/me`,  // /members/me 대신 /auth/me 사용
                     {
                         credentials: 'include'
                     }
@@ -92,7 +95,7 @@ const SocialAccountCard = ({ type, account, onSocialAction }: SocialAccountCardP
         if (account.active) {
             try {
                 const response = await fetch(
-                    `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/members/me/social/${type.toLowerCase()}`,
+                    `${apiUrl}/api/v1/members/me/social/${type.toLowerCase()}`,
                     {
                         method: 'DELETE',
                         credentials: 'include',
