@@ -1,27 +1,11 @@
 // src/pages/MyPage/components/UserInfoForm/index.tsx
-import { useState } from 'react';
-import { FiEdit2 } from 'react-icons/fi';
-import { UserInfo, EditFormData } from '../../types';
-
-declare global {
-    interface Window {
-        jusoCallBack: (roadAddr: string, jibunAddr: string, zipNo: string) => void;
-        setParent: (roadAddr: string, jibunAddr: string, zipNo: string) => void;
-        daum: any;  // daum 타입 추가
-    }
-}
+import FormField from './FormField';
+import { EditFormData } from '../../types';
 
 interface UserInfoFormProps {
-    userInfo: UserInfo;
+    isEditing: boolean;
     editForm: EditFormData;
     setEditForm: (form: EditFormData) => void;
-    onUpdate: () => void;
-}
-
-interface PasswordForm {
-    currentPassword: string;
-    newPassword: string;
-    confirmPassword: string;
 }
 
 interface VerificationState {
@@ -496,103 +480,51 @@ const UserInfoForm = ({ userInfo, editForm, setEditForm, onUpdate }: UserInfoFor
     };
 
     return (
-        <div className="space-y-1">
-            <div className="flex items-center justify-between p-4 border-b border-gray-100 hover:bg-gray-50">
-                <span className="font-bold text-gray-700">비밀번호</span>
-                {isPasswordChanging ? (
-                    <div className="flex flex-col gap-2 w-72">
-                        <input
-                            type="password"
-                            placeholder="현재 비밀번호"
-                            value={passwordForm.currentPassword}
-                            onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
-                            className="px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:border-primary text-sm"
-                        />
-                        <input
-                            type="password"
-                            placeholder="새 비밀번호"
-                            value={passwordForm.newPassword}
-                            onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-                            className="px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:border-primary text-sm"
-                        />
-                        <input
-                            type="password"
-                            placeholder="새 비밀번호 확인"
-                            value={passwordForm.confirmPassword}
-                            onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-                            className="px-3 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:border-primary text-sm"
-                        />
-                        {passwordError && <p className="text-red-500 text-sm">{passwordError}</p>}
-                        <div className="flex gap-2 justify-end mt-2">
-                            <button
-                                onClick={handlePasswordChange}
-                                className="px-3 py-1.5 bg-primary text-white rounded-lg hover:bg-opacity-90 text-sm font-medium"
-                            >
-                                변경
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setIsPasswordChanging(false);
-                                    setPasswordError('');
-                                }}
-                                className="px-3 py-1.5 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300 text-sm font-medium"
-                            >
-                                취소
-                            </button>
-                        </div>
-                    </div>
-                ) : (
-                    <button
-                        onClick={() => setIsPasswordChanging(true)}
-                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm font-medium"
-                    >
-                        비밀번호 변경
-                    </button>
-                )}
-            </div>
-            {renderField('phoneNumber', '전화번호')}
-            {renderField('location', '위치')}
-            {renderField('gender', '성별')}
-            {renderField('birthday', '생년월일', 'date')}
-            <div className="flex items-center justify-between p-4 border-b border-gray-100 hover:bg-gray-50">
-                <span className="font-bold text-gray-700">마케팅 수신 동의</span>
-                <input
-                    type="checkbox"
-                    checked={editForm.mkAlarm}
-                    onChange={async (e) => {
-                        const newValue = e.target.checked;
-                        console.log('체크박스 변경:', newValue);
-
-                        // 직접 API 호출
-                        try {
-                            const response = await fetch(
-                                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/members/me/profile`,
-                                {
-                                    method: 'PUT',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    credentials: 'include',
-                                    body: JSON.stringify({
-                                        ...editForm,
-                                        mkAlarm: newValue
-                                    })
-                                }
-                            );
-
-                            if (response.ok) {
-                                setEditForm({
-                                    ...editForm,
-                                    mkAlarm: newValue
-                                });
-                            }
-                        } catch (error) {
-                            console.error('업데이트 실패:', error);
-                        }
-                    }}
-                    className="w-5 h-5 text-primary rounded"
-                />
+        <div className="space-y-6">
+            <FormField
+                label="전화번호"
+                value={editForm.phoneNumber}
+                onChange={(value) => setEditForm({ ...editForm, phoneNumber: value })}
+                isEditing={isEditing}
+            />
+            <FormField
+                label="위치"
+                value={editForm.location}
+                onChange={(value) => setEditForm({ ...editForm, location: value })}
+                isEditing={isEditing}
+            />
+            <FormField
+                label="성별"
+                value={editForm.gender}
+                onChange={(value) => setEditForm({ ...editForm, gender: value })}
+                isEditing={isEditing}
+                type="select"
+                options={[
+                    { value: 'M', label: '남성' },
+                    { value: 'W', label: '여성' }
+                ]}
+            />
+            <FormField
+                label="생일"
+                value={editForm.birthday}
+                onChange={(value) => setEditForm({ ...editForm, birthday: value })}
+                isEditing={isEditing}
+                type="date"
+            />
+            <div className="border-b pb-3">
+                <label className="flex items-center text-base font-bold text-primary mb-1">
+                    <input
+                        type="checkbox"
+                        checked={editForm.mkAlarm}
+                        onChange={(e) => setEditForm({ ...editForm, mkAlarm: e.target.checked })}
+                        className="mr-2"
+                        disabled={!isEditing}
+                    />
+                    마케팅 수신 동의
+                </label>
             </div>
         </div>
     );
 };
 
-export default UserInfoForm;
+export default UserInfoForm; // default export 추가

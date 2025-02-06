@@ -1,4 +1,5 @@
 import { SocialAccount } from '../../types';
+
 import { useState } from 'react';
 import kakaoIcon from '../../../../assets/images/kakaotalk_simple_icon.png';
 import googleIcon from '../../../../assets/images/google_simple_icon.png';
@@ -41,8 +42,6 @@ const SocialAccountCard = ({ type, account, onSocialAction }: SocialAccountCardP
             );
 
             if (response.ok) {
-                // 소셜 연동 페이지로 이동하기 전에 콜백 등록
-                window.sessionStorage.setItem('needsUpdate', 'true');
                 window.location.href = `${socialLoginUrl}?redirectUrl=${redirectUrl}`;
             } else {
                 const errorData = await response.json();
