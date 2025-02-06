@@ -3,6 +3,7 @@ import { UserInfo } from '../../types';
 
 interface SocialAccountsProps {
     userInfo: UserInfo;
+    onUpdate: () => void;
 }
 
 const SocialAccounts = ({ userInfo, onUpdate }: SocialAccountsProps) => {

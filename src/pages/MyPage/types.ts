@@ -31,4 +31,5 @@ export interface EditFormData {
 export interface SocialAccount {
     active: boolean;
     createDate: string;
+    email: string | null;
 }

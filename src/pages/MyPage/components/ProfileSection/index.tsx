@@ -1,10 +1,10 @@
-import { useRef } from 'react';
+import { useState, useRef } from 'react';
+import { FiEdit2 } from 'react-icons/fi';
 import ProfileImage from './ProfileImage';
 import { UserInfo, EditFormData } from '../../types';
 
 interface ProfileSectionProps {
     userInfo: UserInfo;
-    isEditing: boolean;
     editForm: EditFormData;
     setEditForm: (form: EditFormData) => void;
     onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
