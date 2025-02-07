@@ -16,6 +16,7 @@ import ResetPassword from './pages/ResetPassword';
 import Notice from './pages/Notice';
 import NoticeDetail from './pages/NoticeDetail';
 import { AlertProvider } from './providers/AlertProvider';
+import FestivalDetail from "./pages/FestivalDetail.tsx";
 
 const App = () => {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -92,6 +93,7 @@ const App = () => {
                                                 )} />
                                                 <Route path="/mypage" element={<MyPage />} />
                                                 <Route path="/map" element={<FestivalMap />} />
+                                                <Route path="/detailposts" element={<FestivalDetail />} />
                                             </Routes>
                                         </div>
                                     </div>

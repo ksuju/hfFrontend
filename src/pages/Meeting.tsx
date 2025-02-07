@@ -275,6 +275,7 @@ const Meeting = () => {
                 console.log('Successfully left the chat room');
                 setIsConfirmLeaveOpen(null); // Close the confirmation popup
                 // 나가기 후 최신 데이터 다시 불러오기
+                await fetchUserInfo();
                 await fetchMeetingPosts(0);
             } else {
                 console.error('Error leaving chat room');
