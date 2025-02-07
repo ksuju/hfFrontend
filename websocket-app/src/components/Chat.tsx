@@ -556,9 +556,12 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
 
                 {/* 메시지 목록 */}
                 <div className="flex-grow flex flex-col justify-end" style={{ flexGrow: 1 }}>
-                    {messages.slice().reverse().filter(filterMessagesBySearch).map((msg, index) => {
+                    {messages.slice().reverse().filter(filterMessagesBySearch).map((msg, index, array) => {
                         const isMyMessage = msg.nickname === currentUserNickname;
                         const readCount = msg.messageId ? messageReadCounts[msg.messageId] || 0 : 0;
+                        // 이전 메시지와 닉네임이 다르면 닉네임 표시
+                        const prevMessage = array[index - 1];
+                        const showNickname = !isMyMessage && (!prevMessage || prevMessage.nickname !== msg.nickname);
 
                         return (
                             <div
@@ -570,6 +573,17 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                                     margin: '8px 0'
                                 }}
                             >
+                                {/* 닉네임 표시 (자신의 메시지가 아닐 때만) */}
+                                {showNickname && (
+                                    <span style={{
+                                        fontSize: '0.8rem',
+                                        color: '#666',
+                                        marginBottom: '4px',
+                                        marginLeft: '8px'
+                                    }}>
+                                        {msg.nickname}
+                                    </span>
+                                )}
                                 <div style={{
                                     display: 'flex',
                                     flexDirection: isMyMessage ? 'row-reverse' : 'row',
@@ -616,9 +630,9 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
 
                 {/* 새 메시지 알림 및 스크롤 버튼 */}
                 {showScrollButton && (
-                    <div 
-                    className="sticky bottom-0 left-0 right-0 flex justify-center"
-                    style={{}}>
+                    <div
+                        className="sticky bottom-0 left-0 right-0 flex justify-center"
+                        style={{}}>
                         <button
                             onClick={() => scrollToBottom(true)}
                             className="bg-primary text-white px-4 py-2 rounded-full shadow-lg hover:bg-opacity-90 flex items-center gap-2"
