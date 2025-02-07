@@ -26,6 +26,7 @@ interface ApiResponse {
 // 응답 타입 정의
 interface CommentResponse {
     resultCode: string;
+    msg: string;
     data: Comment;
 }
 
@@ -34,11 +35,6 @@ interface UserInfo {
     id: number;
     email: string;
 }
-
-// userInfo 타입 지정
-const userInfo = localStorage.getItem('userInfo') ? 
-    JSON.parse(localStorage.getItem('userInfo')!).data as UserInfo : 
-    null;
 
 const NoticeDetail = () => {
     const { id } = useParams();
@@ -50,6 +46,36 @@ const NoticeDetail = () => {
     const [editContent, setEditContent] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+
+    useEffect(() => {
+        const checkLoginStatus = async () => {
+            try {
+                const response = await fetch(import.meta.env.VITE_CORE_API_BASE_URL + "/api/v1/auth/me", {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    setIsLoggedIn(true);
+                    setUserInfo(data.data);
+                    localStorage.setItem('isLoggedIn', 'true');
+                    localStorage.setItem('userInfo', JSON.stringify(data));
+                }
+            } catch (error) {
+                console.error('인증 체크 에러:', error);
+                setIsLoggedIn(false);
+                setUserInfo(null);
+            }
+        };
+
+        checkLoginStatus();
+    }, []);
 
     // 게시글 상세 정보 조회
     useEffect(() => {
@@ -94,7 +120,7 @@ const NoticeDetail = () => {
         if (!newComment.trim()) return;
 
         try {
-            const response = await axios.post(
+            const response = await axios.post<CommentResponse>(
                 `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/boardComment/create/${id}`,
                 { content: newComment },
                 {
@@ -119,7 +145,7 @@ const NoticeDetail = () => {
         if (!editContent.trim()) return;
 
         try {
-            const response = await axios.patch(
+            const response = await axios.patch<CommentResponse>(
                 `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/boardComment/modify/${commentId}`,
                 { content: editContent },
                 {
@@ -146,7 +172,7 @@ const NoticeDetail = () => {
         if (!window.confirm('댓글을 삭제하시겠습니까?')) return;
 
         try {
-            const response = await axios.delete(
+            const response = await axios.delete<CommentResponse>(
                 `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/boardComment/delete/${commentId}`,
                 {
                     withCredentials: true,
@@ -167,12 +193,12 @@ const NoticeDetail = () => {
     if (isLoading) return <div className="p-4 text-center">Loading...</div>;
 
     return (
-        <div className="flex flex-col min-h-screen">
-            <Header isLoggedIn={!!userInfo} setIsLoggedIn={() => {}} />
-            <main className="flex-1 mt-16 mb-16">
-                <div className="max-w-[600px] lg:max-w-screen-lg mx-auto lg:py-6">
-                    <div className="bg-white lg:rounded-2xl lg:shadow-md">
-                        <div className="p-8">
+        <>
+            <Header isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />
+            <main className="flex-1 mt-[72px] mb-16">
+                <div className="max-w-[600px] lg:max-w-screen-lg mx-auto">
+                    <div className="bg-white rounded-lg shadow-sm">
+                        <div className="p-6">
                             <div className="mb-8">
                                 <button
                                     onClick={() => navigate('/notice')}
@@ -199,7 +225,7 @@ const NoticeDetail = () => {
                                 <h3 className="text-lg font-bold mb-4">댓글</h3>
                                 
                                 {/* 댓글 작성 폼 */}
-                                {userInfo && (
+                                {isLoggedIn && (
                                     <form onSubmit={handleCommentSubmit} className="mb-6">
                                         <textarea
                                             value={newComment}
@@ -258,21 +284,25 @@ const NoticeDetail = () => {
                                                     </div>
                                                     <p className="text-gray-700">{comment.content}</p>
                                                     <div className="flex justify-end gap-2 mt-2">
-                                                        <button
-                                                            onClick={() => {
-                                                                setEditingCommentId(comment.id);
-                                                                setEditContent(comment.content);
-                                                            }}
-                                                            className="text-sm text-gray-500 hover:text-primary"
-                                                        >
-                                                            수정
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleCommentDelete(comment.id)}
-                                                            className="text-sm text-red-500 hover:text-red-600"
-                                                        >
-                                                            삭제
-                                                        </button>
+                                                        {userInfo && (
+                                                            <>
+                                                                <button
+                                                                    onClick={() => {
+                                                                        setEditingCommentId(comment.id);
+                                                                        setEditContent(comment.content);
+                                                                    }}
+                                                                    className="text-sm text-gray-500 hover:text-primary"
+                                                                >
+                                                                    수정
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleCommentDelete(comment.id)}
+                                                                    className="text-sm text-red-500 hover:text-red-600"
+                                                                >
+                                                                    삭제
+                                                                </button>
+                                                            </>
+                                                        )}
                                                     </div>
                                                 </div>
                                             )}
@@ -285,7 +315,7 @@ const NoticeDetail = () => {
                 </div>
             </main>
             <Footer />
-        </div>
+        </>
     );
 };
 

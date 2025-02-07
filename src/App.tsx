@@ -72,7 +72,6 @@ const App = () => {
                     <Route path="/signup" element={<Signup />} />
                     <Route path="/find-account" element={<FindAccount />} />
                     <Route path="/reset-password" element={<ResetPassword />} />
-                    <Route path="/notice/:id" element={<NoticeDetail />} />
                     <Route path="/*" element={
                         <div className="flex flex-col min-h-screen">
                             <Header isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />
@@ -84,6 +83,7 @@ const App = () => {
                                             <Route path="/posts" element={<Festival />} />
                                             <Route path="/chatroom" element={<Meeting />} />
                                             <Route path="/notice" element={<Notice />} />
+                                            <Route path="/notice/:id" element={<NoticeDetail />} />
                                             <Route path="/chat/:chatRoomId" element={userInfo ? (
                                                 <Chat memberId={userInfo.id} />
                                             ) : (
