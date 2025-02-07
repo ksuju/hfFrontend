@@ -18,14 +18,30 @@ const NoticeManagement = () => {
 
     const fetchNotices = async (page: number = 0) => {
         try {
+            const pageSize = 10;
             const response = await fetch(
-                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/boards?page=${page}&size=10`,
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/boards?page=${page}&size=${pageSize}`,
                 { credentials: 'include' }
             );
             if (response.ok) {
                 const data = await response.json();
-                setNotices(data.data.content);
-                setTotalPages(data.data.totalPages);
+                const content = data.data.content;
+                const remainingItems = pageSize - content.length;
+                
+                // 마지막 페이지에서 빈 항목 채우기
+                if (remainingItems > 0 && content.length > 0) {
+                    const emptyItems = Array(remainingItems).fill({
+                        id: -1,
+                        title: '',
+                        content: '',
+                        createDate: ''
+                    });
+                    setNotices([...content, ...emptyItems]);
+                } else {
+                    setNotices(content);
+                }
+                
+                setTotalPages(Math.max(1, data.data.page.totalPages));
             }
         } catch (error) {
             console.error('공지사항 목록 조회 실패:', error);
@@ -63,8 +79,10 @@ const NoticeManagement = () => {
     };
 
     const handlePageChange = (page: number) => {
-        setCurrentPage(page);
-        fetchNotices(page);
+        if (page >= 0 && page < totalPages) {
+            setCurrentPage(page);
+            fetchNotices(page);
+        }
     };
 
     const handleWriteClick = () => {
@@ -104,30 +122,31 @@ const NoticeManagement = () => {
                 </thead>
                 <tbody>
                     {notices.map(notice => (
-                        <tr key={notice.id} className="border-b">
-                            <td className="p-4">{notice.id}</td>
-                            <td className="p-4">{notice.title}</td>
-                            <td className="p-4">{new Date(notice.createDate).toLocaleDateString()}</td>
-                            <td className="p-4">
-                                <button 
-                                    onClick={() => navigate(`/admin/notice/edit/${notice.id}`)}
-                                    className="text-blue-500 hover:text-blue-700 mr-2"
-                                >
-                                    수정
-                                </button>
-                                <button 
-                                    onClick={() => handleDelete(notice.id)}
-                                    className="text-red-500 hover:text-red-700"
-                                >
-                                    삭제
-                                </button>
-                            </td>
-                        </tr>
+                        notice.id !== -1 ? (  // 빈 항목이 아닌 경우에만 렌더링
+                            <tr key={notice.id} className="border-b">
+                                <td className="p-4">{notice.id}</td>
+                                <td className="p-4">{notice.title}</td>
+                                <td className="p-4">{new Date(notice.createDate).toLocaleDateString()}</td>
+                                <td className="p-4">
+                                    <button 
+                                        onClick={() => navigate(`/admin/notice/edit/${notice.id}`)}
+                                        className="text-blue-500 hover:text-blue-700 mr-2"
+                                    >
+                                        수정
+                                    </button>
+                                    <button 
+                                        onClick={() => handleDelete(notice.id)}
+                                        className="text-red-500 hover:text-red-700"
+                                    >
+                                        삭제
+                                    </button>
+                                </td>
+                            </tr>
+                        ) : null
                     ))}
                 </tbody>
             </table>
 
-            {/* 페이지네이션 추가 */}
             <div className="mt-4">
                 <Pagination
                     currentPage={currentPage}

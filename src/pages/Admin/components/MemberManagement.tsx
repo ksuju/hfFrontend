@@ -89,37 +89,6 @@ const MemberManagement = () => {
         }
     };
 
-    const handleStatusChange = async (memberId: number, currentRole: string) => {
-        // ROLE_USER <-> ROLE_BANNED 전환
-        const newRole = currentRole === 'ROLE_BANNED' ? 'ROLE_USER' : 'ROLE_BANNED';
-        
-        try {
-            const response = await fetch(
-                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/reports/${memberId}/change-role`,
-                {
-                    method: 'PATCH',
-                    credentials: 'include',
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ role: newRole })
-                }
-            );
-
-            if (response.ok) {
-                alert(`회원 상태가 ${newRole === 'ROLE_BANNED' ? '차단' : '활성화'} 되었습니다.`);
-                fetchMembers();  // 목록 새로고침
-            } else {
-                const errorData = await response.json();
-                alert(errorData.msg || '회원 상태 변경에 실패했습니다.');
-            }
-        } catch (error) {
-            console.error('회원 상태 변경 실패:', error);
-            alert('회원 상태 변경 중 오류가 발생했습니다.');
-        }
-    };
-
     const getRoleBadgeStyle = (role: string) => {
         switch (role) {
             case 'ROLE_ADMIN':
