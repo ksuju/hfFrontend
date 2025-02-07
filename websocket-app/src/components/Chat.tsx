@@ -611,7 +611,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                     {/* 기존 메시지 목록 렌더링 */}
                     {isSearchMode && hasMore && (
                         <button onClick={loadMoreSearchResults} className="w-full p-2 text-primary hover:bg-gray-50">
-                            이전 검색 결과 더보기
+                            이전 메시지 더보기
                         </button>
                     )}
 
