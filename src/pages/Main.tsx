@@ -863,7 +863,8 @@ const Main = () => {
 
                                 {/* 수정하기 팝업 */}
                                 {isEditPopupOpen && (
-                                    <div className="fixed inset-0 bg-gray-500 bg-opacity-10 flex justify-center items-center z-20">
+                                    <div className="fixed inset-0 bg-gray-500 bg-opacity-10 flex justify-center items-center z-20"
+                                         onClick={(e) => e.stopPropagation()}>
                                         <div className="bg-white w-2/3 h-4/7 p-6 rounded-lg shadow-md flex flex-col">
                                             <h3 className="text-lg font-semibold mb-4">채팅방 수정</h3>
 
