@@ -44,7 +44,7 @@ const Meeting = () => {
     const [isManagePopupOpen, setIsManagePopupOpen] = useState(false);
     const [isEditPopupOpen, setIsEditPopupOpen] = useState(false);
     const [editRoomData, setEditRoomData] = useState({title: "", content: "", limit: 10,});
-    const [activeTab, setActiveTab] = useState("참여자 목록");
+    const [activeTab, setActiveTab] = useState("참여자");
     const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
     const selectedMeeting = meetingPosts.find(meeting => meeting.chatRoomId === selectedRoomId);
     const currentUserID = currentUser?.id ?? ""; // 기본값을 빈 문자열로 설정하여 undefined 방지
