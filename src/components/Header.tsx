@@ -1,6 +1,7 @@
 // Header.tsx
 import { Link } from 'react-router-dom'
 import logo from '../assets/images/logo.png'
+import { AlertBell } from './AlertBell';
 
 interface HeaderProps {
     isLoggedIn: boolean;
@@ -13,18 +14,18 @@ const Header = ({ isLoggedIn, setIsLoggedIn }: HeaderProps) => {
     const handleLogout = async () => {
         try {
             const memberId = userInfo?.data?.id; // userInfo에서 사용자 ID 추출
-            
+
             const response = await fetch(
                 `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/auth/logout`, {
-                    method: 'POST',
-                    credentials: 'include',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ 
-                        memberId: memberId 
-                    })
-                }
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    memberId: memberId
+                })
+            }
             );
 
             if (response.ok) {
@@ -66,6 +67,7 @@ const Header = ({ isLoggedIn, setIsLoggedIn }: HeaderProps) => {
                         </>
                     ) : (
                         <div className="flex items-center gap-4">
+                            <AlertBell />
                             <div className="flex items-center gap-2">
                                 <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
                                     {userInfo?.data?.profilePath ? (
