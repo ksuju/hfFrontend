@@ -17,6 +17,8 @@ import Notice from './pages/Notice'
 import NoticeDetail from './pages/NoticeDetail'
 import { AlertProvider } from './providers/AlertProvider'
 import Admin from './pages/Admin'
+import NoticeWrite from './pages/Admin/components/NoticeWrite'
+import NoticeEdit from './pages/Admin/components/NoticeEdit'
 
 // ProtectedAdminRoute 컴포넌트 추가
 const ProtectedAdminRoute = () => {
@@ -105,6 +107,8 @@ const App = () => {
                     <Route path="/reset-password" element={<ResetPassword />} />
                     <Route path="/notice/:id" element={<NoticeDetail />} />
                     <Route path="/admin/*" element={<ProtectedAdminRoute />} />
+                    <Route path="/admin/notice/write" element={<NoticeWrite />} />
+                    <Route path="/admin/notice/edit/:id" element={<NoticeEdit />} />
                     <Route path="/*" element={
                         <AlertProvider>
                             <div className="flex flex-col min-h-screen">
