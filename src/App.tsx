@@ -16,7 +16,6 @@ import ResetPassword from './pages/ResetPassword';
 import Notice from './pages/Notice';
 import NoticeDetail from './pages/NoticeDetail';
 
-
 const App = () => {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     console.log('App 컴포넌트 렌더링');
