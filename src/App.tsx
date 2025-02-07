@@ -15,7 +15,7 @@ import FindAccount from './pages/FindAccount';
 import ResetPassword from './pages/ResetPassword';
 import Notice from './pages/Notice';
 import NoticeDetail from './pages/NoticeDetail';
-
+import { AlertProvider } from './providers/AlertProvider';
 
 const App = () => {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -60,8 +60,8 @@ const App = () => {
     }, []);
 
     // localStorage에서 memberId 가져오기 (채팅 테스트)
-    const userInfo = localStorage.getItem('userInfo') 
-        ? JSON.parse(localStorage.getItem('userInfo')!).data 
+    const userInfo = localStorage.getItem('userInfo')
+        ? JSON.parse(localStorage.getItem('userInfo')!).data
         : null;
 
     return (
@@ -74,29 +74,31 @@ const App = () => {
                     <Route path="/reset-password" element={<ResetPassword />} />
                     <Route path="/notice/:id" element={<NoticeDetail />} />
                     <Route path="/*" element={
-                        <div className="flex flex-col min-h-screen">
-                            <Header isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />
-                            <main className="flex-1 mt-16 mb-16">
-                                <div className="max-w-[600px] lg:max-w-screen-lg mx-auto lg:py-6">
-                                    <div className="bg-white lg:rounded-2xl lg:shadow-md">
-                                        <Routes>
-                                            <Route path="/" element={<Main />} />
-                                            <Route path="/posts" element={<Festival />} />
-                                            <Route path="/chatroom" element={<Meeting />} />
-                                            <Route path="/notice" element={<Notice />} />
-                                            <Route path="/chat/:chatRoomId" element={userInfo ? (
-                                                <Chat memberId={userInfo.id} />
-                                            ) : (
-                                                <Navigate to="/login" replace />
-                                            )} />
-                                            <Route path="/mypage" element={<MyPage />} />
-                                            <Route path="/map" element={<FestivalMap />} />
-                                        </Routes>
+                        <AlertProvider>
+                            <div className="flex flex-col min-h-screen">
+                                <Header isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />
+                                <main className="flex-1 mt-16 mb-16">
+                                    <div className="max-w-[600px] lg:max-w-screen-lg mx-auto lg:py-6">
+                                        <div className="bg-white lg:rounded-2xl lg:shadow-md">
+                                            <Routes>
+                                                <Route path="/" element={<Main />} />
+                                                <Route path="/posts" element={<Festival />} />
+                                                <Route path="/chatroom" element={<Meeting />} />
+                                                <Route path="/notice" element={<Notice />} />
+                                                <Route path="/chat/:chatRoomId" element={userInfo ? (
+                                                    <Chat memberId={userInfo.id} />
+                                                ) : (
+                                                    <Navigate to="/login" replace />
+                                                )} />
+                                                <Route path="/mypage" element={<MyPage />} />
+                                                <Route path="/map" element={<FestivalMap />} />
+                                            </Routes>
+                                        </div>
                                     </div>
-                                </div>
-                            </main>
-                            <Footer />
-                        </div>
+                                </main>
+                                <Footer />
+                            </div>
+                        </AlertProvider>
                     } />
                 </Routes>
             </div>
