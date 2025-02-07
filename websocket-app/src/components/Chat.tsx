@@ -144,13 +144,11 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                 if (response.data.data.content.length > 0) {
                     const latestMessage = response.data.data.content[0]; // 가장 최신 메시지
                     if (latestMessage.messageId) {  // id 필드 추가 필요
-                        updateMessageReadStatus(latestMessage.messageId);
-                        setTimeout(() => {
-                            fetchMessageCount();
-                        }, 100); // 0.1초 딜레이 (연속된 요청으로 인한 에러 방지)
+                        await updateMessageReadStatus(latestMessage.messageId);
+                        await fetchMessageCount();
                     }
                 }
-                updateMemberLoginStatus();    // 채팅방 멤버의 로그인 상태 가져오기
+                await updateMemberLoginStatus();    // 채팅방 멤버의 로그인 상태 가져오기
                 setTimeout(() => scrollToBottom(true), 100);
             } else {
                 setMessages(prev => [...prev, ...response.data.data.content]);
@@ -194,7 +192,6 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                 { withCredentials: true }
             );
             setMemberStatusList(response.data.data); // data 필드에서 멤버 상태 배열 추출
-            console.log(memberStatusList);
         } catch (error) {
             console.error('유저 로그인 상태 조회 실패:', error);
         }
