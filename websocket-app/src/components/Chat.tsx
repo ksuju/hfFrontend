@@ -3,6 +3,8 @@ import { useParams } from 'react-router-dom';
 import { Client } from '@stomp/stompjs';
 import axios from 'axios';
 import send from "../assets/images/send.png"
+import memberList from "../assets/images/memberList.png"
+
 
 interface ChatMessage {
     messageId?: number;
@@ -69,6 +71,8 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
     // 메시지 읽음 카운트 상태 추가
     const [messageReadCounts, setMessageReadCounts] = useState<{ [key: number]: number }>({});
     const [showScrollButton, setShowScrollButton] = useState(false);
+    // 상태 추가
+    const [showParticipants, setShowParticipants] = useState(false);
 
     // 메시지 스크롤 함수
     const scrollToBottom = (force: boolean = false) => {
@@ -473,9 +477,31 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
         const [keyword, setKeyword] = useState("");
         const [nickname, setNickname] = useState("");
 
+        // 검색 처리 함수 수정
         const handleSubmit = (e: React.FormEvent) => {
             e.preventDefault();
-            onSearch(keyword, nickname);
+
+            // '홍길동', 커피 형식의 패턴 매칭
+            const nicknameContentPattern = /^['"]([^'"]+)['"],\s*(.+)$/;
+            const match = keyword.match(nicknameContentPattern);
+
+            let searchKeyword = keyword;
+            let searchNickname = "";
+
+            if (match) {
+                // 매칭된 경우 닉네임과 검색어 분리
+                searchNickname = match[1];    // 따옴표 안의 닉네임
+                searchKeyword = match[2];     // 쉼표 뒤의 검색어
+            } else {
+                // 기존 'nickname:홍길동' 형식 처리
+                const nicknameMatch = keyword.match(/'([^']+)'/);
+                if (nicknameMatch) {
+                    searchNickname = nicknameMatch[1];
+                    searchKeyword = keyword.replace(/'.+?'/, '').trim();
+                }
+            }
+
+            onSearch(searchKeyword, searchNickname);
         };
 
         const handleReset = () => {
@@ -500,15 +526,8 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                             type="text"
                             value={keyword}
                             onChange={(e) => setKeyword(e.target.value)}
-                            placeholder="검색할 내용을 입력하세요"
+                            placeholder="검색어 입력 (닉네임 검색: '홍길동', 검색어)"
                             className="flex-1 h-10 px-3 border border-gray-300 rounded-lg focus:outline-none focus:border-primary"
-                        />
-                        <input
-                            type="text"
-                            value={nickname}
-                            onChange={(e) => setNickname(e.target.value)}
-                            placeholder="닉네임 (선택사항)"
-                            className="w-32 h-10 px-3 border border-gray-300 rounded-lg focus:outline-none focus:border-primary"
                         />
                         <button
                             type="submit"
@@ -523,266 +542,247 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                         >
                             초기화
                         </button>
+                        <button
+                            type="button"
+                            onClick={() => setShowParticipants(prev => !prev)}
+                            className="h-10 px-4 border border-gray-300 text-gray-600 rounded-lg flex items-center gap-2"
+                            style={{
+                                backgroundColor: showParticipants ? '#F26A2E' : 'transparent',
+                                color: showParticipants ? 'white' : '#F26A2E',
+                            }}
+                        >
+                            <span className="transition-colors duration-300" style={{ display: 'inline-block' }}>
+                                <img
+                                    src={memberList}
+                                    alt="멤버리스트"
+                                    style={{
+                                        width: '20px',
+                                        height: '20px',
+                                        filter: showParticipants ? 'brightness(0) invert(1)' : 'none', // 아이콘 색을 흰색으로
+                                    }}
+                                />
+                            </span>
+                        </button>
                     </div>
                 </form>
             </div>
         );
     };
 
+    // 메인 컨테이너
     return (
-        <div className="messages-container">
-            <ChatSearch onSearch={(keyword, nickname) => messageSearch(keyword, nickname, 0)} />
-            <div
-                className="messages-list relative flex flex-col"
-                ref={messagesListRef}
-                style={{
-                    height: "400px",
-                    overflowY: "auto",
-                    display: "flex",
-                    flexDirection: "column",
-                    // paddingBottom: "60px", // 하단 여백 추가
-                    padding: "20px"
-                }}
-            >
-                {/* 이전 메시지 더보기 버튼*/}
-                {!isSearchMode && hasMore && (
-                    <button
-                        onClick={loadMoreMessages}
-                        className="w-full p-2 text-primary hover:bg-gray-50 mb-4"
-                    >
-                        이전 메시지 더보기
-                    </button>
-                )}
-
-                {/* 메시지 목록 */}
-                <div className="flex-grow flex flex-col justify-end" style={{ flexGrow: 1 }}>
-                    {messages.slice().reverse().filter(filterMessagesBySearch).map((msg, index, array) => {
-                        const isMyMessage = msg.nickname === currentUserNickname;
-                        const readCount = msg.messageId ? messageReadCounts[msg.messageId] || 0 : 0;
-                        // 이전 메시지와 닉네임이 다르면 닉네임 표시
-                        const prevMessage = array[index - 1];
-                        const showNickname = !isMyMessage && (!prevMessage || prevMessage.nickname !== msg.nickname);
-
-                        return (
-                            <div
-                                key={index}
-                                style={{
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: isMyMessage ? 'flex-end' : 'flex-start',
-                                    margin: '8px 0'
-                                }}
-                            >
-                                {/* 닉네임 표시 (자신의 메시지가 아닐 때만) */}
-                                {showNickname && (
-                                    <span style={{
-                                        fontSize: '0.8rem',
-                                        color: '#666',
-                                        marginBottom: '4px',
-                                        marginLeft: '8px'
-                                    }}>
-                                        {msg.nickname}
-                                    </span>
-                                )}
-                                <div style={{
-                                    display: 'flex',
-                                    flexDirection: isMyMessage ? 'row-reverse' : 'row',
-                                    alignItems: 'flex-end',
-                                    gap: '8px'
-                                }}>
-                                    <div style={{
-                                        background: isMyMessage ? '#F26A2E' : '#e9ecef',
-                                        color: isMyMessage ? 'white' : 'black',
-                                        padding: '8px 12px',
-                                        borderRadius: isMyMessage ? '15px 15px 0 15px' : '15px 15px 15px 0',
-                                        maxWidth: '70%',
-                                        wordBreak: 'break-word'
-                                    }}>
-                                        {highlightKeyword(msg.chatMessageContent, searchKeyword)}
-                                    </div>
-                                    <div style={{
-                                        fontSize: '0.75rem',
-                                        color: '#6c757d',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        gap: '2px',
-                                        alignItems: isMyMessage ? 'flex-end' : 'flex-start'
-                                    }}>
-                                        {readCount > 0 && (
-                                            <span style={{ color: '#F26A2E', fontSize: '0.7rem' }}>
-                                                {readCount}
-                                            </span>
-                                        )}
-                                        <span>{formatMessageTime(msg.messageTimestamp)}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-
-                {/* 기존 메시지 목록 렌더링 */}
-                {isSearchMode && hasMore && (
-                    <button onClick={loadMoreSearchResults} className="w-full p-2 text-primary hover:bg-gray-50">
-                        이전 검색 결과 더보기
-                    </button>
-                )}
-
-                {/* 새 메시지 알림 및 스크롤 버튼 */}
-                {showScrollButton && (
-                    <div
-                        className="sticky bottom-0 left-0 right-0 flex justify-center"
-                        style={{}}>
-                        <button
-                            onClick={() => scrollToBottom(true)}
-                            className="bg-primary text-white px-4 py-2 rounded-full shadow-lg hover:bg-opacity-90 flex items-center gap-2"
-                        >
-                            새 메시지
-                        </button>
-                    </div>
-                )}
-            </div>
-            <div className="message-input" style={{
-                display: 'flex',
-                gap: '8px',
-                padding: '10px',
-                borderTop: '1px solid #ddd'
-            }}>
-                <input
-                    type="text"
-                    value={messageInput}
-                    onChange={(e) => setMessageInput(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                    placeholder="메시지를 입력하세요..."
-                    maxLength={250}
+        <div className="messages-container flex">
+            {/* 채팅 영역 */}
+            <div className="flex-1"> {/* flex-1로 남은 공간 채움 */}
+                <ChatSearch onSearch={(keyword, nickname) => messageSearch(keyword, nickname, 0)} />
+                <div
+                    className="messages-list relative flex flex-col"
+                    ref={messagesListRef}
                     style={{
-                        flex: 1,
-                        padding: '8px',
-                        borderRadius: '4px',
-                        border: '1px solid #ddd',
-                        outline: 'none' // 기본 포커스 테두리 제거
-                    }}
-                    onFocus={(e) => e.target.style.border = '1px solid #F26A2E'} // 포커스 시 테두리 색상
-                    onBlur={(e) => e.target.style.border = '1px solid #ddd'} // 포커스 해제 시 원래 색상
-                />
-                <button
-                    onClick={sendMessage}
-                    style={{
-                        padding: '8px',
-                        backgroundColor: 'transparent',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
+                        height: "400px",
+                        overflowY: "auto",
+                        display: "flex",
+                        flexDirection: "column",
+                        padding: "20px"
                     }}
                 >
-                    <img
-                        src={send}
-                        alt="전송"
-                        style={{
-                            width: '24px',
-                            height: '24px',
-                            filter: messageInput.trim()
-                                ? 'invert(47%) sepia(82%) saturate(2604%) hue-rotate(337deg) brightness(97%) contrast(92%)'
-                                : 'opacity(0.5)'
-                        }}
-                    />
-                </button>
-            </div>
-            {/* 참여자 리스트 섹션 */}
-            <div style={{
-                marginTop: "20px",
-                padding: "15px",
-                borderTop: "1px solid #ddd",
-                backgroundColor: "#fff",
-                borderRadius: "8px"
-            }}>
-                <h3 style={{
-                    fontSize: "1rem",
-                    color: "#333",
-                    marginBottom: "12px",
-                    fontWeight: "600"
-                }}>참여자 리스트</h3>
+                    {/* 이전 메시지 더보기 버튼*/}
+                    {!isSearchMode && hasMore && (
+                        <button
+                            onClick={loadMoreMessages}
+                            className="w-full p-2 text-primary hover:bg-gray-50 mb-4"
+                        >
+                            이전 메시지 더보기
+                        </button>
+                    )}
 
-                {/* 온라인 멤버 */}
-                <div style={{ marginBottom: "16px" }}>
-                    <h4 style={{
-                        fontSize: "0.9rem",
-                        color: "#4CAF50",
-                        marginBottom: "8px"
-                    }}>
-                        온라인
-                    </h4>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                    {/* 기존 메시지 목록 렌더링 */}
+                    {isSearchMode && hasMore && (
+                        <button onClick={loadMoreSearchResults} className="w-full p-2 text-primary hover:bg-gray-50">
+                            이전 검색 결과 더보기
+                        </button>
+                    )}
+
+                    {/* 메시지 목록 */}
+                    <div className="flex-grow flex flex-col justify-end" style={{ flexGrow: 1 }}>
+                        {messages.slice().reverse().filter(filterMessagesBySearch).map((msg, index, array) => {
+                            const isMyMessage = msg.nickname === currentUserNickname;
+                            const readCount = msg.messageId ? messageReadCounts[msg.messageId] || 0 : 0;
+                            // 이전 메시지와 닉네임이 다르면 닉네임 표시
+                            const prevMessage = array[index - 1];
+                            const showNickname = !isMyMessage && (!prevMessage || prevMessage.nickname !== msg.nickname);
+
+                            return (
+                                <div
+                                    key={index}
+                                    style={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: isMyMessage ? 'flex-end' : 'flex-start',
+                                        margin: '8px 0'
+                                    }}
+                                >
+                                    {/* 닉네임 표시 (자신의 메시지가 아닐 때만) */}
+                                    {showNickname && (
+                                        <span style={{
+                                            fontSize: '0.8rem',
+                                            color: '#666',
+                                            marginBottom: '4px',
+                                            marginLeft: '8px'
+                                        }}>
+                                            {msg.nickname}
+                                        </span>
+                                    )}
+                                    <div style={{
+                                        display: 'flex',
+                                        flexDirection: isMyMessage ? 'row-reverse' : 'row',
+                                        alignItems: 'flex-end',
+                                        gap: '8px'
+                                    }}>
+                                        <div style={{
+                                            background: isMyMessage ? '#F26A2E' : '#e9ecef',
+                                            color: isMyMessage ? 'white' : 'black',
+                                            padding: '8px 12px',
+                                            borderRadius: isMyMessage ? '15px 15px 0 15px' : '15px 15px 15px 0',
+                                            maxWidth: '70%',
+                                            wordBreak: 'break-word'
+                                        }}>
+                                            {highlightKeyword(msg.chatMessageContent, searchKeyword)}
+                                        </div>
+                                        <div style={{
+                                            fontSize: '0.75rem',
+                                            color: '#6c757d',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            gap: '2px',
+                                            alignItems: isMyMessage ? 'flex-end' : 'flex-start'
+                                        }}>
+                                            {readCount > 0 && (
+                                                <span style={{ color: '#F26A2E', fontSize: '0.7rem' }}>
+                                                    {readCount}
+                                                </span>
+                                            )}
+                                            <span>{formatMessageTime(msg.messageTimestamp)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    {/* 새 메시지 알림 및 스크롤 버튼 */}
+                    {showScrollButton && (
+                        <div
+                            className="sticky bottom-0 left-0 right-0 flex justify-center"
+                        >
+                            <button
+                                onClick={() => scrollToBottom(true)}
+                                className="bg-primary text-white px-4 py-2 rounded-full shadow-lg hover:bg-opacity-90 flex items-center gap-2"
+                            >
+                                새 메시지
+                            </button>
+                        </div>
+                    )}
+                </div>
+
+                {/* 메시지 입력창 */}
+                <div className="message-input" style={{
+                    display: 'flex',
+                    gap: '8px',
+                    padding: '10px',
+                    borderTop: '1px solid #ddd'
+                }}>
+                    <input
+                        type="text"
+                        value={messageInput}
+                        onChange={(e) => setMessageInput(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                        placeholder="메시지를 입력하세요..."
+                        maxLength={250}
+                        style={{
+                            flex: 1,
+                            padding: '8px',
+                            borderRadius: '4px',
+                            border: '1px solid #ddd',
+                            outline: 'none' // 기본 포커스 테두리 제거
+                        }}
+                        onFocus={(e) => e.target.style.border = '1px solid #F26A2E'} // 포커스 시 테두리 색상
+                        onBlur={(e) => e.target.style.border = '1px solid #ddd'} // 포커스 해제 시 원래 색상
+                    />
+                    <button
+                        onClick={sendMessage}
+                        style={{
+                            padding: '8px',
+                            backgroundColor: 'transparent',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}
+                    >
+                        <img
+                            src={send}
+                            alt="전송"
+                            style={{
+                                width: '24px',
+                                height: '24px',
+                                filter: messageInput.trim()
+                                    ? 'invert(47%) sepia(82%) saturate(2604%) hue-rotate(337deg) brightness(97%) contrast(92%)'
+                                    : 'opacity(0.5)'
+                            }}
+                        />
+                    </button>
+                </div>
+            </div>
+
+            {/* 참여자 목록 섹션 */}
+            {showParticipants && (
+                <div className="w-64 border-l border-gray-200 p-4 bg-white">
+                    <h3 className="text-lg font-semibold mb-4">참여자 목록</h3>
+
+                    {/* 온라인 멤버 */}
+                    <div className="space-y-2 mb-4">
                         {memberStatusList
                             .filter(status => status.userLoginStatus === "LOGIN")
                             .map((status, index) => (
-                                <div key={index} style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    padding: "8px 12px",
-                                    backgroundColor: "#f8f9fa",
-                                    borderRadius: "20px",
-                                    gap: "8px",
-                                    fontSize: "0.9rem",
-                                    border: "1px solid #e9ecef"
-                                }}>
-                                    <span style={{
-                                        width: "8px",
-                                        height: "8px",
-                                        borderRadius: "50%",
-                                        backgroundColor: "#4CAF50",
-                                        display: "inline-block",
-                                        boxShadow: "0 0 0 2px rgba(76, 175, 80, 0.2)"
-                                    }} />
-                                    <span style={{ fontWeight: "500", color: "#424242" }}>
-                                        {status.nickname}
-                                    </span>
+                                <div key={index} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded-lg">
+                                    <div
+                                        className="w-2 h-2 rounded-full animate-pulse"
+                                        style={{
+                                            backgroundColor: '#22c55e',
+                                            boxShadow: '0 0 4px #22c55e',
+                                            minWidth: '8px',
+                                            minHeight: '8px'
+                                        }}
+                                    />
+                                    <span className="text-sm text-gray-700">{status.nickname}</span>
                                 </div>
                             ))}
                     </div>
-                </div>
 
-                {/* 오프라인 멤버 */}
-                <div>
-                    <h4 style={{
-                        fontSize: "0.9rem",
-                        color: "#9e9e9e",
-                        marginBottom: "8px"
-                    }}>
-                        오프라인
-                    </h4>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                    {/* 오프라인 멤버 */}
+                    <div className="space-y-2">
                         {memberStatusList
                             .filter(status => status.userLoginStatus !== "LOGIN")
                             .map((status, index) => (
-                                <div key={index} style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    padding: "8px 12px",
-                                    backgroundColor: "#f8f9fa",
-                                    borderRadius: "20px",
-                                    gap: "8px",
-                                    fontSize: "0.9rem",
-                                    border: "1px solid #e9ecef"
-                                }}>
-                                    <span style={{
-                                        width: "8px",
-                                        height: "8px",
-                                        borderRadius: "50%",
-                                        backgroundColor: "#9e9e9e",
-                                        display: "inline-block"
-                                    }} />
-                                    <span style={{ fontWeight: "500", color: "#424242" }}>
-                                        {status.nickname}
-                                    </span>
+                                <div key={index} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded-lg">
+                                    <div
+                                        className="w-2 h-2 rounded-full"
+                                        style={{
+                                            backgroundColor: '#9ca3af',
+                                            boxShadow: '0 0 4px #9ca3af',
+                                            minWidth: '8px',
+                                            minHeight: '8px'
+                                        }}
+                                    />
+                                    <span className="text-sm text-gray-500">{status.nickname}</span>
                                 </div>
                             ))}
                     </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 };
