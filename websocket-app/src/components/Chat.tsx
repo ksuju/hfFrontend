@@ -560,7 +560,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                         <button
                             type="button"
                             onClick={() => setShowParticipants(prev => !prev)}
-                            className="h-10 px-4 border border-gray-300 text-gray-600 rounded-lg flex items-center gap-2"
+                            className="h-10 px-4 text-gray-600 rounded-lg flex items-center gap-2"
                             style={{
                                 backgroundColor: showParticipants ? '#F26A2E' : 'transparent',
                                 color: showParticipants ? 'white' : '#F26A2E',
