@@ -4,6 +4,7 @@ import { Client } from '@stomp/stompjs';
 import axios from 'axios';
 import send from "../assets/images/send.png"
 import memberList from "../assets/images/memberList.png"
+import fileImage from "../assets/images/file.png"
 
 
 interface ChatMessage {
@@ -11,7 +12,7 @@ interface ChatMessage {
     nickname?: string;
     chatMessageContent: string;
     messageTimestamp: string;
-    count?: number; // 읽지 않은 사람 수 추가
+    count?: number;
 }
 
 interface PageInfo {
@@ -50,6 +51,12 @@ interface messageCount {
     count: number;
 }
 
+interface FileUploadResponse {
+    resultCode: string;
+    msg: string;
+    data: string;  // S3 URL
+}
+
 const WEBSOCKET_URL = `${import.meta.env.VITE_CORE_WEBSOCKET_BASE_URL}/ws/chat`;
 const request_URL = import.meta.env.VITE_CORE_API_BASE_URL;
 
@@ -73,6 +80,52 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
     const [showScrollButton, setShowScrollButton] = useState(false);
     // 상태 추가
     const [showParticipants, setShowParticipants] = useState(false);
+
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // 파일 업로드 함수
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !chatRoomId) return;
+
+        // 파일 크기 검증 (5MB)
+        const MAX_FILE_SIZE = 5 * 1024 * 1024;
+        if (file.size > MAX_FILE_SIZE) {
+            alert('파일 크기는 5MB를 초과할 수 없습니다.');
+            return;
+        }
+
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const response = await axios.post<FileUploadResponse>(
+                `${request_URL}/api/v1/chatRooms/${chatRoomId}/files/upload`,
+                formData,
+                {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                    withCredentials: true
+                }
+            );
+
+            if (response.data.resultCode === "200") {
+                // 파일 URL을 포함한 메시지 전송
+                const messageToSend = {
+                    content: response.data.data // S3 URL을 content로 전송
+                };
+
+                await axios.post(
+                    `${request_URL}/api/v1/chatRooms/${chatRoomId}/messages`,
+                    messageToSend,
+                    { withCredentials: true }
+                );
+            }
+        } catch (error) {
+            console.error('파일 업로드 실패:', error);
+        }
+    };
 
     // 메시지 스크롤 함수
     const scrollToBottom = (force: boolean = false) => {
@@ -510,7 +563,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
             setSearchKeyword('');
             setKeyword("");
             setNickname("");
-            
+
             try {
                 // 메시지 목록 초기화
                 setMessages([]);
@@ -518,13 +571,13 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                 setCurrentPage(0);
                 // hasMore 초기화
                 setHasMore(true);
-                
+
                 // 전체 메시지 다시 로드
                 await fetchPreviousMessages(0);
-                
+
                 // 스크롤 최하단으로 이동
                 scrollToBottom(true);
-                
+
             } catch (error) {
                 console.error('메시지 초기화 실패:', error);
             }
@@ -625,15 +678,12 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                             const showNickname = !isMyMessage && (!prevMessage || prevMessage.nickname !== msg.nickname);
 
                             return (
-                                <div
-                                    key={index}
-                                    style={{
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        alignItems: isMyMessage ? 'flex-end' : 'flex-start',
-                                        margin: '8px 0'
-                                    }}
-                                >
+                                <div key={index} style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: isMyMessage ? 'flex-end' : 'flex-start',
+                                    margin: '8px 0'
+                                }}>
                                     {/* 닉네임 표시 (자신의 메시지가 아닐 때만) */}
                                     {showNickname && (
                                         <span style={{
@@ -652,14 +702,39 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                                         gap: '8px'
                                     }}>
                                         <div style={{
-                                            background: isMyMessage ? '#F26A2E' : '#e9ecef',
-                                            color: isMyMessage ? 'white' : 'black',
-                                            padding: '8px 12px',
-                                            borderRadius: isMyMessage ? '15px 15px 0 15px' : '15px 15px 15px 0',
+                                            ...(msg.chatMessageContent.includes('https://hf-chat.s3.ap-northeast-2.amazonaws.com')
+                                                ? {
+                                                    // 이미지 메시지일 때의 스타일
+                                                    padding: '8px 40px 8px 0',
+                                                    background: 'transparent',
+                                                    maxWidth: '70%',
+                                                    wordBreak: 'break-word'
+                                                }
+                                                : {
+                                                    // 일반 텍스트 메시지일 때 기존 말풍선 스타일 유지
+                                                    background: isMyMessage ? '#F26A2E' : '#e9ecef',
+                                                    color: isMyMessage ? 'white' : 'black',
+                                                    padding: '8px 12px',
+                                                    borderRadius: isMyMessage ? '15px 15px 0 15px' : '15px 15px 15px 0',
+                                                }),
                                             maxWidth: '70%',
                                             wordBreak: 'break-word'
                                         }}>
-                                            {highlightKeyword(msg.chatMessageContent, searchKeyword)}
+                                            {msg.chatMessageContent.includes('https://hf-chat.s3.ap-northeast-2.amazonaws.com') ? (
+                                                <img
+                                                    src={msg.chatMessageContent}
+                                                    alt="uploaded file"
+                                                    style={{
+                                                        maxWidth: '200px',
+                                                        maxHeight: '200px',
+                                                        borderRadius: '8px',
+                                                        cursor: 'pointer'
+                                                    }}
+                                                    onClick={() => window.open(msg.chatMessageContent, '_blank')}
+                                                />
+                                            ) : (
+                                                highlightKeyword(msg.chatMessageContent, searchKeyword)
+                                            )}
                                         </div>
                                         <div style={{
                                             fontSize: '0.75rem',
@@ -736,13 +811,41 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                     >
                         <img
                             src={send}
-                            alt="전송"
+                            alt="채팅전송"
                             style={{
                                 width: '24px',
                                 height: '24px',
                                 filter: messageInput.trim()
                                     ? 'invert(47%) sepia(82%) saturate(2604%) hue-rotate(337deg) brightness(97%) contrast(92%)'
                                     : 'opacity(0.5)'
+                            }}
+                        />
+                    </button>
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileUpload}
+                        style={{ display: 'none' }}
+                        accept="image/*"
+                    />
+                    <button
+                        onClick={() => fileInputRef.current?.click()}
+                        style={{
+                            paddingBottom: '1px',
+                            backgroundColor: 'transparent',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}>
+                        <img
+                            src={fileImage}
+                            alt="파일전송"
+                            style={{
+                                width: '24px',
+                                height: '24px',
                             }}
                         />
                     </button>
