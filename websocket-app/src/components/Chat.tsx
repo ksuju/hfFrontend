@@ -504,18 +504,33 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
             onSearch(searchKeyword, searchNickname);
         };
 
-        const handleReset = () => {
-            // 검색 관련 상태 초기화
-            setKeyword("");
-            setNickname("");
+        const handleReset = async () => {
+            // 검색 상태 초기화
             setIsSearchMode(false);
             setSearchPage(0);
             setCurrentSearchKeyword('');
             setCurrentSearchNickname('');
-            setSearchKeyword(''); // 하이라이트 제거를 위한 검색 키워드 초기화
-
-            // 전체 메시지 다시 로드
-            fetchPreviousMessages(0);
+            setSearchKeyword('');
+            setKeyword("");
+            setNickname("");
+            
+            try {
+                // 메시지 목록 초기화
+                setMessages([]);
+                // 페이지 초기화
+                setCurrentPage(0);
+                // hasMore 초기화
+                setHasMore(true);
+                
+                // 전체 메시지 다시 로드
+                await fetchPreviousMessages(0);
+                
+                // 스크롤 최하단으로 이동
+                scrollToBottom(true);
+                
+            } catch (error) {
+                console.error('메시지 초기화 실패:', error);
+            }
         };
 
         return (
