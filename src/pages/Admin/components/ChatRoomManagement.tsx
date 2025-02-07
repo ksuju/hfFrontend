@@ -8,7 +8,8 @@ interface ChatRoom {
     roomMemberLimit: string;
     joinMemberNum: string;
     createDate: string;
-    hostNickname: string;
+    memberId: number;
+    hostNickname?: string;
     status?: string;
     phoneNumber?: string;
 }
@@ -16,7 +17,6 @@ interface ChatRoom {
 const ChatRoomManagement = () => {
     const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
-    const [editingRows, setEditingRows] = useState<{ [key: string]: boolean }>({});
 
     const fetchChatRooms = async () => {
         try {
@@ -32,7 +32,6 @@ const ChatRoomManagement = () => {
             );
             if (response.ok) {
                 const data = await response.json();
-                console.log('채팅방 데이터:', data);
                 setChatRooms(data.content || []);
             }
         } catch (error) {
@@ -62,9 +61,10 @@ const ChatRoomManagement = () => {
             } else {
                 const errorData = await response.json();
                 alert(errorData.msg || '채팅방 삭제에 실패했습니다.');
+                console.error('채팅방 삭제 실패:', errorData);
             }
         } catch (error) {
-            console.error('채팅방 삭제 실패:', error);
+            console.error('채팅방 삭제 중 오류 발생:', error);
             alert('채팅방 삭제 중 오류가 발생했습니다.');
         }
     };
@@ -124,7 +124,7 @@ const ChatRoomManagement = () => {
                             >
                                 {room.festivalName}
                             </td>
-                            <td className="p-4 whitespace-nowrap">{room.hostNickname}</td>
+                            <td className="p-4 whitespace-nowrap">{room.memberId}</td>
                             <td className="p-4 whitespace-nowrap">{room.joinMemberNum}/{room.roomMemberLimit}</td>
                             <td className="p-4 whitespace-nowrap">
                                 <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium

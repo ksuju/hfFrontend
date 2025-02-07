@@ -36,8 +36,6 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
     }, []);
 
     const handleLogin = async (e: React.FormEvent) => {
-        console.log(import.meta.env.VITE_CORE_API_BASE_URL);
-
         e.preventDefault();
         try {
             const response = await fetch(
@@ -52,8 +50,6 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
                 }
             );
 
-            console.log("API URL:", import.meta.env.VITE_CORE_API_BASE_URL + '/api/v1/auth/login');
-
             if (response.ok) {
                 const data = await response.json();
                 localStorage.setItem('accessToken', data.data.accessToken);
@@ -63,16 +59,34 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
                 } else {
                     localStorage.removeItem('savedEmail');
                 }
+                
+                // 사용자 정보 즉시 조회
+                const userResponse = await fetch(
+                    `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/auth/me`,
+                    {
+                        credentials: 'include',
+                        headers: {
+                            'Authorization': `Bearer ${data.data.accessToken}`,
+                            'Content-Type': 'application/json',
+                        }
+                    }
+                );
+
+                if (userResponse.ok) {
+                    const userData = await userResponse.json();
+                    localStorage.setItem('userInfo', JSON.stringify(userData.data));
+                }
+
                 setIsLoggedIn(true);
                 navigate(from, { replace: true });
+                window.location.reload(); // 페이지 새로고침
             } else {
                 const errorData = await response.json();
                 alert(errorData.msg || '로그인에 실패했습니다.');
-                console.error('로그인 실패', errorData);
             }
         } catch (error) {
-            alert('서버와의 통신에 실패했습니다.');
-            console.error('로그인 실패:', error);
+            console.error('Login error:', error);
+            alert('로그인 중 오류가 발생했습니다.');
         }
     };
 

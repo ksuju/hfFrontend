@@ -2,16 +2,11 @@ import { useState, useEffect } from 'react';
 
 interface Member {
     id: number;
-    username: string;
     nickname: string;
     phoneNumber: string | null;
     state: string;
-    role: 'ROLE_ADMIN' | 'ROLE_USER' | 'ROLE_BANNED';
+    role: 'ROLE_ADMIN' | 'ROLE_USER';
     createDate: string;
-    gender: string;
-    location: string;
-    birthday: string;
-    mkAlarm: boolean;
 }
 
 interface EditingMember {
@@ -33,10 +28,11 @@ const MemberManagement = () => {
             );
             if (response.ok) {
                 const data = await response.json();
-                console.log('API 응답 전체:', data);
+                console.log('전체 회원 데이터:', data);
                 if (data && data.length > 0) {
-                    console.log('첫 번째 회원의 모든 필드:', Object.keys(data[0]));
                     console.log('첫 번째 회원 데이터:', data[0]);
+                    console.log('첫 번째 회원의 role 값:', data[0].role);
+                    console.log('첫 번째 회원의 모든 필드:', Object.keys(data[0]));
                 }
                 setMembers(data);
             }
@@ -111,6 +107,32 @@ const MemberManagement = () => {
         }
     };
 
+    const getStateDisplayName = (state: string) => {
+        switch (state) {
+            case 'NORMAL':
+                return '활성';
+            case 'BANNED':
+                return '차단';
+            case 'DELETED':
+                return '탈퇴';
+            default:
+                return state;
+        }
+    };
+
+    const getStateBadgeStyle = (state: string) => {
+        switch (state) {
+            case 'NORMAL':
+                return 'bg-green-100 text-green-800 border border-green-200';
+            case 'BANNED':
+                return 'bg-red-100 text-red-800 border border-red-200';
+            case 'DELETED':
+                return 'bg-gray-100 text-gray-800 border border-gray-200';
+            default:
+                return 'bg-gray-100 text-gray-800 border border-gray-200';
+        }
+    };
+
     useEffect(() => {
         fetchMembers();
     }, []);
@@ -130,7 +152,7 @@ const MemberManagement = () => {
             <table className="w-full">
                 <thead>
                     <tr className="bg-gray-50">
-                        <th className="p-4 text-left">ID</th>
+                        <th className="p-4 text-left">회원 ID</th>
                         <th className="p-4 text-left">닉네임</th>
                         <th className="p-4 text-left">전화번호</th>
                         <th className="p-4 text-left">권한</th>
@@ -145,27 +167,7 @@ const MemberManagement = () => {
                             <td className="p-4">{member.id}</td>
                             <td className="p-4">{member.nickname}</td>
                             <td className="p-4">
-                                {editingRow?.id === member.id ? (
-                                    <input
-                                        type="text"
-                                        className="px-2 py-1 border border-gray-200 rounded-lg text-sm bg-white w-full"
-                                        value={editingRow.phoneNumber}
-                                        onChange={(e) => {
-                                            const phoneRegex = /^[0-9-]*$/;
-                                            if (phoneRegex.test(e.target.value)) {
-                                                setEditingRow({
-                                                    ...editingRow,
-                                                    phoneNumber: e.target.value
-                                                });
-                                            }
-                                        }}
-                                        placeholder="전화번호를 입력하세요"
-                                    />
-                                ) : (
-                                    <div className="px-2 py-1">
-                                        {member.phoneNumber || '전화번호를 입력하지 않음'}
-                                    </div>
-                                )}
+                                {member.phoneNumber || '전화번호 없음'}
                             </td>
                             <td className="p-4">
                                 <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getRoleBadgeStyle(member.role)}`}>
@@ -178,34 +180,13 @@ const MemberManagement = () => {
                                 </span>
                             </td>
                             <td className="p-4">
-                                {editingRow?.id === member.id ? (
-                                    <select
-                                        className="px-2 py-1 border border-gray-200 rounded-lg text-sm bg-white"
-                                        value={editingRow.state}
-                                        onChange={(e) => setEditingRow({
-                                            ...editingRow,
-                                            state: e.target.value
-                                        })}
-                                    >
-                                        <option value="NORMAL">활성</option>
-                                        <option value="BANNED">차단됨</option>
-                                        <option value="DELETED">탈퇴</option>
-                                    </select>
-                                ) : (
-                                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                                        member.state === 'NORMAL' 
-                                            ? 'bg-green-100 text-green-800 border border-green-200'
-                                            : member.state === 'BANNED'
-                                            ? 'bg-red-100 text-red-800 border border-red-200'
-                                            : 'bg-gray-100 text-gray-800 border border-gray-200'
-                                    }`}>
-                                        {member.state === 'NORMAL' ? '활성' : 
-                                         member.state === 'BANNED' ? '차단됨' :
-                                         member.state === 'DELETED' ? '탈퇴' : member.state}
-                                    </span>
-                                )}
+                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getStateBadgeStyle(member.state)}`}>
+                                    {getStateDisplayName(member.state)}
+                                </span>
                             </td>
-                            <td className="p-4">{new Date(member.createDate).toLocaleDateString()}</td>
+                            <td className="p-4">
+                                {new Date(member.createDate).toLocaleDateString()}
+                            </td>
                             <td className="p-4">
                                 {editingRow?.id === member.id ? (
                                     <div className="space-x-2">

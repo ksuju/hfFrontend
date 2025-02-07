@@ -30,13 +30,12 @@ interface CommentResponse {
     data: Comment;
 }
 
-// UserInfo 인터페이스 수정
-interface UserInfo {
-    id: number;
-    email: string;
+interface NoticeDetailProps {
+    isLoggedIn: boolean;
+    setIsLoggedIn: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const NoticeDetail = () => {
+const NoticeDetail = ({ isLoggedIn, setIsLoggedIn }: NoticeDetailProps) => {
     const { id } = useParams();
     const navigate = useNavigate();
     const [notice, setNotice] = useState<NoticeDetail | null>(null);
@@ -46,36 +45,6 @@ const NoticeDetail = () => {
     const [editContent, setEditContent] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
-
-    useEffect(() => {
-        const checkLoginStatus = async () => {
-            try {
-                const response = await fetch(import.meta.env.VITE_CORE_API_BASE_URL + "/api/v1/auth/me", {
-                    method: 'GET',
-                    credentials: 'include',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    setIsLoggedIn(true);
-                    setUserInfo(data.data);
-                    localStorage.setItem('isLoggedIn', 'true');
-                    localStorage.setItem('userInfo', JSON.stringify(data));
-                }
-            } catch (error) {
-                console.error('인증 체크 에러:', error);
-                setIsLoggedIn(false);
-                setUserInfo(null);
-            }
-        };
-
-        checkLoginStatus();
-    }, []);
 
     // 게시글 상세 정보 조회
     useEffect(() => {
@@ -284,7 +253,7 @@ const NoticeDetail = () => {
                                                     </div>
                                                     <p className="text-gray-700">{comment.content}</p>
                                                     <div className="flex justify-end gap-2 mt-2">
-                                                        {userInfo && (
+                                                        {isLoggedIn && (
                                                             <>
                                                                 <button
                                                                     onClick={() => {
