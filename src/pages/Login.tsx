@@ -4,7 +4,7 @@ import kakaoSimpleIcon from '../assets/images/kakaotalk_simple_icon2.png';
 import googleSimpleIcon from '../assets/images/google_simple_icon.png';
 import naverSimpleIcon from '../assets/images/naver_simple_icon.png';
 import githubSimpleIcon from '../assets/images/github_simple_icon.png';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 
 interface LoginProps {
     setIsLoggedIn: React.Dispatch<React.SetStateAction<boolean>>;
@@ -16,7 +16,11 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
     const socialLoginForNaverUrl = import.meta.env.VITE_CORE_API_BASE_URL + `/oauth2/authorization/naver`;  // 네이버 로그인 요청 URL
     const socialLoginForGithubUrl = import.meta.env.VITE_CORE_API_BASE_URL + `/oauth2/authorization/github`;  // 깃허브 로그인 요청 URL
     const redirectUrlAfterSocialLogin = import.meta.env.VITE_CORE_FRONT_BASE_URL; // 카카오 로그인 후 리다이렉트 URL
-
+    const navigate = useNavigate();
+    const location = useLocation();
+    
+    // from 파라미터 추출
+    const from = location.state?.from?.pathname || '/';
 
     // 로그인 폼 입력 값 상태 관리
     const [email, setEmail] = useState('');
@@ -36,28 +40,31 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
 
         e.preventDefault();
         try {
-            const response = await fetch(import.meta.env.VITE_CORE_API_BASE_URL + '/api/v1/auth/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    email,
-                    password
-                }),
-                credentials: 'include', // 쿠키 포함
-            });
+            const response = await fetch(
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/auth/login`,
+                {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ email, password })
+                }
+            );
 
             console.log("API URL:", import.meta.env.VITE_CORE_API_BASE_URL + '/api/v1/auth/login');
 
             if (response.ok) {
+                const data = await response.json();
+                localStorage.setItem('accessToken', data.data.accessToken);
+                localStorage.setItem('refreshToken', data.data.refreshToken);
                 if (saveEmail) {
                     localStorage.setItem('savedEmail', email);
                 } else {
                     localStorage.removeItem('savedEmail');
                 }
                 setIsLoggedIn(true);
-                window.location.href = '/'; // 홈 페이지
+                navigate(from, { replace: true });
             } else {
                 const errorData = await response.json();
                 alert(errorData.msg || '로그인에 실패했습니다.');
