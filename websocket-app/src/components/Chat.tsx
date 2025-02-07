@@ -68,11 +68,45 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
     const [currentSearchNickname, setCurrentSearchNickname] = useState('');
     // 메시지 읽음 카운트 상태 추가
     const [messageReadCounts, setMessageReadCounts] = useState<{ [key: number]: number }>({});
+    const [showScrollButton, setShowScrollButton] = useState(false);
 
-    const scrollToBottom = () => {
+    // 메시지 스크롤 함수
+    const scrollToBottom = (force: boolean = false) => {
         if (messagesListRef.current) {
-            messagesListRef.current.scrollTop = messagesListRef.current.scrollHeight;
+            const element = messagesListRef.current;
+            const isScrolledNearBottom = element.scrollHeight - element.scrollTop - element.clientHeight < 100;
+
+            if (force || isScrolledNearBottom) {
+                element.scrollTop = element.scrollHeight;
+                setShowScrollButton(false);
+            } else if (!isScrolledNearBottom) {
+                setShowScrollButton(true);
+            }
         }
+    };
+
+    // 스크롤 핸들러 함수
+    const handleScroll = () => {
+        if (messagesListRef.current) {
+            const element = messagesListRef.current;
+            const isScrolledNearBottom = element.scrollHeight - element.scrollTop - element.clientHeight < 100;
+
+            if (isScrolledNearBottom) {
+                setShowScrollButton(false);
+            }
+        }
+    };
+
+    // 메시지 필터링 함수
+    const filterMessagesBySearch = (message: ChatMessage) => {
+        if (!isSearchMode) return true;
+
+        const contentMatch = message.chatMessageContent.toLowerCase()
+            .includes(currentSearchKeyword.toLowerCase());
+        const nicknameMatch = !currentSearchNickname ||
+            (message.nickname?.toLowerCase() === currentSearchNickname.toLowerCase());
+
+        return contentMatch && nicknameMatch;
     };
 
     // 채팅 메시지 읽음 카운트 가져오기
@@ -113,7 +147,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                     }
                 }
                 updateMemberLoginStatus();    // 채팅방 멤버의 로그인 상태 가져오기
-                setTimeout(() => scrollToBottom(), 100);
+                setTimeout(() => scrollToBottom(true), 100);
             } else {
                 setMessages(prev => [...prev, ...response.data.data.content]);
             }
@@ -276,10 +310,28 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                                 const chatMessage: ChatMessage = {
                                     messageId: receivedData.data.id,
                                     nickname: receivedData.data.nickname,
-                                    chatMessageContent: receivedData.data.chatMessageContent, 
+                                    chatMessageContent: receivedData.data.chatMessageContent,
                                     messageTimestamp: receivedData.data.createDate
                                 };
-                                setMessages(prev => [chatMessage, ...prev]);
+
+                                // 검색 모드일 때는 키워드가 포함된 메시지만 추가
+                                if (!isSearchMode ||
+                                    (chatMessage.chatMessageContent.toLowerCase().includes(currentSearchKeyword.toLowerCase()) &&
+                                        (!currentSearchNickname || chatMessage.nickname?.toLowerCase() === currentSearchNickname.toLowerCase()))) {
+                                    setMessages(prev => [chatMessage, ...prev]);
+                                }
+
+                                // 새 메시지 도착 시 스크롤 위치에 따라 알림 표시
+                                if (messagesListRef.current) {
+                                    const element = messagesListRef.current;
+                                    const isScrolledNearBottom = element.scrollHeight - element.scrollTop - element.clientHeight < 100;
+
+                                    if (!isScrolledNearBottom) {
+                                        setShowScrollButton(true);
+                                    } else {
+                                        scrollToBottom();
+                                    }
+                                }
 
                                 // 새 메시지가 도착하면 읽음 상태 업데이트
                                 if (receivedData.data.id) {
@@ -292,7 +344,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
 
                             case 'COUNT':
                                 // COUNT 타입으로 받은 데이터를 메시지 읽음 수에 반영
-                                const countMap = receivedData.data.reduce((acc: {[key: number]: number}, curr: messageCount) => {
+                                const countMap = receivedData.data.reduce((acc: { [key: number]: number }, curr: messageCount) => {
                                     acc[curr.messageId] = curr.count;
                                     return acc;
                                 }, {});
@@ -322,6 +374,20 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
         };
     }, [chatRoomId, memberId]);
 
+    // 스크롤 이벤트 리스너 추가
+    useEffect(() => {
+        const messagesList = messagesListRef.current;
+        if (messagesList) {
+            messagesList.addEventListener('scroll', handleScroll);
+        }
+        return () => {
+            if (messagesList) {
+                messagesList.removeEventListener('scroll', handleScroll);
+            }
+        };
+    }, []);
+
+    // 메시지 전송
     const sendMessage = async () => {
         if (!messageInput.trim() || !stompClientRef.current) return;
 
@@ -342,7 +408,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
             );
 
             setMessageInput('');
-            scrollToBottom();
+            scrollToBottom(true);
         } catch (error) {
             console.error('메시지 전송 실패:', error);
         }
@@ -467,32 +533,36 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
         <div className="messages-container">
             <ChatSearch onSearch={(keyword, nickname) => messageSearch(keyword, nickname, 0)} />
             <div
-                className="messages-list"
+                className="messages-list relative flex flex-col"
                 ref={messagesListRef}
                 style={{
                     height: "400px",
                     overflowY: "auto",
                     display: "flex",
                     flexDirection: "column",
+                    // paddingBottom: "60px", // 하단 여백 추가
                     padding: "20px"
                 }}
             >
-                {isSearchMode && hasMore && (
-                    <button onClick={loadMoreSearchResults} className="w-full p-2 text-primary hover:bg-gray-50">
-                        이전 검색 결과 더보기
+                {/* 이전 메시지 더보기 버튼*/}
+                {!isSearchMode && hasMore && (
+                    <button
+                        onClick={loadMoreMessages}
+                        className="w-full p-2 text-primary hover:bg-gray-50 mb-4"
+                    >
+                        이전 메시지 더보기
                     </button>
                 )}
-                {!isSearchMode && hasMore && (
-                    <button onClick={loadMoreMessages}>이전 메시지 더보기</button>
-                )}
-                <div style={{ flexGrow: 1 }}>
-                    {messages.slice().reverse().map((msg, index, array) => {
+
+                {/* 메시지 목록 */}
+                <div className="flex-grow flex flex-col justify-end" style={{ flexGrow: 1 }}>
+                    {messages.slice().reverse().filter(filterMessagesBySearch).map((msg, index) => {
                         const isMyMessage = msg.nickname === currentUserNickname;
                         const readCount = msg.messageId ? messageReadCounts[msg.messageId] || 0 : 0;
-                        
+
                         return (
-                            <div 
-                                key={index} 
+                            <div
+                                key={index}
                                 style={{
                                     display: 'flex',
                                     flexDirection: 'column',
@@ -525,7 +595,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                                         alignItems: isMyMessage ? 'flex-end' : 'flex-start'
                                     }}>
                                         {readCount > 0 && (
-                                            <span style={{color: '#F26A2E', fontSize: '0.7rem'}}>
+                                            <span style={{ color: '#F26A2E', fontSize: '0.7rem' }}>
                                                 {readCount}
                                             </span>
                                         )}
@@ -536,6 +606,27 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                         );
                     })}
                 </div>
+
+                {/* 기존 메시지 목록 렌더링 */}
+                {isSearchMode && hasMore && (
+                    <button onClick={loadMoreSearchResults} className="w-full p-2 text-primary hover:bg-gray-50">
+                        이전 검색 결과 더보기
+                    </button>
+                )}
+
+                {/* 새 메시지 알림 및 스크롤 버튼 */}
+                {showScrollButton && (
+                    <div 
+                    className="sticky bottom-0 left-0 right-0 flex justify-center"
+                    style={{}}>
+                        <button
+                            onClick={() => scrollToBottom(true)}
+                            className="bg-primary text-white px-4 py-2 rounded-full shadow-lg hover:bg-opacity-90 flex items-center gap-2"
+                        >
+                            새 메시지
+                        </button>
+                    </div>
+                )}
             </div>
             <div className="message-input" style={{
                 display: 'flex',
