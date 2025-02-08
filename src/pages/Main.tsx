@@ -87,6 +87,11 @@ const Main = () => {
     const [kickTargetId, setKickTargetId] = useState<string | null>(null);
     const [kickChatRoomId, setKickChatRoomId] = useState<string | null>(null);
 
+    // 배너 클릭 시 실행될 함수
+    const handleBannerClick = (festivalId: string) => {
+        navigate(`/detailposts/${festivalId}`);
+    };
+
     const handleTogglePopup = (chatRoomId: string) => {
         setOpenPopupId(openPopupId === chatRoomId ? null : chatRoomId);
     };
@@ -132,7 +137,6 @@ const Main = () => {
                 }
             })
         );
-
         setGenrePosts(newGenrePosts);
         setIsLoading(false); // 데이터 로딩 완료 후 로딩 상태 변경
     };
@@ -359,6 +363,7 @@ const Main = () => {
                 console.log('Successfully left the chat room');
                 setIsConfirmLeaveOpen(null); // Close the confirmation popup
                 // 나가기 후 최신 데이터 다시 불러오기
+                await fetchUserInfo();
                 await fetchMeetingPosts();
             } else {
                 console.error('Error leaving chat room');
@@ -559,7 +564,8 @@ const Main = () => {
                                     onInit={(swiper) => swiper.update()}
                                 >
                                     {mainPosts.map((mainPost) => (
-                                        <SwiperSlide key={mainPost.festivalId} className="flex justify-center items-center">
+                                        <SwiperSlide key={mainPost.festivalId} className="flex justify-center items-center"
+                                                     onClick={() => handleBannerClick(mainPost.festivalId)}>
                                             <div className="w-full max-w-4xl bg-white rounded-lg shadow-md overflow-hidden">
                                                 <div className="relative w-full h-[300px] bg-gray-100 flex justify-center items-center">
                                                     <img
@@ -587,7 +593,8 @@ const Main = () => {
                                         </div>
                                         <Swiper slidesPerView={3} spaceBetween={12} className="w-full pb-1">
                                             {genrePosts[index]?.map((genrePost) => (
-                                                <SwiperSlide key={genrePost.festivalId}>
+                                                <SwiperSlide key={genrePost.festivalId}
+                                                             onClick={() => handleBannerClick(genrePost.festivalId)}>
                                                     <div className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
                                                         {/* 이미지 영역 */}
                                                         <div className="relative pb-[90%]">
@@ -635,7 +642,9 @@ const Main = () => {
                 </div>
                 <div className="grid grid-cols-3 gap-3">
                     {searchPosts.map((searchPost) => (
-                        <div key={searchPost.festivalId} className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
+                        <div key={searchPost.festivalId} className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col"
+                             onClick={() => handleBannerClick(searchPost.festivalId)}
+                        >
                             {/* 이미지 영역 */}
                             <div className="relative pb-[90%]">
                                 <img
