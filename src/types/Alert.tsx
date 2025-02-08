@@ -16,5 +16,6 @@ export enum AlertType {
     GROUP_DELETED = 'GROUP_DELETED',
     GROUP_NEW_POST = 'GROUP_NEW_POST',
     COMMENT_REPLY = 'COMMENT_REPLY',
+    PASSWORD_CHANGED = 'PASSWORD_CHANGED',
     // ... (백엔드 AlertType과 일치하게 설정)
 }

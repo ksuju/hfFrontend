@@ -6,21 +6,48 @@ import { ToastAlert } from '../components/ToastAlert';
 interface AlertContextType {
     alerts: Alert[];
     unreadCount: number;
+    hasMore: boolean;
+    loadMore: () => Promise<void>;
 }
 
 export const AlertContext = createContext<AlertContextType>({
     alerts: [],
-    unreadCount: 0
+    unreadCount: 0,
+    hasMore: false,
+    loadMore: async () => { }
 });
 
 export const AlertProvider = ({ children }: { children: ReactNode }) => {
     const [alerts, setAlerts] = useState<Alert[]>([]);
     const [toast, setToast] = useState<Alert | null>(null);
+    const [hasMore, setHasMore] = useState(true);
+    const [page, setPage] = useState(0);
     const clientRef = useRef<Client | null>(null);
 
     const userInfo = localStorage.getItem('userInfo')
         ? JSON.parse(localStorage.getItem('userInfo')!).data
         : null;
+
+    const loadMore = async () => {
+        try {
+            const response = await fetch(
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/alerts?page=${page + 1}&size=10`,
+                { credentials: 'include' }
+            );
+
+            const data = await response.json();
+            if (data.resultCode === "200") {
+                const newAlerts = data.data.content;
+                if (newAlerts.length < 10) {
+                    setHasMore(false);
+                }
+                setAlerts(prev => [...prev, ...newAlerts]);
+                setPage(prev => prev + 1);
+            }
+        } catch (error) {
+            console.error('Failed to load more alerts:', error);
+        }
+    };
 
     useEffect(() => {
         if (!userInfo) return undefined;
@@ -28,30 +55,25 @@ export const AlertProvider = ({ children }: { children: ReactNode }) => {
             clientRef.current.deactivate();
         }
 
-        const fetchAlerts = async () => {
+        const fetchInitialAlerts = async () => {
             try {
                 const response = await fetch(
                     `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/alerts?page=0&size=10`,
-                    {
-                        credentials: 'include'
-                    }
+                    { credentials: 'include' }
                 );
 
                 const data = await response.json();
-
                 if (data.resultCode === "200") {
-                    console.log('Setting alerts:', data.data.content);
                     setAlerts(data.data.content);
-                } else {
-                    console.error('Failed to fetch alerts:', data.msg);
+                    setHasMore(data.data.content.length === 10);
+                    setPage(0);
                 }
-
             } catch (error) {
                 console.error('Failed to fetch alerts:', error);
             }
         };
 
-        fetchAlerts();
+        fetchInitialAlerts();
 
         const client = new Client({
             brokerURL: `${import.meta.env.VITE_CORE_WEBSOCKET_BASE_URL}/ws/chat`,
@@ -59,7 +81,6 @@ export const AlertProvider = ({ children }: { children: ReactNode }) => {
             heartbeatIncoming: 4000,
             heartbeatOutgoing: 4000,
             onConnect: () => {
-
                 console.log('Connected');
                 client.subscribe(`/user/${userInfo.id}/queue/alerts`, message => {
                     console.log('Received alert:', message.body);
@@ -73,18 +94,16 @@ export const AlertProvider = ({ children }: { children: ReactNode }) => {
                     setToast(newAlert);
                 });
             },
-            onDisconnect: () => {
-                console.log('Disconnected');
-            },
+            onDisconnect: () => console.log('Disconnected'),
             onStompError: (frame) => {
-                console.error('브로커 오류: ' + frame.headers['message']);
-                console.error('추가 정보: ' + frame.body);
+                console.error('브로커 오류:', frame.headers['message']);
+                console.error('추가 정보:', frame.body);
             },
         });
 
         clientRef.current = client;
-
         client.activate();
+
         return () => {
             if (clientRef.current) {
                 clientRef.current.deactivate();
@@ -93,16 +112,15 @@ export const AlertProvider = ({ children }: { children: ReactNode }) => {
         };
     }, []);
 
-
-
     return (
-        <AlertContext.Provider value= {{
-        alerts,
-            unreadCount: alerts.filter(alert => !alert.isRead).length
-    }
-}>
-    { children }
-{ toast && <ToastAlert alert={ toast } onClose = {() => setToast(null) } />}
-</AlertContext.Provider>
+        <AlertContext.Provider value={{
+            alerts,
+            unreadCount: alerts.filter(alert => !alert.isRead).length,
+            hasMore,
+            loadMore
+        }}>
+            {children}
+            {toast && <ToastAlert alert={toast} onClose={() => setToast(null)} />}
+        </AlertContext.Provider>
     );
 };

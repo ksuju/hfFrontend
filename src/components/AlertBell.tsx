@@ -5,7 +5,19 @@ import { Alert } from '../types/Alert';
 
 export const AlertBell = () => {
     const [isOpen, setIsOpen] = useState(false);
-    const { alerts, unreadCount } = useContext(AlertContext);
+    const { alerts, unreadCount, hasMore, loadMore } = useContext(AlertContext);
+
+    const highlightText = (text: string) => {
+        return text.split(/('.*?')/).map((part, index) =>
+            part.startsWith("'") && part.endsWith("'") ? (
+                <span key={index} className="text-primary font-extrabold">
+                    {part}
+                </span>
+            ) : (
+                part
+            )
+        );
+    };
 
     return (
         <div className="relative">
@@ -29,17 +41,26 @@ export const AlertBell = () => {
                                 알림이 없습니다
                             </div>
                         ) : (
-                            alerts.map((alert) => (
-                                <div
-                                    key={alert.id}
-                                    className="p-4 cursor-pointer hover:bg-gray-50 border-b"
-                                >
-                                    <div className="font-medium">{alert.content}</div>
-                                    <div className="text-sm text-gray-500">
-                                        {new Date(alert.createdAt).toLocaleString()}
+                            <>
+                                {alerts.map((alert) => (
+                                    <div key={alert.id} className="p-4 cursor-pointer hover:bg-gray-50 border-b">
+                                        <div className="font-medium">
+                                            {highlightText(alert.content)}
+                                        </div>
+                                        <div className="text-sm text-gray-500">
+                                            {new Date(alert.createdAt).toLocaleString()}
+                                        </div>
                                     </div>
-                                </div>
-                            ))
+                                ))}
+                                {hasMore && (
+                                    <button
+                                        onClick={loadMore}
+                                        className="w-full p-2 text-sm text-primary hover:bg-gray-50"
+                                    >
+                                        더보기
+                                    </button>
+                                )}
+                            </>
                         )}
                     </div>
                 </div>
