@@ -1,7 +1,7 @@
 import { useState, useContext } from 'react';
 import { Bell } from 'lucide-react';
 import { AlertContext } from '../providers/AlertProvider';
-import { Alert } from '../types/Alert';
+// import { Alert } from '../types/Alert';
 
 export const AlertBell = () => {
     const [isOpen, setIsOpen] = useState(false);
