@@ -113,7 +113,8 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
             if (response.data.resultCode === "200") {
                 // 파일 URL을 포함한 메시지 전송
                 const messageToSend = {
-                    content: response.data.data // S3 URL을 content로 전송
+                    content: response.data.data, // S3 URL을 content로 전송
+                    originalFileName: file.name  // 원본 파일명 추가
                 };
 
                 await axios.post(
@@ -123,7 +124,13 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                 );
             }
         } catch (error) {
-            console.error('파일 업로드 실패:', error);
+            if (error && 'response' in error && error.response?.data?.msg) {
+                setTimeout(() => {
+                    alert(error.response.data.msg);
+                }, 50)
+            } else {
+                console.error('파일 업로드 실패:', error);
+            }
         }
     };
 
@@ -846,6 +853,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                             style={{
                                 width: '24px',
                                 height: '24px',
+                                filter: 'opacity(0.5)'
                             }}
                         />
                     </button>
