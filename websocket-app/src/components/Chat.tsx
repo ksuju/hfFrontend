@@ -57,6 +57,11 @@ interface FileUploadResponse {
     data: string;  // S3 URL
 }
 
+interface FileDeleteResponse {
+    resultCode: string;
+    msg: string;
+}
+
 const WEBSOCKET_URL = `${import.meta.env.VITE_CORE_WEBSOCKET_BASE_URL}/ws/chat`;
 const request_URL = import.meta.env.VITE_CORE_API_BASE_URL;
 
@@ -82,6 +87,38 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
     const [showParticipants, setShowParticipants] = useState(false);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // 파일 삭제 함수
+    const handleFileDelete = async (fileUrl: string) => {
+        if (!chatRoomId) return;
+
+        try {
+            const response = await axios.delete<FileDeleteResponse>(
+                `${request_URL}/api/v1/chatRooms/${chatRoomId}/files/delete`,
+                {
+                    params: { fileName: fileUrl },
+                    withCredentials: true
+                }
+            );
+
+            if (response.data.resultCode === "200") {
+                // 성공 메시지 표시
+                alert("파일이 성공적으로 삭제되었습니다.");
+
+                // 필요한 경우 메시지 목록 업데이트
+                setMessages(prevMessages =>
+                    prevMessages.filter(msg => msg.chatMessageContent !== fileUrl)
+                );
+            }
+        } catch (error) {
+            if (error && 'response' in error && error.response?.data?.msg) {
+                alert(error.response.data.msg);
+            } else {
+                console.error('파일 삭제 실패:', error);
+                alert('파일 삭제에 실패했습니다.');
+            }
+        }
+    };
 
     // 파일 업로드 함수
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -728,17 +765,38 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                                             wordBreak: 'break-word'
                                         }}>
                                             {msg.chatMessageContent.includes('https://hf-chat.s3.ap-northeast-2.amazonaws.com') ? (
-                                                <img
-                                                    src={msg.chatMessageContent}
-                                                    alt="uploaded file"
-                                                    style={{
-                                                        maxWidth: '200px',
-                                                        maxHeight: '200px',
-                                                        borderRadius: '8px',
-                                                        cursor: 'pointer'
-                                                    }}
-                                                    onClick={() => window.open(msg.chatMessageContent, '_blank')}
-                                                />
+                                                <div style={{ position: 'relative', display: 'inline-block' }}>
+                                                    <img
+                                                        src={msg.chatMessageContent}
+                                                        alt="채팅 이미지"
+                                                        style={{
+                                                            maxWidth: '200px',
+                                                            maxHeight: '200px',
+                                                            borderRadius: '8px',
+                                                            cursor: 'pointer'
+                                                        }}
+                                                        onClick={() => window.open(msg.chatMessageContent, '_blank')}
+                                                    />
+                                                    {isMyMessage && (
+                                                        <button
+                                                            onClick={() => handleFileDelete(msg.chatMessageContent)}
+                                                            style={{
+                                                                position: 'absolute',
+                                                                top: '5px',
+                                                                right: '5px',
+                                                                padding: '4px 8px',
+                                                                backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                                                                color: 'white',
+                                                                border: 'none',
+                                                                borderRadius: '4px',
+                                                                cursor: 'pointer',
+                                                                fontSize: '12px',
+                                                            }}
+                                                        >
+                                                            삭제
+                                                        </button>
+                                                    )}
+                                                </div>
                                             ) : (
                                                 highlightKeyword(msg.chatMessageContent, searchKeyword)
                                             )}
