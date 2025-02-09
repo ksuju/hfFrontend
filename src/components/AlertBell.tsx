@@ -7,6 +7,7 @@ import { Alert } from '../types/Alert';
 export const AlertBell = ({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (isOpen: boolean) => void }) => {
     const navigate = useNavigate();
     const [visibleCount, setVisibleCount] = useState(5);
+    const [showAllAlerts, setShowAllAlerts] = useState(false);
     const { alerts, unreadCount, hasMore, loadMore, readAlerts } = useContext(AlertContext);
 
     const handleAlertClick = async (alert: Alert) => {
@@ -158,6 +159,11 @@ export const AlertBell = ({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, [isOpen, alerts]);  // alerts 추가
 
+    // 보여줄 알림 필터링
+    const filteredAlerts = showAllAlerts
+        ? alerts
+        : alerts.filter(alert => !alert.isRead);
+
     return (
         <div className="relative">
             <button
@@ -180,14 +186,25 @@ export const AlertBell = ({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (
 
             {isOpen && (
                 <div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-lg overflow-hidden z-50 alert-container">
+                    <div className="p-2 border-b flex justify-end">
+                        <label className="flex items-center text-sm text-gray-600 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={showAllAlerts}
+                                onChange={(e) => setShowAllAlerts(e.target.checked)}
+                                className="mr-2"
+                            />
+                            전체 알림 보기
+                        </label>
+                    </div>
                     <div className="max-h-96 overflow-y-auto">
-                        {alerts.length === 0 ? (
+                        {filteredAlerts.length === 0 ? (
                             <div className="p-4 text-center text-gray-500">
                                 알림이 없습니다
                             </div>
                         ) : (
                             <>
-                                {alerts.slice(0, visibleCount).map((alert) => (
+                                {filteredAlerts.slice(0, visibleCount).map((alert) => (
                                     <div
                                         key={alert.id}
                                         className={`${getDomainBackgroundColor(alert.domain)} p-5 cursor-pointer hover:brightness-95 border-b transition-all ${alert.isRead ? 'opacity-60' : ''

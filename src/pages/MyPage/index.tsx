@@ -6,6 +6,7 @@ import SocialAccounts from './components/SocialAccounts';
 import UserInfoForm from './components/UserInfoForm';
 import PasswordVerification from './components/PasswordVerification';
 import { EditFormData, UserInfo } from './types';
+import FriendList from './components/FriendList';
 
 const MyPage = () => {
     const navigate = useNavigate();
@@ -274,7 +275,7 @@ const MyPage = () => {
                                             }`}
                                         onClick={() => setActiveTab('meetings')}
                                     >
-                                        완료 모임
+                                        친구 목록
                                     </button>
                                 </div>
                             </div>
@@ -292,7 +293,7 @@ const MyPage = () => {
                                     />
                                 </div>
                             )}
-                            {activeTab === 'meetings' && <div>완료된 모임 목록이 표시될 영역</div>}
+                            {activeTab === 'meetings' && <FriendList />}
                         </div>
                     </div>
                 </>
