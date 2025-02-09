@@ -2,9 +2,18 @@ export interface Alert {
     id: number;
     content: string;
     isRead: boolean;
-    type: AlertType;
+    domain: AlertDomain;
+    createDate: string;
+    navigationType: string;
     navigationData: string;
-    createdAt: string;
+}
+
+export enum AlertDomain {
+    GROUP = 'GROUP',
+    MEMBER = 'MEMBER',
+    BOARD = 'BOARD',
+    FESTIVAL = 'FESTIVAL',
+    COMMENT = 'COMMENT'
 }
 
 export enum AlertType {

@@ -20,6 +20,7 @@ import FestivalDetail from "./pages/FestivalDetail.tsx";
 
 const App = () => {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [isAlertOpen, setIsAlertOpen] = useState(false);
     console.log('App 컴포넌트 렌더링');
 
     const checkLoginStatus = async () => {
@@ -67,17 +68,22 @@ const App = () => {
 
     return (
         <Router>
-            <div className="min-h-screen flex flex-col bg-white lg:bg-gray-100">
-                <Routes>
-                    <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} />} />
-                    <Route path="/signup" element={<Signup />} />
-                    <Route path="/find-account" element={<FindAccount />} />
-                    <Route path="/reset-password" element={<ResetPassword />} />
-                    <Route path="/notice/:id" element={<NoticeDetail />} />
-                    <Route path="/*" element={
-                        <AlertProvider>
+            <AlertProvider isLoggedIn={isLoggedIn} isOpen={isAlertOpen}>
+                <div className="min-h-screen flex flex-col bg-white lg:bg-gray-100">
+                    <Routes>
+                        <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} />} />
+                        <Route path="/signup" element={<Signup />} />
+                        <Route path="/find-account" element={<FindAccount />} />
+                        <Route path="/reset-password" element={<ResetPassword />} />
+                        <Route path="/notice/:id" element={<NoticeDetail />} />
+                        <Route path="/*" element={
                             <div className="flex flex-col min-h-screen">
-                                <Header isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />
+                                <Header
+                                    isLoggedIn={isLoggedIn}
+                                    setIsLoggedIn={setIsLoggedIn}
+                                    isAlertOpen={isAlertOpen}
+                                    setIsAlertOpen={setIsAlertOpen}
+                                />
                                 <main className="flex-1 mt-16 mb-16">
                                     <div className="max-w-[600px] lg:max-w-screen-lg mx-auto lg:py-6">
                                         <div className="bg-white lg:rounded-2xl lg:shadow-md">
@@ -100,10 +106,10 @@ const App = () => {
                                 </main>
                                 <Footer />
                             </div>
-                        </AlertProvider>
-                    } />
-                </Routes>
-            </div>
+                        } />
+                    </Routes>
+                </div>
+            </AlertProvider>
         </Router>
     )
 }
