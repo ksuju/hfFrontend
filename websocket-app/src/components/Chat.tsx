@@ -435,7 +435,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                                     if (!isScrolledNearBottom) {
                                         setShowScrollButton(true);
                                     } else {
-                                        scrollToBottom();
+                                        setTimeout(()=>scrollToBottom(true),50);
                                     }
                                 }
 
