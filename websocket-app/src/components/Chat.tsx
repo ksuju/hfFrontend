@@ -159,6 +159,10 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                     messageToSend,
                     { withCredentials: true }
                 );
+
+                setTimeout(()=>{    // 맨 아래로
+                    scrollToBottom(true);
+                },100)
             }
         } catch (error) {
             if (error && 'response' in error && error.response?.data?.msg) {
