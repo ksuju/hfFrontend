@@ -111,7 +111,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                     prevMessages.filter(msg => msg.chatMessageContent !== fileUrl)
                 );
             }
-        } catch (error) {
+        } catch (error: any) {
             if (error && 'response' in error && error.response?.data?.msg) {
                 alert(error.response.data.msg);
             } else {
@@ -161,11 +161,11 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                     { withCredentials: true }
                 );
 
-                setTimeout(()=>{    // 맨 아래로 스크롤
+                setTimeout(() => {    // 맨 아래로 스크롤
                     scrollToBottom(true);
-                },100)
+                }, 100)
             }
-        } catch (error) {
+        } catch (error: any) {
             if (error && 'response' in error && error.response?.data?.msg) {
                 setTimeout(() => {
                     alert(error.response.data.msg);
@@ -295,9 +295,9 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
             );
             setMemberStatusList(response.data.data); // data 필드에서 멤버 상태 배열 추출
         } catch (error) {
-            setTimeout(()=>{
+            setTimeout(() => {
                 alert("해당 채팅방의 멤버만 입장이 가능합니다.");
-            },100)
+            }, 100)
             console.error('유저 로그인 상태 조회 실패:', error);
             await navigate('/chatroom');  // 채팅방 멤버가 아닐 경우, 모임 리스트 게시판으로 이동
         }
@@ -435,7 +435,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                                     if (!isScrolledNearBottom) {
                                         setShowScrollButton(true);
                                     } else {
-                                        setTimeout(()=>scrollToBottom(true),50);
+                                        setTimeout(() => scrollToBottom(true), 50);
                                     }
                                 }
 
@@ -507,7 +507,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                 body: JSON.stringify(messageToSend),
             });
 
-            await axios.post (
+            await axios.post(
                 request_URL + `/api/v1/chatRooms/${chatRoomId}/messages`,
                 messageToSend,
                 { withCredentials: true }  // 인증 정보 포함
@@ -516,10 +516,10 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
             setMessageInput('');
             scrollToBottom(true);
         } catch (error: any) {
-            if(error.response?.status === 403) {        // 403코드는 error로 잡혀서 조건문 실행 안됨
-                setTimeout(()=>{
+            if (error.response?.status === 403) {        // 403코드는 error로 잡혀서 조건문 실행 안됨
+                setTimeout(() => {
                     alert("해당 채팅방의 멤버만 채팅이 가능합니다.");
-                },100)
+                }, 100)
                 await navigate('/chatroom');  // 채팅방 멤버가 아닐 경우, 모임 리스트 게시판으로 이동
             }
 
@@ -553,6 +553,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
     // 페이지 이동/브라우저 종료 시
     useEffect(() => {
         const handleBeforeUnload = () => {
+            // WebSocket 연결 종료
             if (stompClientRef.current) {
                 stompClientRef.current.deactivate();
                 stompClientRef.current = null;
