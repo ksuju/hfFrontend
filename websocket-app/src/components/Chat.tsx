@@ -303,7 +303,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
         }
     }
 
-    // 채팅방 멤버의 로그인 상태 로그아웃으로 변경하기
+    // 채팅방 멤버의 로그인 상태 오프라인으로 변경하기
     const updateLogout = async () => {
         try {
             await axios.patch(
@@ -316,7 +316,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
         };
     }
 
-    // 채팅방 멤버의 로그인 상태 로그인으로 변경하기
+    // 채팅방 멤버의 로그인 상태 온라인으로 변경하기
     const updateLogin = async () => {
         try {
             await axios.patch(
@@ -506,7 +506,8 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                 destination: `/app/chat/${chatRoomId}`,
                 body: JSON.stringify(messageToSend),
             });
-            await axios.post(
+
+            await axios.post (
                 request_URL + `/api/v1/chatRooms/${chatRoomId}/messages`,
                 messageToSend,
                 { withCredentials: true }  // 인증 정보 포함
@@ -514,7 +515,14 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
 
             setMessageInput('');
             scrollToBottom(true);
-        } catch (error) {
+        } catch (error: any) {
+            if(error.response?.status === 403) {        // 403코드는 error로 잡혀서 조건문 실행 안됨
+                setTimeout(()=>{
+                    alert("해당 채팅방의 멤버만 채팅이 가능합니다.");
+                },100)
+                await navigate('/chatroom');  // 채팅방 멤버가 아닐 경우, 모임 리스트 게시판으로 이동
+            }
+
             console.error('메시지 전송 실패:', error);
         }
     };
@@ -576,7 +584,6 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
     // 채팅 검색 컴포넌트
     const ChatSearch = ({ onSearch }: { onSearch: (keyword: string, nickname: string) => void }) => {
         const [keyword, setKeyword] = useState("");
-        const [nickname, setNickname] = useState("");
 
         // 검색 처리 함수 수정
         const handleSubmit = (e: React.FormEvent) => {
@@ -613,7 +620,6 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
             setCurrentSearchNickname('');
             setSearchKeyword('');
             setKeyword("");
-            setNickname("");
 
             try {
                 // 메시지 목록 초기화
