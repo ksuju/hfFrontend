@@ -1,17 +1,19 @@
 import { useState, useEffect } from 'react';
 
 interface ChatRoom {
-    chatRoomId: string;
+    chatRoomId: number;
+    memberId: number;
+    memberNickName: string;
     roomTitle: string;
     roomContent: string;
-    festivalName: string;
-    roomMemberLimit: string;
-    joinMemberNum: string;
+    roomMemberLimit: number;
+    joinMemberNum: number;
+    waitMemberNum: number;
+    festivalId: string;
+    festivalTitle: string;
+    joinMemberIdNickNameList: string[][];
+    waitingMemberIdNickNameList: string[][];
     createDate: string;
-    memberId: number;
-    hostNickname?: string;
-    status?: string;
-    phoneNumber?: string;
 }
 
 const ChatRoomManagement = () => {
@@ -32,6 +34,8 @@ const ChatRoomManagement = () => {
             );
             if (response.ok) {
                 const data = await response.json();
+                console.log('채팅방 데이터:', data);
+                console.log('첫 번째 채팅방:', data.content?.[0]);
                 setChatRooms(data.content || []);
             }
         } catch (error) {
@@ -77,9 +81,8 @@ const ChatRoomManagement = () => {
     const filteredChatRooms = searchTerm
         ? chatRooms.filter(room => {
             const title = room?.roomTitle?.toLowerCase() || '';
-            const nickname = room?.hostNickname?.toLowerCase() || '';
             const searchTermLower = searchTerm.toLowerCase();
-            return title.includes(searchTermLower) || nickname.includes(searchTermLower);
+            return title.includes(searchTermLower);
         })
         : chatRooms;
 
@@ -98,48 +101,34 @@ const ChatRoomManagement = () => {
             <table className="w-full">
                 <thead>
                     <tr className="bg-gray-50">
-                        <th className="p-4 text-left whitespace-nowrap">ID</th>
-                        <th className="p-4 text-left whitespace-nowrap min-w-[150px]">제목</th>
-                        <th className="p-4 text-left whitespace-nowrap min-w-[120px]">축제명</th>
-                        <th className="p-4 text-left whitespace-nowrap">방장</th>
-                        <th className="p-4 text-left whitespace-nowrap">인원</th>
-                        <th className="p-4 text-left whitespace-nowrap">상태</th>
-                        <th className="p-4 text-left whitespace-nowrap">생성일</th>
-                        <th className="p-4 text-left whitespace-nowrap">관리</th>
+                        <th className="p-4 text-left">ID</th>
+                        <th className="p-4 text-left">방 제목</th>
+                        <th className="p-4 text-left">축제 제목</th>
+                        <th className="p-4 text-left">방장</th>
+                        <th className="p-4 text-left">인원</th>
+                        <th className="p-4 text-left">대기</th>
+                        <th className="p-4 text-left">생성일</th>
+                        <th className="p-4 text-left">관리</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {filteredChatRooms.map((room, index) => (
-                        <tr key={`${room.chatRoomId}-${index}`} className="border-b hover:bg-gray-50">
-                            <td className="p-4 whitespace-nowrap">{room.chatRoomId}</td>
-                            <td 
-                                className="p-4 truncate max-w-[150px]" 
-                                title={room.roomTitle}
-                            >
+                    {filteredChatRooms.map((room) => (
+                        <tr key={room.chatRoomId} className="border-b hover:bg-gray-50">
+                            <td className="p-4">{room.chatRoomId}</td>
+                            <td className="p-4 truncate max-w-[150px]" title={room.roomTitle}>
                                 {room.roomTitle}
                             </td>
-                            <td 
-                                className="p-4 truncate max-w-[120px]"
-                                title={room.festivalName}
-                            >
-                                {room.festivalName}
+                            <td className="p-4 truncate max-w-[150px]" title={room.festivalTitle}>
+                                {room.festivalTitle}
                             </td>
-                            <td className="p-4 whitespace-nowrap">{room.memberId}</td>
-                            <td className="p-4 whitespace-nowrap">{room.joinMemberNum}/{room.roomMemberLimit}</td>
-                            <td className="p-4 whitespace-nowrap">
-                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium
-                                    ${room.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 
-                                      room.status === 'CLOSED' ? 'bg-red-100 text-red-800' : 
-                                      'bg-gray-100 text-gray-800'}`}>
-                                    {room.status === 'ACTIVE' ? '활성' : 
-                                     room.status === 'CLOSED' ? '종료' : room.status}
-                                </span>
-                            </td>
-                            <td className="p-4 whitespace-nowrap">{new Date(room.createDate).toLocaleDateString()}</td>
-                            <td className="p-4 whitespace-nowrap">
+                            <td className="p-4">{room.memberNickName}</td>
+                            <td className="p-4">{room.joinMemberNum}/{room.roomMemberLimit}</td>
+                            <td className="p-4">{room.waitMemberNum}명</td>
+                            <td className="p-4">{new Date(room.createDate).toLocaleDateString()}</td>
+                            <td className="p-4">
                                 <button
-                                    onClick={() => handleDelete(room.chatRoomId)}
-                                    className="px-3 py-1 rounded-md text-sm font-medium text-red-500 hover:text-red-700"
+                                    onClick={() => handleDelete(room.chatRoomId.toString())}
+                                    className="text-red-500 hover:text-red-700"
                                 >
                                     삭제
                                 </button>

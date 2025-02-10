@@ -50,36 +50,24 @@ const Admin = () => {
                 }));
             }
 
-            // 채팅방 수 조회 추가
+            // 채팅방 수 조회
             const chatRoomsResponse = await fetch(
-                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/posts/chat-rooms?page=0&size=1`,
-                { 
-                    credentials: 'include',
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-                        'Content-Type': 'application/json'
-                    }
-                }
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/posts/chat-rooms`,
+                { credentials: 'include' }
             );
 
             if (chatRoomsResponse.ok) {
                 const chatRoomsData = await chatRoomsResponse.json();
                 setStats(prevStats => ({
                     ...prevStats,
-                    totalChatRooms: chatRoomsData.page.totalElements || 0
+                    totalChatRooms: chatRoomsData.totalElements
                 }));
             }
 
             // 신고 수 조회 추가
             const reportsResponse = await fetch(
                 `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/reports`,
-                { 
-                    credentials: 'include',
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-                        'Content-Type': 'application/json'
-                    }
-                }
+                { credentials: 'include' }
             );
 
             if (reportsResponse.ok) {
@@ -91,7 +79,7 @@ const Admin = () => {
             }
 
         } catch (error) {
-            console.error('대시보드 통계 조회 실패:', error);
+            console.error('통계 데이터 조회 실패:', error);
         }
     };
 
@@ -102,9 +90,7 @@ const Admin = () => {
     // 채팅방 탭 클릭 시에도 통계 업데이트
     const handleTabChange = (tabId: 'members' | 'chats' | 'notices' | 'reports') => {
         setActiveTab(tabId);
-        if (tabId === 'chats' || tabId === 'reports') {  // reports 탭 클릭 시에도 통계 업데이트
-            fetchDashboardStats();
-        }
+        fetchDashboardStats(); // 비동기 함수 호출
     };
 
     return (
