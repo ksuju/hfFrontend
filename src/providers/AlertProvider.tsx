@@ -10,6 +10,8 @@ interface AlertContextType {
     loadMore: () => Promise<void>;
     readAlerts: (alertIds: number[]) => Promise<void>;
     setAlerts: React.Dispatch<React.SetStateAction<Alert[]>>;
+    processedAlerts: { [key: number]: string };
+    setProcessedAlerts: React.Dispatch<React.SetStateAction<{ [key: number]: string }>>;
 }
 
 export const AlertContext = createContext<AlertContextType>({
@@ -18,7 +20,9 @@ export const AlertContext = createContext<AlertContextType>({
     hasMore: false,
     loadMore: async () => { },
     readAlerts: async () => { },
-    setAlerts: () => { }
+    setAlerts: () => { },
+    processedAlerts: {},
+    setProcessedAlerts: () => { }
 });
 
 export const AlertProvider = ({ children, isLoggedIn, isOpen }: { children: ReactNode, isLoggedIn: boolean, isOpen: boolean }) => {
@@ -29,6 +33,7 @@ export const AlertProvider = ({ children, isLoggedIn, isOpen }: { children: Reac
     const clientRef = useRef<Client | null>(null);
     const [unreadAlerts, setUnreadAlerts] = useState<number[]>([]);
     const latestAlertsRef = useRef<Alert[]>([]);
+    const [processedAlerts, setProcessedAlerts] = useState<{ [key: number]: string }>({});
 
     const userInfo = localStorage.getItem('userInfo')
         ? JSON.parse(localStorage.getItem('userInfo')!).data
@@ -170,7 +175,9 @@ export const AlertProvider = ({ children, isLoggedIn, isOpen }: { children: Reac
             hasMore,
             loadMore,
             readAlerts,
-            setAlerts
+            setAlerts,
+            processedAlerts,
+            setProcessedAlerts
         }}>
             {children}
             {toast && <ToastAlert alert={toast} onClose={() => setToast(null)} />}

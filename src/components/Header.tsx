@@ -98,6 +98,14 @@ const Header = ({ isLoggedIn, setIsLoggedIn, isAlertOpen, setIsAlertOpen }: Head
                             </button>
                         </div>
                     )}
+                    {userInfo?.data?.role === 'ADMIN' && (
+                        <Link 
+                            to="/admin"
+                            className="px-4 py-1.5 text-sm font-medium text-primary hover:text-white hover:bg-primary rounded-full transition-all duration-200"
+                        >
+                            관리자
+                        </Link>
+                    )}
                 </div>
             </div>
         </header>

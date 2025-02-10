@@ -8,7 +8,7 @@ export const AlertBell = ({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (
     const navigate = useNavigate();
     const [visibleCount, setVisibleCount] = useState(5);
     const [showAllAlerts, setShowAllAlerts] = useState(false);
-    const { alerts, unreadCount, hasMore, loadMore, readAlerts, setAlerts } = useContext(AlertContext);
+    const { alerts, unreadCount, hasMore, loadMore, readAlerts, setAlerts, processedAlerts, setProcessedAlerts } = useContext(AlertContext);
 
     const handleAlertClick = async (alert: Alert) => {
         try {
@@ -71,7 +71,7 @@ export const AlertBell = ({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (
         setVisibleCount(prev => prev + 5);
     };
 
-    const handleAcceptRequest = async (requestId: number) => {
+    const handleAcceptRequest = async (requestId: number, alertId: number) => {
         try {
             const response = await fetch(
                 `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/friends/friend-requests/${requestId}/accept`,
@@ -81,17 +81,18 @@ export const AlertBell = ({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (
                 }
             );
             if (response.ok) {
-                // 알림 목록 갱신
-                setAlerts(prev => prev.filter(alert =>
-                    !alert.navigationData.includes(`"requestId":${requestId}`)
-                ));
+                setProcessedAlerts(prev => ({ ...prev, [alertId]: '수락 완료' }));
+                // 3초 후 알림 제거
+                setTimeout(() => {
+                    setAlerts(prev => prev.filter(a => a.id !== alertId));
+                }, 3000);
             }
         } catch (error) {
             console.error('친구 신청 수락 실패:', error);
         }
     };
 
-    const handleRejectRequest = async (requestId: number) => {
+    const handleRejectRequest = async (requestId: number, alertId: number) => {
         try {
             const response = await fetch(
                 `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/friends/friend-requests/${requestId}/reject`,
@@ -101,10 +102,11 @@ export const AlertBell = ({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (
                 }
             );
             if (response.ok) {
-                // 알림 목록 갱신
-                setAlerts(prev => prev.filter(alert =>
-                    !alert.navigationData.includes(`"requestId":${requestId}`)
-                ));
+                setProcessedAlerts(prev => ({ ...prev, [alertId]: '거절 완료' }));
+                // 3초 후 알림 제거
+                setTimeout(() => {
+                    setAlerts(prev => prev.filter(a => a.id !== alertId));
+                }, 3000);
             }
         } catch (error) {
             console.error('친구 신청 거절 실패:', error);
@@ -132,12 +134,12 @@ export const AlertBell = ({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (
                                     <span className={`text-sm tracking-wide ${alert.isRead ? 'font-normal' : 'font-bold'}`}>
                                         {line}
                                     </span>
-                                    {alert.navigationType === 'SELECT' && navigationData.requestId && (
+                                    {alert.navigationType === 'SELECT' && navigationData.requestId && !processedAlerts[alert.id] ? (
                                         <div className="flex gap-2 ml-4">
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    handleAcceptRequest(navigationData.requestId);
+                                                    handleAcceptRequest(navigationData.requestId, alert.id);
                                                 }}
                                                 className="px-2 py-1 bg-primary text-white text-xs rounded hover:bg-primary-dark"
                                             >
@@ -146,14 +148,16 @@ export const AlertBell = ({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    handleRejectRequest(navigationData.requestId);
+                                                    handleRejectRequest(navigationData.requestId, alert.id);
                                                 }}
                                                 className="px-2 py-1 bg-gray-200 text-gray-700 text-xs rounded hover:bg-gray-300"
                                             >
                                                 거절
                                             </button>
                                         </div>
-                                    )}
+                                    ) : processedAlerts[alert.id] ? (
+                                        <span className="text-sm text-primary">{processedAlerts[alert.id]}</span>
+                                    ) : null}
                                 </div>
                             )}
                         </div>
