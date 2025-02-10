@@ -290,13 +290,16 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
     const updateMemberLoginStatus = async () => {
         try {
             const response = await axios.get<MemberStatusResponse>(
-                import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/chatRooms/${chatRoomId}/members`,
+                request_URL + `/api/v1/chatRooms/${chatRoomId}/members`,
                 { withCredentials: true }
             );
             setMemberStatusList(response.data.data); // data 필드에서 멤버 상태 배열 추출
         } catch (error) {
+            setTimeout(()=>{
+                alert("해당 채팅방의 멤버만 입장이 가능합니다.");
+            },100)
             console.error('유저 로그인 상태 조회 실패:', error);
-            navigate('/chatroom');  // 채팅방 멤버가 아닐 경우, 모임 리스트 게시판으로 이동
+            await navigate('/chatroom');  // 채팅방 멤버가 아닐 경우, 모임 리스트 게시판으로 이동
         }
     }
 
@@ -392,7 +395,6 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
             onConnect: () => {
                 console.log('STOMP 연결 성공');
                 updateLogin();
-                // updateMemberLoginStatus();
                 fetchPreviousMessages(0);
                 setTimeout(() => {
                     fetchMessageCount();
@@ -504,7 +506,6 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                 destination: `/app/chat/${chatRoomId}`,
                 body: JSON.stringify(messageToSend),
             });
-            // console.log(import.meta.env.VITE_CORE_API_BASE_URL)
             await axios.post(
                 request_URL + `/api/v1/chatRooms/${chatRoomId}/messages`,
                 messageToSend,
