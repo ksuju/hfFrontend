@@ -120,7 +120,7 @@ const SocialAccountCard = ({ type, account, onSocialAction }: SocialAccountCardP
     };
 
     return (
-        <div className="flex items-center justify-between p-4 bg-white rounded-lg shadow-sm">
+        <div className="flex items-center justify-between p-4 bg-primary/5 rounded-lg hover:bg-primary/10 transition-colors">
             <div className="flex items-center gap-4">
                 <img src={getSocialIcon(type)} alt={type} className="w-12 h-12" />
                 {account?.active && (

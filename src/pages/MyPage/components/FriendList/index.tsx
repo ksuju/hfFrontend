@@ -143,7 +143,7 @@ export default function FriendList() {
 
     // 빈 상태 컴포넌트 추가
     const EmptyState = ({ message }: { message: string }) => (
-        <div className="flex flex-col items-center justify-center py-8 px-4 bg-gray-50 rounded-lg">
+        <div className="flex flex-col items-center justify-center py-8 px-4 bg-primary/5 rounded-lg">
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                 <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -164,7 +164,7 @@ export default function FriendList() {
                     <div className="space-y-3">
                         {sentRequests.map(request => (
                             <div key={request.id}
-                                className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                                className="flex items-center justify-between p-4 bg-primary/5 rounded-lg hover:bg-primary/10 transition-colors"
                             >
                                 <div className="flex items-center">
                                     <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center">
@@ -197,7 +197,7 @@ export default function FriendList() {
                     <div className="space-y-3">
                         {pendingRequests.map(request => (
                             <div key={request.id}
-                                className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                                className="flex items-center justify-between p-4 bg-primary/5 rounded-lg hover:bg-primary/10 transition-colors"
                             >
                                 <div className="flex items-center">
                                     <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center">
@@ -238,7 +238,7 @@ export default function FriendList() {
                     <div className="space-y-3">
                         {acceptedFriends.map(friend => (
                             <div key={friend.id}
-                                className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                                className="flex items-center justify-between p-4 bg-primary/5 rounded-lg hover:bg-primary/10 transition-colors"
                             >
                                 <div className="flex items-center">
                                     <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center">
