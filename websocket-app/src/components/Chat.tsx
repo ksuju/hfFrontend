@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Client } from '@stomp/stompjs';
 import axios from 'axios';
 import send from "../assets/images/send.png"
@@ -75,6 +75,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
     const [currentUserNickname, setCurrentUserNickname] = useState<string>('');
     const [memberStatusList, setMemberStatusList] = useState<MemberStatus[]>([]);
     const { chatRoomId } = useParams();
+    const navigate = useNavigate();
     const [searchKeyword, setSearchKeyword] = useState<string>('');
     const [searchPage, setSearchPage] = useState(0);
     const [isSearchMode, setIsSearchMode] = useState(false);
@@ -160,7 +161,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                     { withCredentials: true }
                 );
 
-                setTimeout(()=>{    // 맨 아래로
+                setTimeout(()=>{    // 맨 아래로 스크롤
                     scrollToBottom(true);
                 },100)
             }
@@ -295,6 +296,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
             setMemberStatusList(response.data.data); // data 필드에서 멤버 상태 배열 추출
         } catch (error) {
             console.error('유저 로그인 상태 조회 실패:', error);
+            navigate('/chatroom');  // 채팅방 멤버가 아닐 경우, 모임 리스트 게시판으로 이동
         }
     }
 
