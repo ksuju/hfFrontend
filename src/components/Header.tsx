@@ -3,19 +3,28 @@ import { Link } from 'react-router-dom'
 import logo from '../assets/images/logo.png'
 import { AlertBell } from './AlertBell';
 
+
 interface HeaderProps {
     isLoggedIn: boolean;
     setIsLoggedIn: (value: boolean) => void;
     isAlertOpen: boolean;
     setIsAlertOpen: (value: boolean) => void;
+    userInfo: UserInfoType | null;
 }
 
-const Header = ({ isLoggedIn, setIsLoggedIn, isAlertOpen, setIsAlertOpen }: HeaderProps) => {
-    const userInfo = localStorage.getItem('userInfo') ? JSON.parse(localStorage.getItem('userInfo')!) : null;
+interface UserInfoType {
+    data: {
+        id: number;
+        nickname: string;
+        profilePath: string | null;
+        role?: string;
+    };
+}
 
+const Header = ({ isLoggedIn, setIsLoggedIn, isAlertOpen, setIsAlertOpen, userInfo }: HeaderProps) => {
     const handleLogout = async () => {
         try {
-            const memberId = userInfo?.data?.id; // userInfo에서 사용자 ID 추출
+            const memberId = userInfo?.data?.id;
 
             const response = await fetch(
                 `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/auth/logout`, {
@@ -72,19 +81,16 @@ const Header = ({ isLoggedIn, setIsLoggedIn, isAlertOpen, setIsAlertOpen }: Head
                             <AlertBell isOpen={isAlertOpen} setIsOpen={setIsAlertOpen} />
                             <div className="flex items-center gap-2">
                                 <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                                    {userInfo?.data?.profilePath ? (
-                                        <img
-                                            src={userInfo.data.profilePath.startsWith('http')
+                                    <img
+                                        src={userInfo?.data?.profilePath
+                                            ? userInfo.data.profilePath.startsWith('http')
                                                 ? userInfo.data.profilePath
-                                                : `https://kr.object.ncloudstorage.com/hf-bucket2025/member/${userInfo.data.profilePath}`}
-                                            alt="프로필"
-                                            className="w-full h-full object-cover"
-                                        />
-                                    ) : (
-                                        <span className="text-gray-500 text-sm">
-                                            {userInfo?.data?.nickname?.[0] || '?'}
-                                        </span>
-                                    )}
+                                                : `https://kr.object.ncloudstorage.com/hf-bucket2025/member/${userInfo.data.profilePath}`
+                                            : `https://kr.object.ncloudstorage.com/hf-bucket2025/member/default.png`
+                                        }
+                                        alt="프로필"
+                                        className="w-full h-full object-cover"
+                                    />
                                 </div>
                                 <span className="text-sm text-gray-600">
                                     {userInfo?.data?.nickname || '사용자'}
@@ -99,7 +105,7 @@ const Header = ({ isLoggedIn, setIsLoggedIn, isAlertOpen, setIsAlertOpen }: Head
                         </div>
                     )}
                     {userInfo?.data?.role === 'ADMIN' && (
-                        <Link 
+                        <Link
                             to="/admin"
                             className="px-4 py-1.5 text-sm font-medium text-primary hover:text-white hover:bg-primary rounded-full transition-all duration-200"
                         >
