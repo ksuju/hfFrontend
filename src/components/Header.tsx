@@ -5,10 +5,12 @@ import { AlertBell } from './AlertBell';
 
 interface HeaderProps {
     isLoggedIn: boolean;
-    setIsLoggedIn: React.Dispatch<React.SetStateAction<boolean>>;
+    setIsLoggedIn: (value: boolean) => void;
+    isAlertOpen: boolean;
+    setIsAlertOpen: (value: boolean) => void;
 }
 
-const Header = ({ isLoggedIn, setIsLoggedIn }: HeaderProps) => {
+const Header = ({ isLoggedIn, setIsLoggedIn, isAlertOpen, setIsAlertOpen }: HeaderProps) => {
     const userInfo = localStorage.getItem('userInfo') ? JSON.parse(localStorage.getItem('userInfo')!) : null;
 
     const handleLogout = async () => {
@@ -67,7 +69,7 @@ const Header = ({ isLoggedIn, setIsLoggedIn }: HeaderProps) => {
                         </>
                     ) : (
                         <div className="flex items-center gap-4">
-                            <AlertBell />
+                            <AlertBell isOpen={isAlertOpen} setIsOpen={setIsAlertOpen} />
                             <div className="flex items-center gap-2">
                                 <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
                                     {userInfo?.data?.profilePath ? (
@@ -95,6 +97,14 @@ const Header = ({ isLoggedIn, setIsLoggedIn }: HeaderProps) => {
                                 로그아웃
                             </button>
                         </div>
+                    )}
+                    {userInfo?.data?.role === 'ADMIN' && (
+                        <Link 
+                            to="/admin"
+                            className="px-4 py-1.5 text-sm font-medium text-primary hover:text-white hover:bg-primary rounded-full transition-all duration-200"
+                        >
+                            관리자
+                        </Link>
                     )}
                 </div>
             </div>
