@@ -8,7 +8,11 @@ import PasswordVerification from './components/PasswordVerification';
 import { EditFormData, UserInfo } from './types';
 import FriendList from './components/FriendList';
 
-const MyPage = () => {
+interface MyPageProps {
+    updateUserInfo: (userInfo: any) => void;
+}
+
+const MyPage = ({ updateUserInfo }: MyPageProps) => {
     const navigate = useNavigate();
     const [isPasswordVerified, setIsPasswordVerified] = useState(false);
     const [activeTab, setActiveTab] = useState('social');
@@ -190,12 +194,11 @@ const MyPage = () => {
 
             if (response.ok) {
                 const updatedUserInfo = await response.json();
-                // 기존 userInfo의 모든 정보를 유지하면서 profilePath만 업데이트
                 const newUserInfo = {
                     ...userInfo,
                     profilePath: updatedUserInfo.data.profilePath
                 };
-                localStorage.setItem('userInfo', JSON.stringify({ data: newUserInfo }));
+                updateUserInfo({ data: newUserInfo });  // App의 상태 업데이트
                 setUserInfo(newUserInfo);
                 alert('프로필 이미지가 변경되었습니다.');
             } else {

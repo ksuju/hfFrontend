@@ -3,19 +3,28 @@ import { Link } from 'react-router-dom'
 import logo from '../assets/images/logo.png'
 import { AlertBell } from './AlertBell';
 
+
 interface HeaderProps {
     isLoggedIn: boolean;
     setIsLoggedIn: (value: boolean) => void;
     isAlertOpen: boolean;
     setIsAlertOpen: (value: boolean) => void;
+    userInfo: UserInfoType | null;
 }
 
-const Header = ({ isLoggedIn, setIsLoggedIn, isAlertOpen, setIsAlertOpen }: HeaderProps) => {
-    const userInfo = localStorage.getItem('userInfo') ? JSON.parse(localStorage.getItem('userInfo')!) : null;
+interface UserInfoType {
+    data: {
+        id: number;
+        nickname: string;
+        profilePath: string | null;
+        role?: string;
+    };
+}
 
+const Header = ({ isLoggedIn, setIsLoggedIn, isAlertOpen, setIsAlertOpen, userInfo }: HeaderProps) => {
     const handleLogout = async () => {
         try {
-            const memberId = userInfo?.data?.id; // userInfo에서 사용자 ID 추출
+            const memberId = userInfo?.data?.id;
 
             const response = await fetch(
                 `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/auth/logout`, {
@@ -99,7 +108,7 @@ const Header = ({ isLoggedIn, setIsLoggedIn, isAlertOpen, setIsAlertOpen }: Head
                         </div>
                     )}
                     {userInfo?.data?.role === 'ADMIN' && (
-                        <Link 
+                        <Link
                             to="/admin"
                             className="px-4 py-1.5 text-sm font-medium text-primary hover:text-white hover:bg-primary rounded-full transition-all duration-200"
                         >
