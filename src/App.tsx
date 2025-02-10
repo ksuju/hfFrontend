@@ -107,57 +107,64 @@ const App = () => {
     return (
         <Router>
             <AlertProvider isLoggedIn={isLoggedIn} isOpen={isAlertOpen}>
-                <div className="min-h-screen flex flex-col bg-white lg:bg-gray-100">
-                    <Header
-                        isLoggedIn={isLoggedIn}
-                        setIsLoggedIn={setIsLoggedIn}
-                        isAlertOpen={isAlertOpen}
-                        setIsAlertOpen={setIsAlertOpen}
-                        userInfo={userInfo}
-                    />
-                    <Routes>
-                        <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} />} />
-                        <Route path="/signup" element={<Signup />} />
-                        <Route path="/find-account" element={<FindAccount />} />
-                        <Route path="/reset-password" element={<ResetPassword />} />
-                        <Route path="/admin/*" element={<ProtectedAdminRoute />} />
-                        <Route path="/admin/notice/write" element={<NoticeWrite />} />
-                        <Route path="/admin/notice/edit/:id" element={<NoticeEdit />} />
-                        <Route path="/*" element={
-                            <div className="flex flex-col min-h-screen">
-                                <main className="flex-1 mt-16 mb-16">
-                                    <div className="max-w-[600px] lg:max-w-screen-lg mx-auto lg:py-6">
-                                        <div className="bg-white lg:rounded-2xl lg:shadow-md">
-                                            <Routes>
-                                                <Route path="/" element={<Main />} />
-                                                <Route path="/posts" element={<Festival />} />
-                                                <Route path="/chatroom" element={<Meeting />} />
-                                                <Route path="/notice" element={<Notice />} />
-                                                <Route path="/notice/:id" element={
-                                                    <NoticeDetail
-                                                        isLoggedIn={isLoggedIn}
-                                                        setIsLoggedIn={setIsLoggedIn}
-                                                        isAlertOpen={isAlertOpen}
-                                                        setIsAlertOpen={setIsAlertOpen}
-                                                    />
-                                                } />
-                                                <Route path="/chat/:chatRoomId" element={userInfo ? (
-                                                    <Chat memberId={userInfo.id} />
-                                                ) : (
-                                                    <Navigate to="/login" replace />
-                                                )} />
-                                                <Route path="/mypage" element={<MyPage updateUserInfo={updateUserInfo} />} />
-                                                <Route path="/map" element={<FestivalMap />} />
-                                                <Route path="/detailposts" element={<FestivalDetail />} />
-                                            </Routes>
-                                        </div>
+                <Routes>
+                    {/* 관리자 라우트 - 헤더와 푸터 없이 독립적으로 렌더링 */}
+                    <Route path="/admin/*" element={<ProtectedAdminRoute />} />
+                    <Route path="/admin/notice/write" element={<NoticeWrite />} />
+                    <Route path="/admin/notice/edit/:id" element={<NoticeEdit />} />
+
+                    {/* 일반 라우트 - 기존 레이아웃 유지 */}
+                    <Route path="*" element={
+                        <div className="min-h-screen flex flex-col bg-white lg:bg-gray-100">
+                            <Header
+                                isLoggedIn={isLoggedIn}
+                                setIsLoggedIn={setIsLoggedIn}
+                                isAlertOpen={isAlertOpen}
+                                setIsAlertOpen={setIsAlertOpen}
+                                userInfo={userInfo}
+                            />
+                            <Routes>
+                                <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} />} />
+                                <Route path="/signup" element={<Signup />} />
+                                <Route path="/find-account" element={<FindAccount />} />
+                                <Route path="/reset-password" element={<ResetPassword />} />
+                                <Route path="/" element={
+                                    <div className="flex flex-col min-h-screen">
+                                        <main className="flex-1 mt-16 mb-16">
+                                            <div className="max-w-[600px] lg:max-w-screen-lg mx-auto lg:py-6">
+                                                <div className="bg-white lg:rounded-2xl lg:shadow-md">
+                                                    <Routes>
+                                                        <Route path="/" element={<Main />} />
+                                                        <Route path="/posts" element={<Festival />} />
+                                                        <Route path="/chatroom" element={<Meeting />} />
+                                                        <Route path="/notice" element={<Notice />} />
+                                                        <Route path="/notice/:id" element={
+                                                            <NoticeDetail
+                                                                isLoggedIn={isLoggedIn}
+                                                                setIsLoggedIn={setIsLoggedIn}
+                                                                isAlertOpen={isAlertOpen}
+                                                                setIsAlertOpen={setIsAlertOpen}
+                                                            />
+                                                        } />
+                                                        <Route path="/chat/:chatRoomId" element={userInfo ? (
+                                                            <Chat memberId={userInfo.id} />
+                                                        ) : (
+                                                            <Navigate to="/login" replace />
+                                                        )} />
+                                                        <Route path="/mypage" element={<MyPage updateUserInfo={updateUserInfo} />} />
+                                                        <Route path="/map" element={<FestivalMap />} />
+                                                        <Route path="/detailposts" element={<FestivalDetail />} />
+                                                    </Routes>
+                                                </div>
+                                            </div>
+                                        </main>
+                                        <Footer />
                                     </div>
-                                </main>
-                                <Footer />
-                            </div>
-                        } />
-                    </Routes>
-                </div>
+                                } />
+                            </Routes>
+                        </div>
+                    } />
+                </Routes>
             </AlertProvider>
         </Router>
     )

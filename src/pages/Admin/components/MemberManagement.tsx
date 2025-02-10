@@ -104,7 +104,6 @@ const MemberManagement = () => {
                         <th className="p-4 text-left">회원 ID</th>
                         <th className="p-4 text-left">닉네임</th>
                         <th className="p-4 text-left">전화번호</th>
-                        <th className="p-4 text-left">권한</th>
                         <th className="p-4 text-left">상태</th>
                         <th className="p-4 text-left">가입일</th>
                     </tr>
@@ -116,11 +115,6 @@ const MemberManagement = () => {
                             <td className="p-4">{member.nickname}</td>
                             <td className="p-4">
                                 {member.phoneNumber || '전화번호 없음'}
-                            </td>
-                            <td className="p-4">
-                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getRoleBadgeStyle(member.role)}`}>
-                                    {getRoleDisplayName(member.role)}
-                                </span>
                             </td>
                             <td className="p-4">
                                 <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getStateBadgeStyle(member.state)}`}>
