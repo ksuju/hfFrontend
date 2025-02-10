@@ -93,9 +93,6 @@ export const AlertProvider = ({ children, isLoggedIn, isOpen }: { children: Reac
 
     useEffect(() => {
         if (!userInfo) return undefined;
-        if (clientRef.current) {
-            clientRef.current.deactivate();
-        }
 
         const fetchInitialAlerts = async () => {
             try {
@@ -130,9 +127,6 @@ export const AlertProvider = ({ children, isLoggedIn, isOpen }: { children: Reac
 
                     setAlerts(prev => {
                         const newAlerts = [newAlert, ...prev];
-                        if (!newAlert.isRead) {
-                            setUnreadAlerts(prev => [...prev, newAlert.id]);
-                        }
                         return newAlerts;
                     });
                 });
@@ -159,7 +153,7 @@ export const AlertProvider = ({ children, isLoggedIn, isOpen }: { children: Reac
                 clientRef.current = null;
             }
         };
-    }, [isLoggedIn, isOpen]);
+    }, [isLoggedIn]);
 
     useEffect(() => {
         const newUnreadAlerts = alerts
@@ -167,6 +161,18 @@ export const AlertProvider = ({ children, isLoggedIn, isOpen }: { children: Reac
             .map(alert => alert.id);
         setUnreadAlerts(newUnreadAlerts);
     }, [alerts]);
+
+    useEffect(() => {
+        if (!isOpen && alerts.length > 0) {
+            const unreadAlertIds = alerts
+                .filter(alert => !alert.isRead)
+                .map(alert => alert.id);
+
+            if (unreadAlertIds.length > 0) {
+                readAlerts(unreadAlertIds);
+            }
+        }
+    }, [isOpen]);
 
     return (
         <AlertContext.Provider value={{
