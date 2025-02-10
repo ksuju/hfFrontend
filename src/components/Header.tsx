@@ -36,13 +36,13 @@ const Header = ({ isLoggedIn, setIsLoggedIn, isAlertOpen, setIsAlertOpen, userIn
                 body: JSON.stringify({
                     memberId: memberId
                 })
-            }
-            );
+            });
 
             if (response.ok) {
                 setIsLoggedIn(false);
                 localStorage.removeItem('isLoggedIn');
                 localStorage.removeItem('userInfo');
+                window.location.reload();
             } else {
                 const errorData = await response.json();
                 alert(errorData.msg || '로그아웃에 실패했습니다.');
