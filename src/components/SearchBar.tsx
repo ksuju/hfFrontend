@@ -15,10 +15,14 @@ const SearchBar = ({ placeholder, onChange }: SearchBarProps) => {
         onChange(newKeyword); // Trigger the onChange callback on every input change
     };
 
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault(); // 폼 제출 동작 방지
+    };
+
     return (
         <div className="fixed top-16 left-0 right-0 bg-white z-20 shadow-sm">
-            <div className="max-w-[600px] lg:max-w-screen-lg mx-auto px-4 py-2">
-                <form className="relative">
+            <div className="max-w-[600px] lg:max-w-screen-lg mx-auto px-2 py-2">
+                <form onSubmit={handleSubmit} className="relative">
                     <input
                         type="text"
                         value={keyword}
@@ -47,4 +51,4 @@ const SearchBar = ({ placeholder, onChange }: SearchBarProps) => {
     );
 };
 
-export default SearchBar
+export default SearchBar;
