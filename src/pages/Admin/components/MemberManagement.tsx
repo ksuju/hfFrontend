@@ -19,6 +19,7 @@ const MemberManagement = () => {
     const [members, setMembers] = useState<Member[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [editingRow, setEditingRow] = useState<EditingMember | null>(null);
+    const [editingMemberId, setEditingMemberId] = useState<number | null>(null);
 
     const fetchMembers = async () => {
         try {

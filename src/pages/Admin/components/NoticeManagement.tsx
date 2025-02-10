@@ -123,17 +123,16 @@ const NoticeManagement = () => {
                 <tbody>
                     {notices.map(notice => (
                         notice.id !== -1 ? (  // 빈 항목이 아닌 경우에만 렌더링
-                            <tr key={notice.id} className="border-b">
+                            <tr key={notice.id} className="border-b hover:bg-gray-50">
                                 <td className="p-4">{notice.id}</td>
-                                <td className="p-4">{notice.title}</td>
+                                <td 
+                                    className="p-4 cursor-pointer hover:text-primary"
+                                    onClick={() => navigate(`/admin/notice/edit/${notice.id}`)}
+                                >
+                                    {notice.title}
+                                </td>
                                 <td className="p-4">{new Date(notice.createDate).toLocaleDateString()}</td>
                                 <td className="p-4">
-                                    <button 
-                                        onClick={() => navigate(`/admin/notice/edit/${notice.id}`)}
-                                        className="text-blue-500 hover:text-blue-700 mr-2"
-                                    >
-                                        수정
-                                    </button>
                                     <button 
                                         onClick={() => handleDelete(notice.id)}
                                         className="text-red-500 hover:text-red-700"

@@ -52,6 +52,8 @@ const Notice = () => {
 
             if (response.data.resultCode === "200") {
                 const content = response.data.data.content;
+                console.log('공지사항 목록:', content); // ID 기준 정렬 확인용 로그
+                
                 const remainingItems = pageSize - content.length;
                 
                 if (remainingItems > 0 && content.length > 0) {
