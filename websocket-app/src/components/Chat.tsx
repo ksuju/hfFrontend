@@ -3,13 +3,16 @@ import { useParams } from 'react-router-dom';
 import { Client } from '@stomp/stompjs';
 import axios from 'axios';
 import send from "../assets/images/send.png"
+import memberList from "../assets/images/memberList.png"
+import fileImage from "../assets/images/file.png"
+
 
 interface ChatMessage {
     messageId?: number;
     nickname?: string;
     chatMessageContent: string;
     messageTimestamp: string;
-    count?: number; // 읽지 않은 사람 수 추가
+    count?: number;
 }
 
 interface PageInfo {
@@ -48,6 +51,17 @@ interface messageCount {
     count: number;
 }
 
+interface FileUploadResponse {
+    resultCode: string;
+    msg: string;
+    data: string;  // S3 URL
+}
+
+interface FileDeleteResponse {
+    resultCode: string;
+    msg: string;
+}
+
 const WEBSOCKET_URL = `${import.meta.env.VITE_CORE_WEBSOCKET_BASE_URL}/ws/chat`;
 const request_URL = import.meta.env.VITE_CORE_API_BASE_URL;
 
@@ -68,11 +82,132 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
     const [currentSearchNickname, setCurrentSearchNickname] = useState('');
     // 메시지 읽음 카운트 상태 추가
     const [messageReadCounts, setMessageReadCounts] = useState<{ [key: number]: number }>({});
+    const [showScrollButton, setShowScrollButton] = useState(false);
+    // 상태 추가
+    const [showParticipants, setShowParticipants] = useState(false);
 
-    const scrollToBottom = () => {
-        if (messagesListRef.current) {
-            messagesListRef.current.scrollTop = messagesListRef.current.scrollHeight;
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // 파일 삭제 함수
+    const handleFileDelete = async (fileUrl: string) => {
+        if (!chatRoomId) return;
+
+        try {
+            const response = await axios.delete<FileDeleteResponse>(
+                `${request_URL}/api/v1/chatRooms/${chatRoomId}/files/delete`,
+                {
+                    params: { fileName: fileUrl },
+                    withCredentials: true
+                }
+            );
+
+            if (response.data.resultCode === "200") {
+                // 성공 메시지 표시
+                alert("파일이 성공적으로 삭제되었습니다.");
+
+                // 필요한 경우 메시지 목록 업데이트
+                setMessages(prevMessages =>
+                    prevMessages.filter(msg => msg.chatMessageContent !== fileUrl)
+                );
+            }
+        } catch (error) {
+            if (error && 'response' in error && error.response?.data?.msg) {
+                alert(error.response.data.msg);
+            } else {
+                console.error('파일 삭제 실패:', error);
+                alert('파일 삭제에 실패했습니다.');
+            }
         }
+    };
+
+    // 파일 업로드 함수
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !chatRoomId) return;
+
+        // 파일 크기 검증 (5MB)
+        const MAX_FILE_SIZE = 5 * 1024 * 1024;
+        if (file.size > MAX_FILE_SIZE) {
+            alert('파일 크기는 5MB를 초과할 수 없습니다.');
+            return;
+        }
+
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const response = await axios.post<FileUploadResponse>(
+                `${request_URL}/api/v1/chatRooms/${chatRoomId}/files/upload`,
+                formData,
+                {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                    withCredentials: true
+                }
+            );
+
+            if (response.data.resultCode === "200") {
+                // 파일 URL을 포함한 메시지 전송
+                const messageToSend = {
+                    content: response.data.data, // S3 URL을 content로 전송
+                    originalFileName: file.name  // 원본 파일명 추가
+                };
+
+                await axios.post(
+                    `${request_URL}/api/v1/chatRooms/${chatRoomId}/messages`,
+                    messageToSend,
+                    { withCredentials: true }
+                );
+            }
+        } catch (error) {
+            if (error && 'response' in error && error.response?.data?.msg) {
+                setTimeout(() => {
+                    alert(error.response.data.msg);
+                }, 50)
+            } else {
+                console.error('파일 업로드 실패:', error);
+            }
+        }
+    };
+
+    // 메시지 스크롤 함수
+    const scrollToBottom = (force: boolean = false) => {
+        if (messagesListRef.current) {
+            const element = messagesListRef.current;
+            const isScrolledNearBottom = element.scrollHeight - element.scrollTop - element.clientHeight < 100;
+
+            if (force || isScrolledNearBottom) {
+                element.scrollTop = element.scrollHeight;
+                setShowScrollButton(false);
+            } else if (!isScrolledNearBottom) {
+                setShowScrollButton(true);
+            }
+        }
+    };
+
+    // 스크롤 핸들러 함수
+    const handleScroll = () => {
+        if (messagesListRef.current) {
+            const element = messagesListRef.current;
+            const isScrolledNearBottom = element.scrollHeight - element.scrollTop - element.clientHeight < 100;
+
+            if (isScrolledNearBottom) {
+                setShowScrollButton(false);
+            }
+        }
+    };
+
+    // 메시지 필터링 함수
+    const filterMessagesBySearch = (message: ChatMessage) => {
+        if (!isSearchMode) return true;
+
+        const contentMatch = message.chatMessageContent.toLowerCase()
+            .includes(currentSearchKeyword.toLowerCase());
+        const nicknameMatch = !currentSearchNickname ||
+            (message.nickname?.toLowerCase() === currentSearchNickname.toLowerCase());
+
+        return contentMatch && nicknameMatch;
     };
 
     // 채팅 메시지 읽음 카운트 가져오기
@@ -106,14 +241,12 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                 if (response.data.data.content.length > 0) {
                     const latestMessage = response.data.data.content[0]; // 가장 최신 메시지
                     if (latestMessage.messageId) {  // id 필드 추가 필요
-                        updateMessageReadStatus(latestMessage.messageId);
-                        setTimeout(() => {
-                            fetchMessageCount();
-                        }, 100); // 0.1초 딜레이 (연속된 요청으로 인한 에러 방지)
+                        await updateMessageReadStatus(latestMessage.messageId);
+                        await fetchMessageCount();
                     }
                 }
-                updateMemberLoginStatus();    // 채팅방 멤버의 로그인 상태 가져오기
-                setTimeout(() => scrollToBottom(), 100);
+                await updateMemberLoginStatus();    // 채팅방 멤버의 로그인 상태 가져오기
+                setTimeout(() => scrollToBottom(true), 100);
             } else {
                 setMessages(prev => [...prev, ...response.data.data.content]);
             }
@@ -156,7 +289,6 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                 { withCredentials: true }
             );
             setMemberStatusList(response.data.data); // data 필드에서 멤버 상태 배열 추출
-            console.log(memberStatusList);
         } catch (error) {
             console.error('유저 로그인 상태 조회 실패:', error);
         }
@@ -276,10 +408,28 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                                 const chatMessage: ChatMessage = {
                                     messageId: receivedData.data.id,
                                     nickname: receivedData.data.nickname,
-                                    chatMessageContent: receivedData.data.chatMessageContent, 
+                                    chatMessageContent: receivedData.data.chatMessageContent,
                                     messageTimestamp: receivedData.data.createDate
                                 };
-                                setMessages(prev => [chatMessage, ...prev]);
+
+                                // 검색 모드일 때는 키워드가 포함된 메시지만 추가
+                                if (!isSearchMode ||
+                                    (chatMessage.chatMessageContent.toLowerCase().includes(currentSearchKeyword.toLowerCase()) &&
+                                        (!currentSearchNickname || chatMessage.nickname?.toLowerCase() === currentSearchNickname.toLowerCase()))) {
+                                    setMessages(prev => [chatMessage, ...prev]);
+                                }
+
+                                // 새 메시지 도착 시 스크롤 위치에 따라 알림 표시
+                                if (messagesListRef.current) {
+                                    const element = messagesListRef.current;
+                                    const isScrolledNearBottom = element.scrollHeight - element.scrollTop - element.clientHeight < 100;
+
+                                    if (!isScrolledNearBottom) {
+                                        setShowScrollButton(true);
+                                    } else {
+                                        scrollToBottom();
+                                    }
+                                }
 
                                 // 새 메시지가 도착하면 읽음 상태 업데이트
                                 if (receivedData.data.id) {
@@ -292,7 +442,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
 
                             case 'COUNT':
                                 // COUNT 타입으로 받은 데이터를 메시지 읽음 수에 반영
-                                const countMap = receivedData.data.reduce((acc: {[key: number]: number}, curr: messageCount) => {
+                                const countMap = receivedData.data.reduce((acc: { [key: number]: number }, curr: messageCount) => {
                                     acc[curr.messageId] = curr.count;
                                     return acc;
                                 }, {});
@@ -322,6 +472,20 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
         };
     }, [chatRoomId, memberId]);
 
+    // 스크롤 이벤트 리스너 추가
+    useEffect(() => {
+        const messagesList = messagesListRef.current;
+        if (messagesList) {
+            messagesList.addEventListener('scroll', handleScroll);
+        }
+        return () => {
+            if (messagesList) {
+                messagesList.removeEventListener('scroll', handleScroll);
+            }
+        };
+    }, []);
+
+    // 메시지 전송
     const sendMessage = async () => {
         if (!messageInput.trim() || !stompClientRef.current) return;
 
@@ -342,7 +506,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
             );
 
             setMessageInput('');
-            scrollToBottom();
+            scrollToBottom(true);
         } catch (error) {
             console.error('메시지 전송 실패:', error);
         }
@@ -407,23 +571,60 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
         const [keyword, setKeyword] = useState("");
         const [nickname, setNickname] = useState("");
 
+        // 검색 처리 함수 수정
         const handleSubmit = (e: React.FormEvent) => {
             e.preventDefault();
-            onSearch(keyword, nickname);
+
+            // '홍길동', 커피 형식의 패턴 매칭
+            const nicknameContentPattern = /^['"]([^'"]+)['"],\s*(.+)$/;
+            const match = keyword.match(nicknameContentPattern);
+
+            let searchKeyword = keyword;
+            let searchNickname = "";
+
+            if (match) {
+                // 매칭된 경우 닉네임과 검색어 분리
+                searchNickname = match[1];    // 따옴표 안의 닉네임
+                searchKeyword = match[2];     // 쉼표 뒤의 검색어
+            } else {
+                // 기존 'nickname:홍길동' 형식 처리
+                const nicknameMatch = keyword.match(/'([^']+)'/);
+                if (nicknameMatch) {
+                    searchNickname = nicknameMatch[1];
+                    searchKeyword = keyword.replace(/'.+?'/, '').trim();
+                }
+            }
+
+            onSearch(searchKeyword, searchNickname);
         };
 
-        const handleReset = () => {
-            // 검색 관련 상태 초기화
-            setKeyword("");
-            setNickname("");
+        const handleReset = async () => {
+            // 검색 상태 초기화
             setIsSearchMode(false);
             setSearchPage(0);
             setCurrentSearchKeyword('');
             setCurrentSearchNickname('');
-            setSearchKeyword(''); // 하이라이트 제거를 위한 검색 키워드 초기화
+            setSearchKeyword('');
+            setKeyword("");
+            setNickname("");
 
-            // 전체 메시지 다시 로드
-            fetchPreviousMessages(0);
+            try {
+                // 메시지 목록 초기화
+                setMessages([]);
+                // 페이지 초기화
+                setCurrentPage(0);
+                // hasMore 초기화
+                setHasMore(true);
+
+                // 전체 메시지 다시 로드
+                await fetchPreviousMessages(0);
+
+                // 스크롤 최하단으로 이동
+                scrollToBottom(true);
+
+            } catch (error) {
+                console.error('메시지 초기화 실패:', error);
+            }
         };
 
         return (
@@ -434,15 +635,8 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                             type="text"
                             value={keyword}
                             onChange={(e) => setKeyword(e.target.value)}
-                            placeholder="검색할 내용을 입력하세요"
+                            placeholder="검색어 입력 (닉네임 검색: '홍길동', 검색어)"
                             className="flex-1 h-10 px-3 border border-gray-300 rounded-lg focus:outline-none focus:border-primary"
-                        />
-                        <input
-                            type="text"
-                            value={nickname}
-                            onChange={(e) => setNickname(e.target.value)}
-                            placeholder="닉네임 (선택사항)"
-                            className="w-32 h-10 px-3 border border-gray-300 rounded-lg focus:outline-none focus:border-primary"
                         />
                         <button
                             type="submit"
@@ -457,227 +651,319 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                         >
                             초기화
                         </button>
+                        <button
+                            type="button"
+                            onClick={() => setShowParticipants(prev => !prev)}
+                            className="h-10 px-4 text-gray-600 rounded-lg flex items-center gap-2"
+                            style={{
+                                backgroundColor: showParticipants ? '#F26A2E' : 'transparent',
+                                color: showParticipants ? 'white' : '#F26A2E',
+                            }}
+                        >
+                            <span className="transition-colors duration-300" style={{ display: 'inline-block' }}>
+                                <img
+                                    src={memberList}
+                                    alt="멤버리스트"
+                                    style={{
+                                        width: '20px',
+                                        height: '20px',
+                                        filter: showParticipants ? 'brightness(0) invert(1)' : 'none', // 아이콘 색을 흰색으로
+                                    }}
+                                />
+                            </span>
+                        </button>
                     </div>
                 </form>
             </div>
         );
     };
 
+    // 메인 컨테이너
     return (
-        <div className="messages-container">
-            <ChatSearch onSearch={(keyword, nickname) => messageSearch(keyword, nickname, 0)} />
-            <div
-                className="messages-list"
-                ref={messagesListRef}
-                style={{
-                    height: "400px",
-                    overflowY: "auto",
-                    display: "flex",
-                    flexDirection: "column",
-                    padding: "20px"
-                }}
-            >
-                {isSearchMode && hasMore && (
-                    <button onClick={loadMoreSearchResults} className="w-full p-2 text-primary hover:bg-gray-50">
-                        이전 검색 결과 더보기
-                    </button>
-                )}
-                {!isSearchMode && hasMore && (
-                    <button onClick={loadMoreMessages}>이전 메시지 더보기</button>
-                )}
-                <div style={{ flexGrow: 1 }}>
-                    {messages.slice().reverse().map((msg, index, array) => {
-                        const isMyMessage = msg.nickname === currentUserNickname;
-                        const readCount = msg.messageId ? messageReadCounts[msg.messageId] || 0 : 0;
-                        
-                        return (
-                            <div 
-                                key={index} 
-                                style={{
+        <div className="messages-container flex">
+            {/* 채팅 영역 */}
+            <div className="flex-1"> {/* flex-1로 남은 공간 채움 */}
+                <ChatSearch onSearch={(keyword, nickname) => messageSearch(keyword, nickname, 0)} />
+                <div
+                    className="messages-list relative flex flex-col"
+                    ref={messagesListRef}
+                    style={{
+                        height: "400px",
+                        overflowY: "auto",
+                        display: "flex",
+                        flexDirection: "column",
+                        padding: "20px"
+                    }}
+                >
+                    {/* 이전 메시지 더보기 버튼*/}
+                    {!isSearchMode && hasMore && (
+                        <button
+                            onClick={loadMoreMessages}
+                            className="w-full p-2 text-primary hover:bg-gray-50 mb-4"
+                        >
+                            이전 메시지 더보기
+                        </button>
+                    )}
+
+                    {/* 기존 메시지 목록 렌더링 */}
+                    {isSearchMode && hasMore && (
+                        <button onClick={loadMoreSearchResults} className="w-full p-2 text-primary hover:bg-gray-50">
+                            이전 메시지 더보기
+                        </button>
+                    )}
+
+                    {/* 메시지 목록 */}
+                    <div className="flex-grow flex flex-col justify-end" style={{ flexGrow: 1 }}>
+                        {messages.slice().reverse().filter(filterMessagesBySearch).map((msg, index, array) => {
+                            const isMyMessage = msg.nickname === currentUserNickname;
+                            const readCount = msg.messageId ? messageReadCounts[msg.messageId] || 0 : 0;
+                            // 이전 메시지와 닉네임이 다르면 닉네임 표시
+                            const prevMessage = array[index - 1];
+                            const showNickname = !isMyMessage && (!prevMessage || prevMessage.nickname !== msg.nickname);
+
+                            return (
+                                <div key={index} style={{
                                     display: 'flex',
                                     flexDirection: 'column',
                                     alignItems: isMyMessage ? 'flex-end' : 'flex-start',
                                     margin: '8px 0'
-                                }}
-                            >
-                                <div style={{
-                                    display: 'flex',
-                                    flexDirection: isMyMessage ? 'row-reverse' : 'row',
-                                    alignItems: 'flex-end',
-                                    gap: '8px'
                                 }}>
+                                    {/* 닉네임 표시 (자신의 메시지가 아닐 때만) */}
+                                    {showNickname && (
+                                        <span style={{
+                                            fontSize: '0.8rem',
+                                            color: '#666',
+                                            marginBottom: '4px',
+                                            marginLeft: '8px'
+                                        }}>
+                                            {msg.nickname}
+                                        </span>
+                                    )}
                                     <div style={{
-                                        background: isMyMessage ? '#F26A2E' : '#e9ecef',
-                                        color: isMyMessage ? 'white' : 'black',
-                                        padding: '8px 12px',
-                                        borderRadius: isMyMessage ? '15px 15px 0 15px' : '15px 15px 15px 0',
-                                        maxWidth: '70%',
-                                        wordBreak: 'break-word'
-                                    }}>
-                                        {highlightKeyword(msg.chatMessageContent, searchKeyword)}
-                                    </div>
-                                    <div style={{
-                                        fontSize: '0.75rem',
-                                        color: '#6c757d',
                                         display: 'flex',
-                                        flexDirection: 'column',
-                                        gap: '2px',
-                                        alignItems: isMyMessage ? 'flex-end' : 'flex-start'
+                                        flexDirection: isMyMessage ? 'row-reverse' : 'row',
+                                        alignItems: 'flex-end',
+                                        gap: '8px'
                                     }}>
-                                        {readCount > 0 && (
-                                            <span style={{color: '#F26A2E', fontSize: '0.7rem'}}>
-                                                {readCount}
-                                            </span>
-                                        )}
-                                        <span>{formatMessageTime(msg.messageTimestamp)}</span>
+                                        <div style={{
+                                            ...(msg.chatMessageContent.includes('https://hf-chat.s3.ap-northeast-2.amazonaws.com')
+                                                ? {
+                                                    // 이미지 메시지일 때의 스타일
+                                                    padding: '8px 40px 8px 0',
+                                                    background: 'transparent',
+                                                    maxWidth: '70%',
+                                                    wordBreak: 'break-word'
+                                                }
+                                                : {
+                                                    // 일반 텍스트 메시지일 때 기존 말풍선 스타일 유지
+                                                    background: isMyMessage ? '#F26A2E' : '#e9ecef',
+                                                    color: isMyMessage ? 'white' : 'black',
+                                                    padding: '8px 12px',
+                                                    borderRadius: isMyMessage ? '15px 15px 0 15px' : '15px 15px 15px 0',
+                                                }),
+                                            maxWidth: '70%',
+                                            wordBreak: 'break-word'
+                                        }}>
+                                            {msg.chatMessageContent.includes('https://hf-chat.s3.ap-northeast-2.amazonaws.com') ? (
+                                                <div style={{ position: 'relative', display: 'inline-block' }}>
+                                                    <img
+                                                        src={msg.chatMessageContent}
+                                                        alt="채팅 이미지"
+                                                        style={{
+                                                            maxWidth: '200px',
+                                                            maxHeight: '200px',
+                                                            borderRadius: '8px',
+                                                            cursor: 'pointer'
+                                                        }}
+                                                        onClick={() => window.open(msg.chatMessageContent, '_blank')}
+                                                    />
+                                                    {isMyMessage && (
+                                                        <button
+                                                            onClick={() => handleFileDelete(msg.chatMessageContent)}
+                                                            style={{
+                                                                position: 'absolute',
+                                                                top: '5px',
+                                                                right: '5px',
+                                                                padding: '4px 8px',
+                                                                backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                                                                color: 'white',
+                                                                border: 'none',
+                                                                borderRadius: '4px',
+                                                                cursor: 'pointer',
+                                                                fontSize: '12px',
+                                                            }}
+                                                        >
+                                                            삭제
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                highlightKeyword(msg.chatMessageContent, searchKeyword)
+                                            )}
+                                        </div>
+                                        <div style={{
+                                            fontSize: '0.75rem',
+                                            color: '#6c757d',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            gap: '2px',
+                                            alignItems: isMyMessage ? 'flex-end' : 'flex-start'
+                                        }}>
+                                            {readCount > 0 && (
+                                                <span style={{ color: '#F26A2E', fontSize: '0.7rem' }}>
+                                                    {readCount}
+                                                </span>
+                                            )}
+                                            <span>{formatMessageTime(msg.messageTimestamp)}</span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        );
-                    })}
+                            );
+                        })}
+                    </div>
+
+                    {/* 새 메시지 알림 및 스크롤 버튼 */}
+                    {showScrollButton && (
+                        <div
+                            className="sticky bottom-0 left-0 right-0 flex justify-center"
+                        >
+                            <button
+                                onClick={() => scrollToBottom(true)}
+                                className="bg-primary text-white px-4 py-2 rounded-full shadow-lg hover:bg-opacity-90 flex items-center gap-2"
+                            >
+                                새 메시지
+                            </button>
+                        </div>
+                    )}
+                </div>
+
+                {/* 메시지 입력창 */}
+                <div className="message-input" style={{
+                    display: 'flex',
+                    gap: '8px',
+                    padding: '10px',
+                    borderTop: '1px solid #ddd'
+                }}>
+                    <input
+                        type="text"
+                        value={messageInput}
+                        onChange={(e) => setMessageInput(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                        placeholder="메시지를 입력하세요..."
+                        maxLength={250}
+                        style={{
+                            flex: 1,
+                            padding: '8px',
+                            borderRadius: '4px',
+                            border: '1px solid #ddd',
+                            outline: 'none' // 기본 포커스 테두리 제거
+                        }}
+                        onFocus={(e) => e.target.style.border = '1px solid #F26A2E'} // 포커스 시 테두리 색상
+                        onBlur={(e) => e.target.style.border = '1px solid #ddd'} // 포커스 해제 시 원래 색상
+                    />
+                    <button
+                        onClick={sendMessage}
+                        style={{
+                            padding: '8px',
+                            backgroundColor: 'transparent',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}
+                    >
+                        <img
+                            src={send}
+                            alt="채팅전송"
+                            style={{
+                                width: '24px',
+                                height: '24px',
+                                filter: messageInput.trim()
+                                    ? 'invert(47%) sepia(82%) saturate(2604%) hue-rotate(337deg) brightness(97%) contrast(92%)'
+                                    : 'opacity(0.5)'
+                            }}
+                        />
+                    </button>
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileUpload}
+                        style={{ display: 'none' }}
+                        accept="image/*"
+                    />
+                    <button
+                        onClick={() => fileInputRef.current?.click()}
+                        style={{
+                            paddingBottom: '1px',
+                            backgroundColor: 'transparent',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}>
+                        <img
+                            src={fileImage}
+                            alt="파일전송"
+                            style={{
+                                width: '24px',
+                                height: '24px',
+                                filter: 'opacity(0.5)'
+                            }}
+                        />
+                    </button>
                 </div>
             </div>
-            <div className="message-input" style={{
-                display: 'flex',
-                gap: '8px',
-                padding: '10px',
-                borderTop: '1px solid #ddd'
-            }}>
-                <input
-                    type="text"
-                    value={messageInput}
-                    onChange={(e) => setMessageInput(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                    placeholder="메시지를 입력하세요..."
-                    maxLength={250}
-                    style={{
-                        flex: 1,
-                        padding: '8px',
-                        borderRadius: '4px',
-                        border: '1px solid #ddd',
-                        outline: 'none' // 기본 포커스 테두리 제거
-                    }}
-                    onFocus={(e) => e.target.style.border = '1px solid #F26A2E'} // 포커스 시 테두리 색상
-                    onBlur={(e) => e.target.style.border = '1px solid #ddd'} // 포커스 해제 시 원래 색상
-                />
-                <button
-                    onClick={sendMessage}
-                    style={{
-                        padding: '8px',
-                        backgroundColor: 'transparent',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                    }}
-                >
-                    <img
-                        src={send}
-                        alt="전송"
-                        style={{
-                            width: '24px',
-                            height: '24px',
-                            filter: messageInput.trim()
-                                ? 'invert(47%) sepia(82%) saturate(2604%) hue-rotate(337deg) brightness(97%) contrast(92%)'
-                                : 'opacity(0.5)'
-                        }}
-                    />
-                </button>
-            </div>
-            {/* 참여자 리스트 섹션 */}
-            <div style={{
-                marginTop: "20px",
-                padding: "15px",
-                borderTop: "1px solid #ddd",
-                backgroundColor: "#fff",
-                borderRadius: "8px"
-            }}>
-                <h3 style={{
-                    fontSize: "1rem",
-                    color: "#333",
-                    marginBottom: "12px",
-                    fontWeight: "600"
-                }}>참여자 리스트</h3>
 
-                {/* 온라인 멤버 */}
-                <div style={{ marginBottom: "16px" }}>
-                    <h4 style={{
-                        fontSize: "0.9rem",
-                        color: "#4CAF50",
-                        marginBottom: "8px"
-                    }}>
-                        온라인
-                    </h4>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+            {/* 참여자 목록 섹션 */}
+            {showParticipants && (
+                <div className="w-64 border-l border-gray-200 p-4 bg-white">
+                    <h3 className="text-lg font-semibold mb-4">참여자 목록</h3>
+
+                    {/* 온라인 멤버 */}
+                    <div className="space-y-2 mb-4">
                         {memberStatusList
                             .filter(status => status.userLoginStatus === "LOGIN")
                             .map((status, index) => (
-                                <div key={index} style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    padding: "8px 12px",
-                                    backgroundColor: "#f8f9fa",
-                                    borderRadius: "20px",
-                                    gap: "8px",
-                                    fontSize: "0.9rem",
-                                    border: "1px solid #e9ecef"
-                                }}>
-                                    <span style={{
-                                        width: "8px",
-                                        height: "8px",
-                                        borderRadius: "50%",
-                                        backgroundColor: "#4CAF50",
-                                        display: "inline-block",
-                                        boxShadow: "0 0 0 2px rgba(76, 175, 80, 0.2)"
-                                    }} />
-                                    <span style={{ fontWeight: "500", color: "#424242" }}>
-                                        {status.nickname}
-                                    </span>
+                                <div key={index} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded-lg">
+                                    <div
+                                        className="w-2 h-2 rounded-full animate-pulse"
+                                        style={{
+                                            backgroundColor: '#22c55e',
+                                            boxShadow: '0 0 4px #22c55e',
+                                            minWidth: '8px',
+                                            minHeight: '8px'
+                                        }}
+                                    />
+                                    <span className="text-sm text-gray-700">{status.nickname}</span>
                                 </div>
                             ))}
                     </div>
-                </div>
 
-                {/* 오프라인 멤버 */}
-                <div>
-                    <h4 style={{
-                        fontSize: "0.9rem",
-                        color: "#9e9e9e",
-                        marginBottom: "8px"
-                    }}>
-                        오프라인
-                    </h4>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                    {/* 오프라인 멤버 */}
+                    <div className="space-y-2">
                         {memberStatusList
                             .filter(status => status.userLoginStatus !== "LOGIN")
                             .map((status, index) => (
-                                <div key={index} style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    padding: "8px 12px",
-                                    backgroundColor: "#f8f9fa",
-                                    borderRadius: "20px",
-                                    gap: "8px",
-                                    fontSize: "0.9rem",
-                                    border: "1px solid #e9ecef"
-                                }}>
-                                    <span style={{
-                                        width: "8px",
-                                        height: "8px",
-                                        borderRadius: "50%",
-                                        backgroundColor: "#9e9e9e",
-                                        display: "inline-block"
-                                    }} />
-                                    <span style={{ fontWeight: "500", color: "#424242" }}>
-                                        {status.nickname}
-                                    </span>
+                                <div key={index} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded-lg">
+                                    <div
+                                        className="w-2 h-2 rounded-full"
+                                        style={{
+                                            backgroundColor: '#9ca3af',
+                                            boxShadow: '0 0 4px #9ca3af',
+                                            minWidth: '8px',
+                                            minHeight: '8px'
+                                        }}
+                                    />
+                                    <span className="text-sm text-gray-500">{status.nickname}</span>
                                 </div>
                             ))}
                     </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 };
