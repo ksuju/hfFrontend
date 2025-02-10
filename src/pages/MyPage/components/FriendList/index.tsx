@@ -6,6 +6,7 @@ interface Friend {
     profileImage: string | null;
     status: string;
     requestId?: number;
+    friendId?: number;
 }
 
 export default function FriendList() {
@@ -234,7 +235,7 @@ export default function FriendList() {
                                     <span className="ml-2 font-medium">{friend.nickname}</span>
                                 </div>
                                 <button
-                                    onClick={() => handleDelete(friend.id)}
+                                    onClick={() => handleDelete(friend.requestId!)}
                                     className="px-3 py-1 text-red-500 hover:text-red-700 text-sm"
                                 >
                                     삭제

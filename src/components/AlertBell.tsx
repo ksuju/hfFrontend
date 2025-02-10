@@ -8,7 +8,7 @@ export const AlertBell = ({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (
     const navigate = useNavigate();
     const [visibleCount, setVisibleCount] = useState(5);
     const [showAllAlerts, setShowAllAlerts] = useState(false);
-    const { alerts, unreadCount, hasMore, loadMore, readAlerts } = useContext(AlertContext);
+    const { alerts, unreadCount, hasMore, loadMore, readAlerts, setAlerts } = useContext(AlertContext);
 
     const handleAlertClick = async (alert: Alert) => {
         try {
@@ -71,56 +71,90 @@ export const AlertBell = ({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (
         setVisibleCount(prev => prev + 5);
     };
 
-    const highlightText = (text: string, isRead: boolean) => {
-        const lines = text.split('\n');
+    const handleAcceptRequest = async (requestId: number) => {
+        try {
+            const response = await fetch(
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/friends/friend-requests/${requestId}/accept`,
+                {
+                    method: 'POST',
+                    credentials: 'include'
+                }
+            );
+            if (response.ok) {
+                // 알림 목록 갱신
+                setAlerts(prev => prev.filter(alert =>
+                    !alert.navigationData.includes(`"requestId":${requestId}`)
+                ));
+            }
+        } catch (error) {
+            console.error('친구 신청 수락 실패:', error);
+        }
+    };
 
-        const keywords = {
-            // 파란색 키워드
-            '참가 신청': 'text-blue-500',
-            '승인': 'text-blue-500',
-            '참여': 'text-blue-500',
-            '위임': 'text-blue-500',
-            '답글': 'text-blue-500',
-            '변경': 'text-blue-500',
+    const handleRejectRequest = async (requestId: number) => {
+        try {
+            const response = await fetch(
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/friends/friend-requests/${requestId}/reject`,
+                {
+                    method: 'POST',
+                    credentials: 'include'
+                }
+            );
+            if (response.ok) {
+                // 알림 목록 갱신
+                setAlerts(prev => prev.filter(alert =>
+                    !alert.navigationData.includes(`"requestId":${requestId}`)
+                ));
+            }
+        } catch (error) {
+            console.error('친구 신청 거절 실패:', error);
+        }
+    };
 
-            // 빨간색 키워드
-            '거절': 'text-red-500',
-            '강퇴': 'text-red-500',
-            '취소': 'text-red-500',
-            '삭제': 'text-red-500',
-            '신고': 'text-red-500',
-            '차단': 'text-red-500',
-
-            // 노란색 키워드
-            '새로운 전체 공지사항': 'text-orange-500',
-            '비밀번호': 'text-orange-500'
-        };
+    const highlightText = (alert: Alert) => {
+        const lines = alert.content.split('\n');
+        const navigationData = JSON.parse(alert.navigationData);
 
         return (
             <div className="flex items-start">
                 <div className="flex-shrink-0 mr-3">
-                    <Bell className={`w-4 h-4 ${isRead ? 'text-gray-400' : 'text-red-500'}`} />
+                    <Bell className={`w-4 h-4 ${alert.isRead ? 'text-gray-400' : 'text-red-500'}`} />
                 </div>
                 <div className="flex-1 min-w-0">
                     {lines.map((line, lineIndex) => (
                         <div key={`line-${lineIndex}`} className="mb-1">
                             {lineIndex === 0 ? (
-                                <span className={`text-xs text-gray-500 block truncate tracking-wide ${isRead ? 'font-normal' : 'font-bold'}`}>
+                                <span className={`text-xs text-gray-500 block truncate tracking-wide ${alert.isRead ? 'font-normal' : 'font-bold'}`}>
                                     {line}
                                 </span>
                             ) : (
-                                <span className={`text-sm tracking-wide ${isRead ? 'font-normal' : 'font-bold'}`}>
-                                    {line.split(/(참가 신청|승인|참여|위임|답글|변경|거절|강퇴|취소|삭제|신고|차단|새로운 전체 공지사항|비밀번호)/).map((part, index) => {
-                                        if (!part) return null;
-
-                                        const keyword = keywords[part as keyof typeof keywords];
-                                        if (keyword) {
-                                            return <span key={`keyword-${lineIndex}-${index}`} className={`${keyword} ${isRead ? 'font-normal' : 'font-bold'}`}>{part}</span>;
-                                        }
-
-                                        return <span key={`text-${lineIndex}-${index}`}>{part}</span>;
-                                    })}
-                                </span>
+                                <div className="flex justify-between items-center">
+                                    <span className={`text-sm tracking-wide ${alert.isRead ? 'font-normal' : 'font-bold'}`}>
+                                        {line}
+                                    </span>
+                                    {alert.navigationType === 'SELECT' && navigationData.requestId && (
+                                        <div className="flex gap-2 ml-4">
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleAcceptRequest(navigationData.requestId);
+                                                }}
+                                                className="px-2 py-1 bg-primary text-white text-xs rounded hover:bg-primary-dark"
+                                            >
+                                                수락
+                                            </button>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleRejectRequest(navigationData.requestId);
+                                                }}
+                                                className="px-2 py-1 bg-gray-200 text-gray-700 text-xs rounded hover:bg-gray-300"
+                                            >
+                                                거절
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
                             )}
                         </div>
                     ))}
@@ -212,7 +246,7 @@ export const AlertBell = ({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (
                                         onClick={() => handleAlertClick(alert)}
                                     >
                                         <div className={`tracking-wide ${alert.isRead ? 'font-normal' : 'font-medium'}`}>
-                                            {highlightText(alert.content, alert.isRead)}
+                                            {highlightText(alert)}
                                         </div>
                                         <div className="text-xs text-gray-400 ml-6 mt-2">
                                             {new Date(alert.createDate).toLocaleString()}

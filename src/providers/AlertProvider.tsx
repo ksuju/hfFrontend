@@ -9,6 +9,7 @@ interface AlertContextType {
     hasMore: boolean;
     loadMore: () => Promise<void>;
     readAlerts: (alertIds: number[]) => Promise<void>;
+    setAlerts: React.Dispatch<React.SetStateAction<Alert[]>>;
 }
 
 export const AlertContext = createContext<AlertContextType>({
@@ -17,6 +18,7 @@ export const AlertContext = createContext<AlertContextType>({
     hasMore: false,
     loadMore: async () => { },
     readAlerts: async () => { },
+    setAlerts: () => { }
 });
 
 export const AlertProvider = ({ children, isLoggedIn, isOpen }: { children: ReactNode, isLoggedIn: boolean, isOpen: boolean }) => {
@@ -168,6 +170,7 @@ export const AlertProvider = ({ children, isLoggedIn, isOpen }: { children: Reac
             hasMore,
             loadMore,
             readAlerts,
+            setAlerts
         }}>
             {children}
             {toast && <ToastAlert alert={toast} onClose={() => setToast(null)} />}
