@@ -81,19 +81,16 @@ const Header = ({ isLoggedIn, setIsLoggedIn, isAlertOpen, setIsAlertOpen, userIn
                             <AlertBell isOpen={isAlertOpen} setIsOpen={setIsAlertOpen} />
                             <div className="flex items-center gap-2">
                                 <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                                    {userInfo?.data?.profilePath ? (
-                                        <img
-                                            src={userInfo.data.profilePath.startsWith('http')
+                                    <img
+                                        src={userInfo?.data?.profilePath
+                                            ? userInfo.data.profilePath.startsWith('http')
                                                 ? userInfo.data.profilePath
-                                                : `https://kr.object.ncloudstorage.com/hf-bucket2025/member/${userInfo.data.profilePath}`}
-                                            alt="프로필"
-                                            className="w-full h-full object-cover"
-                                        />
-                                    ) : (
-                                        <span className="text-gray-500 text-sm">
-                                            {userInfo?.data?.nickname?.[0] || '?'}
-                                        </span>
-                                    )}
+                                                : `https://kr.object.ncloudstorage.com/hf-bucket2025/member/${userInfo.data.profilePath}`
+                                            : `https://kr.object.ncloudstorage.com/hf-bucket2025/member/default.png`
+                                        }
+                                        alt="프로필"
+                                        className="w-full h-full object-cover"
+                                    />
                                 </div>
                                 <span className="text-sm text-gray-600">
                                     {userInfo?.data?.nickname || '사용자'}
