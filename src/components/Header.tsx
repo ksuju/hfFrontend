@@ -1,5 +1,5 @@
 // Header.tsx
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import logo from '../assets/images/logo.png'
 import { AlertBell } from './AlertBell';
 
@@ -22,6 +22,13 @@ interface UserInfoType {
 }
 
 const Header = ({ isLoggedIn, setIsLoggedIn, isAlertOpen, setIsAlertOpen, userInfo }: HeaderProps) => {
+    const location = useLocation();  // 현재 경로 확인을 위한 hook
+    
+    // 관리자 페이지에서는 헤더를 렌더링하지 않음
+    if (location.pathname.startsWith('/admin')) {
+        return null;
+    }
+
     const handleLogout = async () => {
         try {
             const memberId = userInfo?.data?.id;
