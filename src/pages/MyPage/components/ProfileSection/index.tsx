@@ -36,13 +36,12 @@ const ProfileSection = ({ userInfo, editForm, setEditForm, onImageUpload, onUpda
             </button>
             <div className="flex items-center gap-8">
                 <div className="flex flex-col items-center">
-                    <div className="w-64 h-64 rounded-full overflow-hidden">
-                        <img
-                            src={userInfo.profilePath || '/default-profile.png'}
-                            alt="프로필"
-                            className="w-full h-full object-cover"
-                        />
-                    </div>
+                    <ProfileImage
+                        profilePath={userInfo.profilePath}
+                        onImageUpload={onImageUpload}
+                        onResetImage={async () => await handleResetImage()}
+                        fileInputRef={fileInputRef}
+                    />
                 </div>
                 <div className="flex-1 space-y-4">
                     <div className="flex items-center justify-between">

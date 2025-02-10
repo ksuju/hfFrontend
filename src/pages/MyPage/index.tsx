@@ -12,7 +12,6 @@ const MyPage = () => {
     const navigate = useNavigate();
     const [isPasswordVerified, setIsPasswordVerified] = useState(false);
     const [activeTab, setActiveTab] = useState('social');
-    const [isEditing, setIsEditing] = useState(false);
 
     const defaultSocialAccount = {
         active: false,
