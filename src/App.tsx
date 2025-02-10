@@ -108,9 +108,6 @@ const App = () => {
                         <Route path="/signup" element={<Signup />} />
                         <Route path="/find-account" element={<FindAccount />} />
                         <Route path="/reset-password" element={<ResetPassword />} />
-                        <Route path="/notice/:id" element={
-                            <NoticeDetail isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />
-                        } />
                         <Route path="/admin/*" element={<ProtectedAdminRoute />} />
                         <Route path="/admin/notice/write" element={<NoticeWrite />} />
                         <Route path="/admin/notice/edit/:id" element={<NoticeEdit />} />
@@ -130,6 +127,14 @@ const App = () => {
                                                 <Route path="/posts" element={<Festival />} />
                                                 <Route path="/chatroom" element={<Meeting />} />
                                                 <Route path="/notice" element={<Notice />} />
+                                                <Route path="/notice/:id" element={
+                                                    <NoticeDetail
+                                                        isLoggedIn={isLoggedIn}
+                                                        setIsLoggedIn={setIsLoggedIn}
+                                                        isAlertOpen={isAlertOpen}
+                                                        setIsAlertOpen={setIsAlertOpen}
+                                                    />
+                                                } />
                                                 <Route path="/chat/:chatRoomId" element={userInfo ? (
                                                     <Chat memberId={userInfo.id} />
                                                 ) : (

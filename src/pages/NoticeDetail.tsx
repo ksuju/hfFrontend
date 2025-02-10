@@ -32,10 +32,12 @@ interface CommentResponse {
 
 interface NoticeDetailProps {
     isLoggedIn: boolean;
-    setIsLoggedIn: React.Dispatch<React.SetStateAction<boolean>>;
+    setIsLoggedIn: (isLoggedIn: boolean) => void;
+    isAlertOpen: boolean;
+    setIsAlertOpen: (isOpen: boolean) => void;
 }
 
-const NoticeDetail = ({ isLoggedIn, setIsLoggedIn }: NoticeDetailProps) => {
+const NoticeDetail = ({ isLoggedIn, setIsLoggedIn, isAlertOpen, setIsAlertOpen }: NoticeDetailProps) => {
     const { id } = useParams();
     const navigate = useNavigate();
     const [notice, setNotice] = useState<NoticeDetail | null>(null);
@@ -124,7 +126,7 @@ const NoticeDetail = ({ isLoggedIn, setIsLoggedIn }: NoticeDetailProps) => {
             );
 
             if (response.data.resultCode === "200") {
-                setComments(comments.map(comment => 
+                setComments(comments.map(comment =>
                     comment.id === commentId ? response.data.data : comment
                 ));
                 setEditingCommentId(null);
@@ -163,7 +165,12 @@ const NoticeDetail = ({ isLoggedIn, setIsLoggedIn }: NoticeDetailProps) => {
 
     return (
         <>
-            <Header isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />
+            <Header
+                isLoggedIn={isLoggedIn}
+                setIsLoggedIn={setIsLoggedIn}
+                isAlertOpen={isAlertOpen}
+                setIsAlertOpen={setIsAlertOpen}
+            />
             <main className="flex-1 mt-[72px] mb-16">
                 <div className="max-w-[600px] lg:max-w-screen-lg mx-auto">
                     <div className="bg-white rounded-lg shadow-sm">
@@ -192,7 +199,7 @@ const NoticeDetail = ({ isLoggedIn, setIsLoggedIn }: NoticeDetailProps) => {
                             {/* 댓글 섹션 */}
                             <div className="mt-8 border-t border-gray-200 pt-8">
                                 <h3 className="text-lg font-bold mb-4">댓글</h3>
-                                
+
                                 {/* 댓글 작성 폼 */}
                                 {isLoggedIn && (
                                     <form onSubmit={handleCommentSubmit} className="mb-6">
