@@ -30,6 +30,7 @@ const Admin = () => {
             
             if (noticesResponse.ok) {
                 const noticesData = await noticesResponse.json();
+                console.log('공지사항 데이터:', noticesData);  // 데이터 구조 확인
                 setStats(prevStats => ({
                     ...prevStats,
                     totalNotices: noticesData.data.page.totalElements
@@ -44,6 +45,7 @@ const Admin = () => {
             
             if (membersResponse.ok) {
                 const membersData = await membersResponse.json();
+                console.log('회원 데이터:', membersData);  // 데이터 구조 확인
                 setStats(prevStats => ({
                     ...prevStats,
                     totalMembers: membersData.length
@@ -58,9 +60,10 @@ const Admin = () => {
 
             if (chatRoomsResponse.ok) {
                 const chatRoomsData = await chatRoomsResponse.json();
+                console.log('채팅방 데이터:', chatRoomsData);
                 setStats(prevStats => ({
                     ...prevStats,
-                    totalChatRooms: chatRoomsData.totalElements
+                    totalChatRooms: chatRoomsData.content?.length || 0
                 }));
             }
 
