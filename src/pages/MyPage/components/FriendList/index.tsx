@@ -155,11 +155,11 @@ export default function FriendList() {
                         {sentRequests.map(request => (
                             <div key={request.id} className="flex items-center justify-between p-3 bg-gray-50 rounded">
                                 <div className="flex items-center">
-                                    <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                                    <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center">
                                         {request.profileImage ? (
                                             <img src={request.profileImage} alt={request.nickname} className="w-full h-full rounded-full" />
                                         ) : (
-                                            <span>{request.nickname[0]}</span>
+                                            <span className="text-sm">{request.nickname[0]}</span>
                                         )}
                                     </div>
                                     <span className="ml-2 font-medium">{request.nickname}</span>
@@ -186,11 +186,11 @@ export default function FriendList() {
                         {pendingRequests.map(request => (
                             <div key={request.id} className="flex items-center justify-between p-3 bg-gray-50 rounded">
                                 <div className="flex items-center">
-                                    <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                                    <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center">
                                         {request.profileImage ? (
                                             <img src={request.profileImage} alt={request.nickname} className="w-full h-full rounded-full" />
                                         ) : (
-                                            <span>{request.nickname[0]}</span>
+                                            <span className="text-sm">{request.nickname[0]}</span>
                                         )}
                                     </div>
                                     <span className="ml-2 font-medium">{request.nickname}</span>
@@ -225,11 +225,11 @@ export default function FriendList() {
                         {acceptedFriends.map(friend => (
                             <div key={friend.id} className="flex items-center justify-between p-3 bg-gray-50 rounded">
                                 <div className="flex items-center">
-                                    <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                                    <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center">
                                         {friend.profileImage ? (
                                             <img src={friend.profileImage} alt={friend.nickname} className="w-full h-full rounded-full" />
                                         ) : (
-                                            <span>{friend.nickname[0]}</span>
+                                            <span className="text-sm">{friend.nickname[0]}</span>
                                         )}
                                     </div>
                                     <span className="ml-2 font-medium">{friend.nickname}</span>

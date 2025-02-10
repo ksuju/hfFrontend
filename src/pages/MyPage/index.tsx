@@ -12,6 +12,7 @@ const MyPage = () => {
     const navigate = useNavigate();
     const [isPasswordVerified, setIsPasswordVerified] = useState(false);
     const [activeTab, setActiveTab] = useState('social');
+    const [isEditing, setIsEditing] = useState(false);
 
     const defaultSocialAccount = {
         active: false,
@@ -115,22 +116,23 @@ const MyPage = () => {
             });
 
             const responseData = await response.json();
-            console.log('Update response:', responseData); // 응답 데이터 로깅
+            console.log('Update response:', responseData);
 
             if (response.ok && responseData.data) {
-                // socialAccounts 데이터 보존
-                const newUserInfo = {
-                    ...responseData.data,
-                    socialAccounts: userInfo?.socialAccounts || {
-                        KAKAO: { active: false, createDate: '' },
-                        NAVER: { active: false, createDate: '' },
-                        GOOGLE: { active: false, createDate: '' },
-                        GITHUB: { active: false, createDate: '' }
+                // 회원 정보 업데이트 후 전체 사용자 정보 다시 가져오기
+                const userInfoResponse = await fetch(
+                    `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/auth/me`,
+                    {
+                        credentials: 'include'
                     }
-                };
+                );
 
-                localStorage.setItem('userInfo', JSON.stringify({ data: newUserInfo }));
-                setUserInfo(newUserInfo);
+                if (userInfoResponse.ok) {
+                    const data = await userInfoResponse.json();
+                    setUserInfo(data.data);
+                    localStorage.setItem('userInfo', JSON.stringify(data));
+                }
+
                 alert('회원정보가 수정되었습니다.');
             } else {
                 alert(responseData.msg || '회원정보 수정에 실패했습니다.');
