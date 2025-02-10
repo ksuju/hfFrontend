@@ -343,8 +343,9 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
     // 채팅 내용 검색
     const messageSearch = async (keyword: string, nickname: string, page: number = 0) => {
         try {
+            // eks 붙이면 엘라스틱, 안붙이면 쿼리dsl
             const response = await axios.get<ChatResponse>(
-                `${request_URL}/api/v1/chatRooms/${chatRoomId}/messages/search`,
+                `${request_URL}/api/v1/chatRooms/${chatRoomId}/messages/search/eks`,
                 {
                     params: {
                         keyword,
