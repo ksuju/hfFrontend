@@ -17,6 +17,39 @@ import Notice from './pages/Notice';
 import NoticeDetail from './pages/NoticeDetail';
 import { AlertProvider } from './providers/AlertProvider';
 import FestivalDetail from "./pages/FestivalDetail.tsx";
+import Admin from './pages/Admin'
+import NoticeWrite from './pages/Admin/components/NoticeWrite'
+import NoticeEdit from './pages/Admin/components/NoticeEdit'
+
+// ProtectedAdminRoute 컴포넌트 추가
+const ProtectedAdminRoute = () => {
+    const userInfo = localStorage.getItem('userInfo')
+        ? JSON.parse(localStorage.getItem('userInfo')!).data
+        : null;
+
+    if (!userInfo) {
+        return <Navigate to="/login" replace />;
+    }
+
+    if (userInfo.role !== 'ROLE_ADMIN') {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-100">
+                <div className="bg-white p-8 rounded-lg shadow-md text-center">
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">접근 권한 없음</h2>
+                    <p className="text-gray-600 mb-4">관리자만 접근할 수 있는 페이지입니다.</p>
+                    <button
+                        onClick={() => window.history.back()}
+                        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                    >
+                        이전 페이지로 돌아가기
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    return <Admin />;
+};
 
 const App = () => {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -73,7 +106,12 @@ const App = () => {
                     <Route path="/signup" element={<Signup />} />
                     <Route path="/find-account" element={<FindAccount />} />
                     <Route path="/reset-password" element={<ResetPassword />} />
-                    <Route path="/notice/:id" element={<NoticeDetail />} />
+                    <Route path="/notice/:id" element={
+                        <NoticeDetail isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />
+                    } />
+                    <Route path="/admin/*" element={<ProtectedAdminRoute />} />
+                    <Route path="/admin/notice/write" element={<NoticeWrite />} />
+                    <Route path="/admin/notice/edit/:id" element={<NoticeEdit />} />
                     <Route path="/*" element={
                         <AlertProvider>
                             <div className="flex flex-col min-h-screen">
