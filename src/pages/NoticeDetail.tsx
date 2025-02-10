@@ -170,6 +170,7 @@ const NoticeDetail = ({ isLoggedIn, setIsLoggedIn, isAlertOpen, setIsAlertOpen }
                 setIsLoggedIn={setIsLoggedIn}
                 isAlertOpen={isAlertOpen}
                 setIsAlertOpen={setIsAlertOpen}
+                userInfo={localStorage.getItem('userInfo') ? JSON.parse(localStorage.getItem('userInfo')!) : null}
             />
             <main className="flex-1 mt-[72px] mb-16">
                 <div className="max-w-[600px] lg:max-w-screen-lg mx-auto">
