@@ -28,15 +28,10 @@
   display: flex;
 }
 
-
-
 .content {
   flex: 1;
   overflow-y: auto;
 }
-
-
-
 
 .logo {
   height: 6em;

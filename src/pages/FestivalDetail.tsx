@@ -725,16 +725,6 @@ export default function FestivalDetail() {
                         <p className="text-sm text-gray-500">
                             {post.festivalStartDate.replace(/-/g, ".")} - {post.festivalEndDate.replace(/-/g, ".")}
                         </p>
-
-                        {/* 사이트 바로가기 링크 */}
-                        <a
-                            // href={}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-primary text-sm"
-                        >
-                            바로가기
-                        </a>
                     </div>
                 </div>
 
@@ -998,6 +988,10 @@ export default function FestivalDetail() {
                                                 }`}
                                                 onClick={(e) => {
                                                     e.stopPropagation();
+                                                    if (currentUserID == "") {
+                                                        alert("로그인이 필요합니다.");
+                                                        return;
+                                                    }
                                                     handleJoinClick(meeting.chatRoomId, isUserWaiting);
                                                 }}
                                             >
