@@ -18,10 +18,6 @@ interface GenreBannerProps {
 const GenreBanner = ({ genre, posts }: GenreBannerProps) => {
     const navigate = useNavigate();
 
-    const handleBannerClick = (festivalId: string) => {
-        navigate(`/detailposts/${festivalId}`);
-    };
-
     return (
         <div className="mt-4 lg:mt-12">
             <div className="flex justify-between items-center mb-4">
@@ -37,7 +33,7 @@ const GenreBanner = ({ genre, posts }: GenreBannerProps) => {
                 {posts?.map((post) => (
                     <SwiperSlide
                         key={post.festivalId}
-                        onClick={() => handleBannerClick(post.festivalId)}
+                        onClick={() => navigate(`/detailposts?id=${encodeURIComponent(post.festivalId)}`)}
                     >
                         <div className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
                             <div className="relative pb-[90%]">
