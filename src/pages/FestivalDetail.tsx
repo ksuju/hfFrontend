@@ -698,8 +698,11 @@ export default function FestivalDetail() {
     return (
         <div className="w-full pt-20 p-4">
             {/* 뒤로 가기 버튼 */}
-            <button onClick={() => navigate(-1)} className="mb-4 text-primary text-base">
-                ← 뒤로가기
+            <button onClick={() => navigate(-1)} className="mb-4 text-gray-500 hover:text-primary text-base flex items-center">
+                <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                뒤로가기
             </button>
 
             {/* 상세 카드 섹션 */}
