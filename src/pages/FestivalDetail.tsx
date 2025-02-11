@@ -695,7 +695,7 @@ export default function FestivalDetail() {
     if (!post) return <div className="text-center text-gray-500 mt-10">게시글이 존재하지 않습니다.</div>;
 
     return (
-        <div className="w-full p-4">
+        <div className="w-full pt-20 p-4">
             {/* 뒤로 가기 버튼 */}
             <button onClick={() => navigate(-1)} className="mb-4 text-primary text-base">
                 ← 뒤로가기
@@ -725,16 +725,6 @@ export default function FestivalDetail() {
                         <p className="text-sm text-gray-500">
                             {post.festivalStartDate.replace(/-/g, ".")} - {post.festivalEndDate.replace(/-/g, ".")}
                         </p>
-
-                        {/* 사이트 바로가기 링크 */}
-                        <a
-                            // href={}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-primary text-sm"
-                        >
-                            바로가기
-                        </a>
                     </div>
                 </div>
 
@@ -998,6 +988,10 @@ export default function FestivalDetail() {
                                                 }`}
                                                 onClick={(e) => {
                                                     e.stopPropagation();
+                                                    if (currentUserID == "") {
+                                                        alert("로그인이 필요합니다.");
+                                                        return;
+                                                    }
                                                     handleJoinClick(meeting.chatRoomId, isUserWaiting);
                                                 }}
                                             >

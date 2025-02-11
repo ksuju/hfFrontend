@@ -1,5 +1,6 @@
 import {useEffect, useState} from 'react';
 import SearchBar from '../components/SearchBar';
+import {useNavigate} from "react-router-dom";
 
 // API 응답 데이터 타입 정의
 interface FestivalPost {
@@ -29,6 +30,7 @@ const Festival = () => {
     const [page, setPage] = useState(0);
     const [searchKeyword, setSearchKeyword] = useState("");
     const [searchType, setSearchType] = useState("축제명+지역");
+    const navigate = useNavigate();
     // const [searchParams] = useSearchParams();
     // const selectedGenre = searchParams.get("genre") || ""; // 기본값 "축제"
 
@@ -123,9 +125,9 @@ const Festival = () => {
     }, [selectedGenre])
 
     // 검색 실행 함수
-    const handleSearch = (keyword: string, newSearchType: string) => {
+    const handleSearch = (keyword: string, newSearchType?: string) => {
         setSearchKeyword(keyword);
-        setSearchType(newSearchType);
+        setSearchType(newSearchType ?? "");
         setPage(0);
         setHasMore(true);
     };
@@ -166,7 +168,9 @@ const Festival = () => {
                 <div className="grid grid-cols-3 gap-3">
                     {searchPosts.map((searchPost) => (
                         <div key={searchPost.festivalId}
-                             className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
+                             className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col"
+                             onClick={() => navigate(`/detailposts?id=${encodeURIComponent(searchPost.festivalId)}`)}
+                        >
                             {/* 이미지 영역 */}
                             <div className="relative pb-[90%]">
                                 <img

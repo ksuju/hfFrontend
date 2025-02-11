@@ -501,6 +501,10 @@ const Meeting = () => {
                                                 }`}
                                                 onClick={(e) => {
                                                     e.stopPropagation();
+                                                    if (currentUserID == "") {
+                                                        alert("로그인이 필요합니다.");
+                                                        return;
+                                                    }
                                                     handleJoinClick(meeting.chatRoomId, isUserWaiting);
                                                 }}
                                             >
