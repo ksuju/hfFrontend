@@ -74,6 +74,7 @@ const App = () => {
                     <Route path="/find-account" element={<FindAccount />} />
                     <Route path="/reset-password" element={<ResetPassword />} />
                     <Route path="/notice/:id" element={<NoticeDetail />} />
+                    <Route path="/detailposts" element={<FestivalDetail />} />
                     <Route path="/*" element={
                         <AlertProvider>
                             <div className="flex flex-col min-h-screen">
@@ -93,7 +94,6 @@ const App = () => {
                                                 )} />
                                                 <Route path="/mypage" element={<MyPage />} />
                                                 <Route path="/map" element={<FestivalMap />} />
-                                                <Route path="/detailposts" element={<FestivalDetail />} />
                                             </Routes>
                                         </div>
                                     </div>

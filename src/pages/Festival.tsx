@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import SearchBar from '../components/SearchBar';
-import {useSearchParams} from "react-router-dom";
+import {useNavigate, useSearchParams} from "react-router-dom";
 
 // API 응답 데이터 타입 정의
 interface FestivalPost {
@@ -29,6 +29,7 @@ const Festival = () => {
   const [hasMore, setHasMore] = useState(true); // 더 불러올 데이터가 있는지 여부
   const [page, setPage] = useState(0);
   const [searchKeyword, setSearchKeyword] = useState("");
+  const navigate = useNavigate(); // 👈 페이지 이동 함수
 
   // 축제 데이터 가져오기 (페이지 스크롤링 기준 요청)
   const fetchFestivalPosts = async (pageNumber: number, keyword = "") => {
@@ -90,7 +91,8 @@ const Festival = () => {
         <div className="p-4 my-20">
           <div className="grid grid-cols-3 gap-3">
             {searchPosts.map((searchPost) => (
-                <div key={searchPost.festivalId} className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
+                <div key={searchPost.festivalId} className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col"
+                     onClick={() => navigate(`/detailposts?id=${encodeURIComponent(searchPost.festivalId)}`)}>
                   {/* 이미지 영역 */}
                   <div className="relative pb-[90%]">
                     <img

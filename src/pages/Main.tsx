@@ -87,11 +87,6 @@ const Main = () => {
     const [kickTargetId, setKickTargetId] = useState<string | null>(null);
     const [kickChatRoomId, setKickChatRoomId] = useState<string | null>(null);
 
-    // 배너 클릭 시 실행될 함수
-    const handleBannerClick = (festivalId: string) => {
-        navigate(`/detailposts/${festivalId}`);
-    };
-
     const handleTogglePopup = (chatRoomId: string) => {
         setOpenPopupId(openPopupId === chatRoomId ? null : chatRoomId);
     };
@@ -105,7 +100,9 @@ const Main = () => {
     // 메인 배너 게시글 가져오기 (서울 기준)
     const fetchMainPosts = async () => {
         try {
-            const response = await fetch(`http://localhost:8090/api/v1/posts/view?area=서울&count=5`);
+            const url = import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/posts/view?area=서울&count=5`
+
+            const response = await fetch(url);
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
@@ -123,7 +120,9 @@ const Main = () => {
         await Promise.all(
             genres.map(async (genre, index) => {
                 try {
-                    const response = await fetch(`http://localhost:8090/api/v1/posts/select?genre=${encodeURIComponent(genre)}&page=0&size=10`);
+                    const url = import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/posts/select?genre=${encodeURIComponent(genre)}&page=0&size=10`
+
+                    const response = await fetch(url);
                     if (!response.ok) {
                         throw new Error(`HTTP error! Status: ${response.status}`);
                     }
@@ -565,7 +564,7 @@ const Main = () => {
                                 >
                                     {mainPosts.map((mainPost) => (
                                         <SwiperSlide key={mainPost.festivalId} className="flex justify-center items-center"
-                                                     onClick={() => handleBannerClick(mainPost.festivalId)}>
+                                                     onClick={() => navigate(`/detailposts?id=${encodeURIComponent(mainPost.festivalId)}`)}>
                                             <div className="w-full max-w-4xl bg-white rounded-lg shadow-md overflow-hidden">
                                                 <div className="relative w-full h-[300px] bg-gray-100 flex justify-center items-center">
                                                     <img
@@ -594,7 +593,7 @@ const Main = () => {
                                         <Swiper slidesPerView={3} spaceBetween={12} className="w-full pb-1">
                                             {genrePosts[index]?.map((genrePost) => (
                                                 <SwiperSlide key={genrePost.festivalId}
-                                                             onClick={() => handleBannerClick(genrePost.festivalId)}>
+                                                             onClick={() => navigate(`/detailposts?id=${encodeURIComponent(genrePost.festivalId)}`)}>
                                                     <div className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col">
                                                         {/* 이미지 영역 */}
                                                         <div className="relative pb-[90%]">
@@ -643,8 +642,7 @@ const Main = () => {
                 <div className="grid grid-cols-3 gap-3">
                     {searchPosts.map((searchPost) => (
                         <div key={searchPost.festivalId} className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col"
-                             onClick={() => handleBannerClick(searchPost.festivalId)}
-                        >
+                             onClick={() => navigate(`/detailposts?id=${encodeURIComponent(searchPost.festivalId)}`)}>
                             {/* 이미지 영역 */}
                             <div className="relative pb-[90%]">
                                 <img

@@ -102,12 +102,13 @@ const Meeting = () => {
     useEffect(() => {
         const handleScroll = () => {
             if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200 && !isLoading) {
-                fetchMeetingPosts(page, searchKeyword);
+                fetchMeetingPosts(page);
             }
         };
+
         window.addEventListener("scroll", handleScroll);
         return () => window.removeEventListener("scroll", handleScroll);
-    }, [page, isLoading, searchKeyword]);
+    }, [page, isLoading]);
 
     // 현재 로그인한 유저 정보 업데이트
     const fetchUserInfo = async () => {
