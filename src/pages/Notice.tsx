@@ -11,17 +11,18 @@ interface NoticeItem {
     createDate: string;
 }
 
-interface PageInfo {
-    content: NoticeItem[];
-    totalPages: number;
-    totalElements: number;
-    size: number;
-    number: number;
-}
-
 interface ApiResponse {
     resultCode: string;
-    data: PageInfo;
+    msg: string;
+    data: {
+        content: NoticeItem[];
+        page: {
+            totalPages: number;
+            totalElements: number;
+            size: number;
+            number: number;
+        };
+    };
 }
 
 const Notice = () => {
@@ -31,6 +32,7 @@ const Notice = () => {
     const [totalPages, setTotalPages] = useState(0);
     const [searchKeyword, setSearchKeyword] = useState("");
     const [error, setError] = useState<string | null>(null);
+    const [totalNotices, setTotalNotices] = useState(0);
     const navigate = useNavigate();
 
     const fetchNotices = async (pageNumber: number, keyword = "") => {
@@ -50,6 +52,8 @@ const Notice = () => {
 
             if (response.data.resultCode === "200") {
                 const content = response.data.data.content;
+                console.log('공지사항 목록:', content); // ID 기준 정렬 확인용 로그
+                
                 const remainingItems = pageSize - content.length;
                 
                 if (remainingItems > 0 && content.length > 0) {
@@ -65,6 +69,7 @@ const Notice = () => {
                 }
                 
                 setTotalPages(Math.max(1, response.data.data.page.totalPages));
+                setTotalNotices(response.data.data.page.totalElements);
                 
                 console.log('API 응답:', {
                     totalPages: response.data.data.page.totalPages,
@@ -109,7 +114,7 @@ const Notice = () => {
                             <div className="flex justify-between items-center mb-6">
                                 <h2 className="text-xl font-bold">공지사항</h2>
                                 <p className="text-sm text-gray-500">
-                                    총 {notices.length}개의 공지사항
+                                    총 {totalNotices}개의 공지사항
                                 </p>
                             </div>
                             <div className="divide-y divide-gray-100">

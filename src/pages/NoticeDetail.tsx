@@ -26,21 +26,18 @@ interface ApiResponse {
 // 응답 타입 정의
 interface CommentResponse {
     resultCode: string;
+    msg: string;
     data: Comment;
 }
 
-// UserInfo 인터페이스 수정
-interface UserInfo {
-    id: number;
-    email: string;
+interface NoticeDetailProps {
+    isLoggedIn: boolean;
+    setIsLoggedIn: (isLoggedIn: boolean) => void;
+    isAlertOpen: boolean;
+    setIsAlertOpen: (isOpen: boolean) => void;
 }
 
-// userInfo 타입 지정
-const userInfo = localStorage.getItem('userInfo') ? 
-    JSON.parse(localStorage.getItem('userInfo')!).data as UserInfo : 
-    null;
-
-const NoticeDetail = () => {
+const NoticeDetail = ({ isLoggedIn, setIsLoggedIn, isAlertOpen, setIsAlertOpen }: NoticeDetailProps) => {
     const { id } = useParams();
     const navigate = useNavigate();
     const [notice, setNotice] = useState<NoticeDetail | null>(null);
@@ -94,7 +91,7 @@ const NoticeDetail = () => {
         if (!newComment.trim()) return;
 
         try {
-            const response = await axios.post(
+            const response = await axios.post<CommentResponse>(
                 `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/boardComment/create/${id}`,
                 { content: newComment },
                 {
@@ -119,7 +116,7 @@ const NoticeDetail = () => {
         if (!editContent.trim()) return;
 
         try {
-            const response = await axios.patch(
+            const response = await axios.patch<CommentResponse>(
                 `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/boardComment/modify/${commentId}`,
                 { content: editContent },
                 {
@@ -129,7 +126,7 @@ const NoticeDetail = () => {
             );
 
             if (response.data.resultCode === "200") {
-                setComments(comments.map(comment => 
+                setComments(comments.map(comment =>
                     comment.id === commentId ? response.data.data : comment
                 ));
                 setEditingCommentId(null);
@@ -146,7 +143,7 @@ const NoticeDetail = () => {
         if (!window.confirm('댓글을 삭제하시겠습니까?')) return;
 
         try {
-            const response = await axios.delete(
+            const response = await axios.delete<CommentResponse>(
                 `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/boardComment/delete/${commentId}`,
                 {
                     withCredentials: true,
@@ -167,12 +164,18 @@ const NoticeDetail = () => {
     if (isLoading) return <div className="p-4 text-center">Loading...</div>;
 
     return (
-        <div className="flex flex-col min-h-screen">
-            <Header isLoggedIn={!!userInfo} setIsLoggedIn={() => {}} />
-            <main className="flex-1 mt-16 mb-16">
-                <div className="max-w-[600px] lg:max-w-screen-lg mx-auto lg:py-6">
-                    <div className="bg-white lg:rounded-2xl lg:shadow-md">
-                        <div className="p-8">
+        <>
+            <Header
+                isLoggedIn={isLoggedIn}
+                setIsLoggedIn={setIsLoggedIn}
+                isAlertOpen={isAlertOpen}
+                setIsAlertOpen={setIsAlertOpen}
+                userInfo={localStorage.getItem('userInfo') ? JSON.parse(localStorage.getItem('userInfo')!) : null}
+            />
+            <main className="flex-1 mt-[72px] mb-16">
+                <div className="max-w-[600px] lg:max-w-screen-lg mx-auto">
+                    <div className="bg-white rounded-lg shadow-sm">
+                        <div className="p-6">
                             <div className="mb-8">
                                 <button
                                     onClick={() => navigate('/notice')}
@@ -197,9 +200,9 @@ const NoticeDetail = () => {
                             {/* 댓글 섹션 */}
                             <div className="mt-8 border-t border-gray-200 pt-8">
                                 <h3 className="text-lg font-bold mb-4">댓글</h3>
-                                
+
                                 {/* 댓글 작성 폼 */}
-                                {userInfo && (
+                                {isLoggedIn && (
                                     <form onSubmit={handleCommentSubmit} className="mb-6">
                                         <textarea
                                             value={newComment}
@@ -258,21 +261,25 @@ const NoticeDetail = () => {
                                                     </div>
                                                     <p className="text-gray-700">{comment.content}</p>
                                                     <div className="flex justify-end gap-2 mt-2">
-                                                        <button
-                                                            onClick={() => {
-                                                                setEditingCommentId(comment.id);
-                                                                setEditContent(comment.content);
-                                                            }}
-                                                            className="text-sm text-gray-500 hover:text-primary"
-                                                        >
-                                                            수정
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleCommentDelete(comment.id)}
-                                                            className="text-sm text-red-500 hover:text-red-600"
-                                                        >
-                                                            삭제
-                                                        </button>
+                                                        {isLoggedIn && (
+                                                            <>
+                                                                <button
+                                                                    onClick={() => {
+                                                                        setEditingCommentId(comment.id);
+                                                                        setEditContent(comment.content);
+                                                                    }}
+                                                                    className="text-sm text-gray-500 hover:text-primary"
+                                                                >
+                                                                    수정
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleCommentDelete(comment.id)}
+                                                                    className="text-sm text-red-500 hover:text-red-600"
+                                                                >
+                                                                    삭제
+                                                                </button>
+                                                            </>
+                                                        )}
                                                     </div>
                                                 </div>
                                             )}
@@ -285,7 +292,7 @@ const NoticeDetail = () => {
                 </div>
             </main>
             <Footer />
-        </div>
+        </>
     );
 };
 

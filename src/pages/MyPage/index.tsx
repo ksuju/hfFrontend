@@ -6,8 +6,13 @@ import SocialAccounts from './components/SocialAccounts';
 import UserInfoForm from './components/UserInfoForm';
 import PasswordVerification from './components/PasswordVerification';
 import { EditFormData, UserInfo } from './types';
+import FriendList from './components/FriendList';
 
-const MyPage = () => {
+interface MyPageProps {
+    updateUserInfo: (userInfo: any) => void;
+}
+
+const MyPage = ({ updateUserInfo }: MyPageProps) => {
     const navigate = useNavigate();
     const [isPasswordVerified, setIsPasswordVerified] = useState(false);
     const [activeTab, setActiveTab] = useState('social');
@@ -114,22 +119,23 @@ const MyPage = () => {
             });
 
             const responseData = await response.json();
-            console.log('Update response:', responseData); // 응답 데이터 로깅
+            console.log('Update response:', responseData);
 
             if (response.ok && responseData.data) {
-                // socialAccounts 데이터 보존
-                const newUserInfo = {
-                    ...responseData.data,
-                    socialAccounts: userInfo?.socialAccounts || {
-                        KAKAO: { active: false, createDate: '' },
-                        NAVER: { active: false, createDate: '' },
-                        GOOGLE: { active: false, createDate: '' },
-                        GITHUB: { active: false, createDate: '' }
+                // 회원 정보 업데이트 후 전체 사용자 정보 다시 가져오기
+                const userInfoResponse = await fetch(
+                    `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/auth/me`,
+                    {
+                        credentials: 'include'
                     }
-                };
+                );
 
-                localStorage.setItem('userInfo', JSON.stringify({ data: newUserInfo }));
-                setUserInfo(newUserInfo);
+                if (userInfoResponse.ok) {
+                    const data = await userInfoResponse.json();
+                    setUserInfo(data.data);
+                    localStorage.setItem('userInfo', JSON.stringify(data));
+                }
+
                 alert('회원정보가 수정되었습니다.');
             } else {
                 alert(responseData.msg || '회원정보 수정에 실패했습니다.');
@@ -188,12 +194,11 @@ const MyPage = () => {
 
             if (response.ok) {
                 const updatedUserInfo = await response.json();
-                // 기존 userInfo의 모든 정보를 유지하면서 profilePath만 업데이트
                 const newUserInfo = {
                     ...userInfo,
                     profilePath: updatedUserInfo.data.profilePath
                 };
-                localStorage.setItem('userInfo', JSON.stringify({ data: newUserInfo }));
+                updateUserInfo({ data: newUserInfo });  // App의 상태 업데이트
                 setUserInfo(newUserInfo);
                 alert('프로필 이미지가 변경되었습니다.');
             } else {
@@ -274,7 +279,7 @@ const MyPage = () => {
                                             }`}
                                         onClick={() => setActiveTab('meetings')}
                                     >
-                                        완료 모임
+                                        친구 목록
                                     </button>
                                 </div>
                             </div>
@@ -292,7 +297,7 @@ const MyPage = () => {
                                     />
                                 </div>
                             )}
-                            {activeTab === 'meetings' && <div>완료된 모임 목록이 표시될 영역</div>}
+                            {activeTab === 'meetings' && <FriendList />}
                         </div>
                     </div>
                 </>

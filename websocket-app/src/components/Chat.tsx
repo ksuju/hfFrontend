@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Client } from '@stomp/stompjs';
 import axios from 'axios';
 import send from "../assets/images/send.png"
 import memberList from "../assets/images/memberList.png"
+import fileImage from "../assets/images/file.png"
 
 
 interface ChatMessage {
@@ -11,7 +12,7 @@ interface ChatMessage {
     nickname?: string;
     chatMessageContent: string;
     messageTimestamp: string;
-    count?: number; // 읽지 않은 사람 수 추가
+    count?: number;
 }
 
 interface PageInfo {
@@ -50,6 +51,17 @@ interface messageCount {
     count: number;
 }
 
+interface FileUploadResponse {
+    resultCode: string;
+    msg: string;
+    data: string;  // S3 URL
+}
+
+interface FileDeleteResponse {
+    resultCode: string;
+    msg: string;
+}
+
 const WEBSOCKET_URL = `${import.meta.env.VITE_CORE_WEBSOCKET_BASE_URL}/ws/chat`;
 const request_URL = import.meta.env.VITE_CORE_API_BASE_URL;
 
@@ -63,6 +75,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
     const [currentUserNickname, setCurrentUserNickname] = useState<string>('');
     const [memberStatusList, setMemberStatusList] = useState<MemberStatus[]>([]);
     const { chatRoomId } = useParams();
+    const navigate = useNavigate();
     const [searchKeyword, setSearchKeyword] = useState<string>('');
     const [searchPage, setSearchPage] = useState(0);
     const [isSearchMode, setIsSearchMode] = useState(false);
@@ -73,6 +86,95 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
     const [showScrollButton, setShowScrollButton] = useState(false);
     // 상태 추가
     const [showParticipants, setShowParticipants] = useState(false);
+
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // 파일 삭제 함수
+    const handleFileDelete = async (fileUrl: string) => {
+        if (!chatRoomId) return;
+
+        try {
+            const response = await axios.delete<FileDeleteResponse>(
+                `${request_URL}/api/v1/chatRooms/${chatRoomId}/files/delete`,
+                {
+                    params: { fileName: fileUrl },
+                    withCredentials: true
+                }
+            );
+
+            if (response.data.resultCode === "200") {
+                // 성공 메시지 표시
+                alert("파일이 성공적으로 삭제되었습니다.");
+
+                // 필요한 경우 메시지 목록 업데이트
+                setMessages(prevMessages =>
+                    prevMessages.filter(msg => msg.chatMessageContent !== fileUrl)
+                );
+            }
+        } catch (error: any) {
+            if (error && 'response' in error && error.response?.data?.msg) {
+                alert(error.response.data.msg);
+            } else {
+                console.error('파일 삭제 실패:', error);
+                alert('파일 삭제에 실패했습니다.');
+            }
+        }
+    };
+
+    // 파일 업로드 함수
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !chatRoomId) return;
+
+        // 파일 크기 검증 (5MB)
+        const MAX_FILE_SIZE = 5 * 1024 * 1024;
+        if (file.size > MAX_FILE_SIZE) {
+            alert('파일 크기는 5MB를 초과할 수 없습니다.');
+            return;
+        }
+
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const response = await axios.post<FileUploadResponse>(
+                `${request_URL}/api/v1/chatRooms/${chatRoomId}/files/upload`,
+                formData,
+                {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    },
+                    withCredentials: true
+                }
+            );
+
+            if (response.data.resultCode === "200") {
+                // 파일 URL을 포함한 메시지 전송
+                const messageToSend = {
+                    content: response.data.data, // S3 URL을 content로 전송
+                    originalFileName: file.name  // 원본 파일명 추가
+                };
+
+                await axios.post(
+                    `${request_URL}/api/v1/chatRooms/${chatRoomId}/messages`,
+                    messageToSend,
+                    { withCredentials: true }
+                );
+
+                setTimeout(() => {    // 맨 아래로 스크롤
+                    scrollToBottom(true);
+                }, 100)
+            }
+        } catch (error: any) {
+            if (error && 'response' in error && error.response?.data?.msg) {
+                setTimeout(() => {
+                    alert(error.response.data.msg);
+                }, 50)
+            } else {
+                console.error('파일 업로드 실패:', error);
+            }
+        }
+    };
 
     // 메시지 스크롤 함수
     const scrollToBottom = (force: boolean = false) => {
@@ -144,13 +246,11 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                 if (response.data.data.content.length > 0) {
                     const latestMessage = response.data.data.content[0]; // 가장 최신 메시지
                     if (latestMessage.messageId) {  // id 필드 추가 필요
-                        updateMessageReadStatus(latestMessage.messageId);
-                        setTimeout(() => {
-                            fetchMessageCount();
-                        }, 100); // 0.1초 딜레이 (연속된 요청으로 인한 에러 방지)
+                        await updateMessageReadStatus(latestMessage.messageId);
+                        await fetchMessageCount();
                     }
                 }
-                updateMemberLoginStatus();    // 채팅방 멤버의 로그인 상태 가져오기
+                await updateMemberLoginStatus();    // 채팅방 멤버의 로그인 상태 가져오기
                 setTimeout(() => scrollToBottom(true), 100);
             } else {
                 setMessages(prev => [...prev, ...response.data.data.content]);
@@ -190,17 +290,20 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
     const updateMemberLoginStatus = async () => {
         try {
             const response = await axios.get<MemberStatusResponse>(
-                import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/chatRooms/${chatRoomId}/members`,
+                request_URL + `/api/v1/chatRooms/${chatRoomId}/members`,
                 { withCredentials: true }
             );
             setMemberStatusList(response.data.data); // data 필드에서 멤버 상태 배열 추출
-            console.log(memberStatusList);
         } catch (error) {
+            setTimeout(() => {
+                alert("해당 채팅방의 멤버만 입장이 가능합니다.");
+            }, 100)
             console.error('유저 로그인 상태 조회 실패:', error);
+            await navigate('/chatroom');  // 채팅방 멤버가 아닐 경우, 모임 리스트 게시판으로 이동
         }
     }
 
-    // 채팅방 멤버의 로그인 상태 로그아웃으로 변경하기
+    // 채팅방 멤버의 로그인 상태 오프라인으로 변경하기
     const updateLogout = async () => {
         try {
             await axios.patch(
@@ -213,7 +316,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
         };
     }
 
-    // 채팅방 멤버의 로그인 상태 로그인으로 변경하기
+    // 채팅방 멤버의 로그인 상태 온라인으로 변경하기
     const updateLogin = async () => {
         try {
             await axios.patch(
@@ -240,8 +343,9 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
     // 채팅 내용 검색
     const messageSearch = async (keyword: string, nickname: string, page: number = 0) => {
         try {
+            // eks 붙이면 엘라스틱, 안붙이면 쿼리dsl
             const response = await axios.get<ChatResponse>(
-                `${request_URL}/api/v1/chatRooms/${chatRoomId}/messages/search`,
+                `${request_URL}/api/v1/chatRooms/${chatRoomId}/messages/search/eks`,
                 {
                     params: {
                         keyword,
@@ -292,7 +396,6 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
             onConnect: () => {
                 console.log('STOMP 연결 성공');
                 updateLogin();
-                // updateMemberLoginStatus();
                 fetchPreviousMessages(0);
                 setTimeout(() => {
                     fetchMessageCount();
@@ -333,7 +436,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                                     if (!isScrolledNearBottom) {
                                         setShowScrollButton(true);
                                     } else {
-                                        scrollToBottom();
+                                        setTimeout(() => scrollToBottom(true), 50);
                                     }
                                 }
 
@@ -404,7 +507,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                 destination: `/app/chat/${chatRoomId}`,
                 body: JSON.stringify(messageToSend),
             });
-            // console.log(import.meta.env.VITE_CORE_API_BASE_URL)
+
             await axios.post(
                 request_URL + `/api/v1/chatRooms/${chatRoomId}/messages`,
                 messageToSend,
@@ -413,7 +516,14 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
 
             setMessageInput('');
             scrollToBottom(true);
-        } catch (error) {
+        } catch (error: any) {
+            if (error.response?.status === 403) {        // 403코드는 error로 잡혀서 조건문 실행 안됨
+                setTimeout(() => {
+                    alert("해당 채팅방의 멤버만 채팅이 가능합니다.");
+                }, 100)
+                await navigate('/chatroom');  // 채팅방 멤버가 아닐 경우, 모임 리스트 게시판으로 이동
+            }
+
             console.error('메시지 전송 실패:', error);
         }
     };
@@ -444,6 +554,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
     // 페이지 이동/브라우저 종료 시
     useEffect(() => {
         const handleBeforeUnload = () => {
+            // WebSocket 연결 종료
             if (stompClientRef.current) {
                 stompClientRef.current.deactivate();
                 stompClientRef.current = null;
@@ -475,7 +586,6 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
     // 채팅 검색 컴포넌트
     const ChatSearch = ({ onSearch }: { onSearch: (keyword: string, nickname: string) => void }) => {
         const [keyword, setKeyword] = useState("");
-        const [nickname, setNickname] = useState("");
 
         // 검색 처리 함수 수정
         const handleSubmit = (e: React.FormEvent) => {
@@ -512,8 +622,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
             setCurrentSearchNickname('');
             setSearchKeyword('');
             setKeyword("");
-            setNickname("");
-            
+
             try {
                 // 메시지 목록 초기화
                 setMessages([]);
@@ -521,13 +630,13 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                 setCurrentPage(0);
                 // hasMore 초기화
                 setHasMore(true);
-                
+
                 // 전체 메시지 다시 로드
                 await fetchPreviousMessages(0);
-                
+
                 // 스크롤 최하단으로 이동
                 scrollToBottom(true);
-                
+
             } catch (error) {
                 console.error('메시지 초기화 실패:', error);
             }
@@ -614,7 +723,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                     {/* 기존 메시지 목록 렌더링 */}
                     {isSearchMode && hasMore && (
                         <button onClick={loadMoreSearchResults} className="w-full p-2 text-primary hover:bg-gray-50">
-                            이전 검색 결과 더보기
+                            이전 메시지 더보기
                         </button>
                     )}
 
@@ -628,15 +737,12 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                             const showNickname = !isMyMessage && (!prevMessage || prevMessage.nickname !== msg.nickname);
 
                             return (
-                                <div
-                                    key={index}
-                                    style={{
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        alignItems: isMyMessage ? 'flex-end' : 'flex-start',
-                                        margin: '8px 0'
-                                    }}
-                                >
+                                <div key={index} style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: isMyMessage ? 'flex-end' : 'flex-start',
+                                    margin: '8px 0'
+                                }}>
                                     {/* 닉네임 표시 (자신의 메시지가 아닐 때만) */}
                                     {showNickname && (
                                         <span style={{
@@ -655,14 +761,60 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                                         gap: '8px'
                                     }}>
                                         <div style={{
-                                            background: isMyMessage ? '#F26A2E' : '#e9ecef',
-                                            color: isMyMessage ? 'white' : 'black',
-                                            padding: '8px 12px',
-                                            borderRadius: isMyMessage ? '15px 15px 0 15px' : '15px 15px 15px 0',
+                                            ...(msg.chatMessageContent.includes('https://hf-chat.s3.ap-northeast-2.amazonaws.com')
+                                                ? {
+                                                    // 이미지 메시지일 때의 스타일
+                                                    padding: '8px 40px 8px 0',
+                                                    background: 'transparent',
+                                                    maxWidth: '70%',
+                                                    wordBreak: 'break-word'
+                                                }
+                                                : {
+                                                    // 일반 텍스트 메시지일 때 기존 말풍선 스타일 유지
+                                                    background: isMyMessage ? '#F26A2E' : '#e9ecef',
+                                                    color: isMyMessage ? 'white' : 'black',
+                                                    padding: '8px 12px',
+                                                    borderRadius: isMyMessage ? '15px 15px 0 15px' : '15px 15px 15px 0',
+                                                }),
                                             maxWidth: '70%',
                                             wordBreak: 'break-word'
                                         }}>
-                                            {highlightKeyword(msg.chatMessageContent, searchKeyword)}
+                                            {msg.chatMessageContent.includes('https://hf-chat.s3.ap-northeast-2.amazonaws.com') ? (
+                                                <div style={{ position: 'relative', display: 'inline-block' }}>
+                                                    <img
+                                                        src={msg.chatMessageContent}
+                                                        alt="채팅 이미지"
+                                                        style={{
+                                                            maxWidth: '200px',
+                                                            maxHeight: '200px',
+                                                            borderRadius: '8px',
+                                                            cursor: 'pointer'
+                                                        }}
+                                                        onClick={() => window.open(msg.chatMessageContent, '_blank')}
+                                                    />
+                                                    {isMyMessage && (
+                                                        <button
+                                                            onClick={() => handleFileDelete(msg.chatMessageContent)}
+                                                            style={{
+                                                                position: 'absolute',
+                                                                top: '5px',
+                                                                right: '5px',
+                                                                padding: '4px 8px',
+                                                                backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                                                                color: 'white',
+                                                                border: 'none',
+                                                                borderRadius: '4px',
+                                                                cursor: 'pointer',
+                                                                fontSize: '12px',
+                                                            }}
+                                                        >
+                                                            삭제
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                highlightKeyword(msg.chatMessageContent, searchKeyword)
+                                            )}
                                         </div>
                                         <div style={{
                                             fontSize: '0.75rem',
@@ -739,13 +891,42 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                     >
                         <img
                             src={send}
-                            alt="전송"
+                            alt="채팅전송"
                             style={{
                                 width: '24px',
                                 height: '24px',
                                 filter: messageInput.trim()
                                     ? 'invert(47%) sepia(82%) saturate(2604%) hue-rotate(337deg) brightness(97%) contrast(92%)'
                                     : 'opacity(0.5)'
+                            }}
+                        />
+                    </button>
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileUpload}
+                        style={{ display: 'none' }}
+                        accept="image/*"
+                    />
+                    <button
+                        onClick={() => fileInputRef.current?.click()}
+                        style={{
+                            paddingBottom: '1px',
+                            backgroundColor: 'transparent',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}>
+                        <img
+                            src={fileImage}
+                            alt="파일전송"
+                            style={{
+                                width: '24px',
+                                height: '24px',
+                                filter: 'opacity(0.5)'
                             }}
                         />
                     </button>

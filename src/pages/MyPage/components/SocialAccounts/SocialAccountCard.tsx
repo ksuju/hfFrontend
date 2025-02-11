@@ -120,24 +120,22 @@ const SocialAccountCard = ({ type, account, onSocialAction }: SocialAccountCardP
     };
 
     return (
-        <div className="flex items-center justify-between p-4 bg-white rounded-lg shadow-sm">
+        <div className="flex items-center justify-between p-4 bg-primary/5 rounded-lg hover:bg-primary/10 transition-colors">
             <div className="flex items-center gap-4">
-                <img src={getSocialIcon(type)} alt={type} className="w-8 h-8" />
-            </div>
-            <div className="flex items-center gap-20 mr-2">
+                <img src={getSocialIcon(type)} alt={type} className="w-12 h-12" />
                 {account?.active && (
-                    <>
-                        <div className="text-gray-600">
+                    <div className="flex-1">
+                        <div className="text-gray-600 text-sm">
                             <span className="text-gray-500 font-medium">이메일: </span>
                             {account.email || '연동된 이메일 없음'}
                         </div>
                         {account.createDate && (
-                            <div className="text-gray-600">
+                            <div className="text-gray-600 text-sm mt-1">
                                 <span className="text-gray-500 font-medium">연동일: </span>
                                 {new Date(account.createDate).toLocaleDateString()}
                             </div>
                         )}
-                    </>
+                    </div>
                 )}
             </div>
             <button

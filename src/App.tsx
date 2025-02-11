@@ -17,10 +17,53 @@ import Notice from './pages/Notice';
 import NoticeDetail from './pages/NoticeDetail';
 import { AlertProvider } from './providers/AlertProvider';
 import FestivalDetail from "./pages/FestivalDetail.tsx";
+import Admin from './pages/Admin'
+import NoticeWrite from './pages/Admin/components/NoticeWrite'
+import NoticeEdit from './pages/Admin/components/NoticeEdit'
+
+// ProtectedAdminRoute 컴포넌트 추가
+const ProtectedAdminRoute = () => {
+    const userInfo = localStorage.getItem('userInfo')
+        ? JSON.parse(localStorage.getItem('userInfo')!).data
+        : null;
+
+    if (!userInfo) {
+        return <Navigate to="/login" replace />;
+    }
+
+    if (userInfo.role !== 'ROLE_ADMIN') {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-100">
+                <div className="bg-white p-8 rounded-lg shadow-md text-center">
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">접근 권한 없음</h2>
+                    <p className="text-gray-600 mb-4">관리자만 접근할 수 있는 페이지입니다.</p>
+                    <button
+                        onClick={() => window.history.back()}
+                        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                    >
+                        이전 페이지로 돌아가기
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    return <Admin />;
+};
+
+
 
 const App = () => {
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-    console.log('App 컴포넌트 렌더링');
+    const [isLoggedIn, setIsLoggedIn] = useState(localStorage.getItem('isLoggedIn') === 'true');
+    const [isAlertOpen, setIsAlertOpen] = useState(false);
+    const [userInfo, setUserInfo] = useState(() =>
+        localStorage.getItem('userInfo') ? JSON.parse(localStorage.getItem('userInfo')!) : null
+    );
+
+    const updateUserInfo = (newUserInfo: string) => {
+        setUserInfo(newUserInfo);
+        localStorage.setItem('userInfo', JSON.stringify(newUserInfo));
+    };
 
     const checkLoginStatus = async () => {
         console.log('로그인 상태 체크 시작');
@@ -39,17 +82,20 @@ const App = () => {
                 const data = await response.json();
                 console.log('받아온 회원정보:', data);
                 setIsLoggedIn(true);
+                setUserInfo(data);
                 localStorage.setItem('isLoggedIn', 'true');
                 localStorage.setItem('userInfo', JSON.stringify(data));
             } else {
                 console.log('인증 실패');
                 setIsLoggedIn(false);
+                setUserInfo(null);
                 localStorage.removeItem('isLoggedIn');
                 localStorage.removeItem('userInfo');
             }
         } catch (error) {
             console.error('인증 체크 에러:', error);
             setIsLoggedIn(false);
+            setUserInfo(null);
             localStorage.removeItem('isLoggedIn');
             localStorage.removeItem('userInfo');
         }
@@ -60,25 +106,28 @@ const App = () => {
         checkLoginStatus(); // 직접 체크 먼저 실행
     }, []);
 
-    // localStorage에서 memberId 가져오기 (채팅 테스트)
-    const userInfo = localStorage.getItem('userInfo')
-        ? JSON.parse(localStorage.getItem('userInfo')!).data
-        : null;
-
     return (
         <Router>
-            <div className="min-h-screen flex flex-col bg-white lg:bg-gray-100">
-                <Routes>
-                    <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} />} />
-                    <Route path="/signup" element={<Signup />} />
-                    <Route path="/find-account" element={<FindAccount />} />
-                    <Route path="/reset-password" element={<ResetPassword />} />
-                    <Route path="/notice/:id" element={<NoticeDetail />} />
-                    <Route path="/detailposts" element={<FestivalDetail />} />
-                    <Route path="/*" element={
-                        <AlertProvider>
+            <AlertProvider isLoggedIn={isLoggedIn} isOpen={isAlertOpen}>
+                <div className="min-h-screen flex flex-col bg-white lg:bg-gray-100">
+                    <Header
+                        isLoggedIn={isLoggedIn}
+                        setIsLoggedIn={setIsLoggedIn}
+                        isAlertOpen={isAlertOpen}
+                        setIsAlertOpen={setIsAlertOpen}
+                        userInfo={userInfo}
+                    />
+                    <Routes>
+                        <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} />} />
+                        <Route path="/signup" element={<Signup />} />
+                        <Route path="/find-account" element={<FindAccount />} />
+                        <Route path="/reset-password" element={<ResetPassword />} />
+                        <Route path="/admin/*" element={<ProtectedAdminRoute />} />
+                        <Route path="/admin/notice/write" element={<NoticeWrite />} />
+                        <Route path="/admin/notice/edit/:id" element={<NoticeEdit />} />
+                        <Route path="/detailposts" element={<FestivalDetail />} />
+                        <Route path="/*" element={
                             <div className="flex flex-col min-h-screen">
-                                <Header isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />
                                 <main className="flex-1 mt-16 mb-16">
                                     <div className="max-w-[600px] lg:max-w-screen-lg mx-auto lg:py-6">
                                         <div className="bg-white lg:rounded-2xl lg:shadow-md">
@@ -87,12 +136,20 @@ const App = () => {
                                                 <Route path="/posts" element={<Festival />} />
                                                 <Route path="/chatroom" element={<Meeting />} />
                                                 <Route path="/notice" element={<Notice />} />
+                                                <Route path="/notice/:id" element={
+                                                    <NoticeDetail
+                                                        isLoggedIn={isLoggedIn}
+                                                        setIsLoggedIn={setIsLoggedIn}
+                                                        isAlertOpen={isAlertOpen}
+                                                        setIsAlertOpen={setIsAlertOpen}
+                                                    />
+                                                } />
                                                 <Route path="/chat/:chatRoomId" element={userInfo ? (
                                                     <Chat memberId={userInfo.id} />
                                                 ) : (
                                                     <Navigate to="/login" replace />
                                                 )} />
-                                                <Route path="/mypage" element={<MyPage />} />
+                                                <Route path="/mypage" element={<MyPage updateUserInfo={updateUserInfo} />} />
                                                 <Route path="/map" element={<FestivalMap />} />
                                             </Routes>
                                         </div>
@@ -100,10 +157,10 @@ const App = () => {
                                 </main>
                                 <Footer />
                             </div>
-                        </AlertProvider>
-                    } />
-                </Routes>
-            </div>
+                        } />
+                    </Routes>
+                </div>
+            </AlertProvider>
         </Router>
     )
 }
