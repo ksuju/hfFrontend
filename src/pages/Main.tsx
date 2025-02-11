@@ -87,11 +87,6 @@ const Main = () => {
     const [kickTargetId, setKickTargetId] = useState<string | null>(null);
     const [kickChatRoomId, setKickChatRoomId] = useState<string | null>(null);
 
-    // 배너 클릭 시 실행될 함수
-    const handleBannerClick = (festivalId: string) => {
-        navigate(`/detailposts/${festivalId}`);
-    };
-
     const handleTogglePopup = (chatRoomId: string) => {
         setOpenPopupId(openPopupId === chatRoomId ? null : chatRoomId);
     };
@@ -590,7 +585,7 @@ const Main = () => {
                         <div className="grid grid-cols-3 gap-3">
                             {searchPosts.map((searchPost) => (
                                 <div key={searchPost.festivalId} className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col"
-                                     onClick={() => handleBannerClick(searchPost.festivalId)}
+                                     onClick={() => navigate(`/detailposts?id=${encodeURIComponent(searchPost.festivalId)}`)}
                                 >
                                     {/* 이미지 영역 */}
                                     <div className="relative pb-[90%]">

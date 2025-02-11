@@ -18,10 +18,6 @@ interface MainBannerProps {
 const MainBanner = ({ mainPosts }: MainBannerProps) => {
     const navigate = useNavigate();
 
-    const handleBannerClick = (festivalId: string) => {
-        navigate(`/detailposts/${festivalId}`);
-    };
-
     return (
         <div className="relative">
             <Swiper
@@ -37,7 +33,7 @@ const MainBanner = ({ mainPosts }: MainBannerProps) => {
                     <SwiperSlide
                         key={mainPost.festivalId}
                         className="flex justify-center items-center"
-                        onClick={() => handleBannerClick(mainPost.festivalId)}
+                        onClick={() => navigate(`/detailposts?id=${encodeURIComponent(mainPost.festivalId)}`)}
                     >
                         <div className="w-full max-w-4xl bg-white rounded-lg shadow-md overflow-hidden">
                             <div className="relative w-full h-[300px] bg-gray-100 flex justify-center items-center">
