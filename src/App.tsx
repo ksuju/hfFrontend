@@ -51,6 +51,8 @@ const ProtectedAdminRoute = () => {
     return <Admin />;
 };
 
+
+
 const App = () => {
     const [isLoggedIn, setIsLoggedIn] = useState(localStorage.getItem('isLoggedIn') === 'true');
     const [isAlertOpen, setIsAlertOpen] = useState(false);
