@@ -105,7 +105,9 @@ const Main = () => {
     // 메인 배너 게시글 가져오기 (서울 기준)
     const fetchMainPosts = async () => {
         try {
-            const response = await fetch(`http://localhost:8090/api/v1/posts/view?area=서울&count=5`);
+            const url = import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/posts/view?area=서울&count=5`
+
+            const response = await fetch(url);
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
@@ -123,7 +125,9 @@ const Main = () => {
         await Promise.all(
             genres.map(async (genre, index) => {
                 try {
-                    const response = await fetch(`http://localhost:8090/api/v1/posts/select?genre=${encodeURIComponent(genre)}&page=0&size=10`);
+                    const url = import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/posts/select?genre=${encodeURIComponent(genre)}&page=0&size=10`
+
+                    const response = await fetch(url);
                     if (!response.ok) {
                         throw new Error(`HTTP error! Status: ${response.status}`);
                     }
@@ -543,16 +547,20 @@ const Main = () => {
 
     return (
         <div className="flex flex-col">
+            {/* 검색창 */}
             <SearchBar placeholder="축제, 공연, 모임을 검색해보세요" onChange={handleSearch} />
             <div className="px-4 mb-6 mt-20">
+                {/* 로딩 중 표시 */}
                 {isLoading ? (
                     <div className="text-center text-gray-500 mt-4">Loading...</div>
                 ) : (
                     <>
+                        {/* 메인 배너 & 장르별 배너 (검색 중이 아닐 때만 표시) */}
                         {!isSearching && (
                             <>
                                 <MainBanner mainPosts={mainPosts} />
 
+                                {/* 장르별 배너 섹션 */}
                                 {genres.map((genre, index) => (
                                     <GenreBanner
                                         key={genre}
