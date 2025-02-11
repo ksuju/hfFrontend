@@ -369,6 +369,9 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                 setCurrentSearchNickname(nickname);
                 setSearchPage(page + 1);
             }
+            setTimeout(()=>{
+                scrollToBottom(true);
+            },100);
         } catch (error) {
             console.error('채팅 내용 검색 실패:', error);
         }
