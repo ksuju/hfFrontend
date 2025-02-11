@@ -350,7 +350,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                     params: {
                         keyword,
                         nickname,
-                        page
+                        // page
                     },
                     withCredentials: true
                 }
