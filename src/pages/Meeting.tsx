@@ -102,12 +102,13 @@ const Meeting = () => {
     useEffect(() => {
         const handleScroll = () => {
             if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 200 && !isLoading) {
-                fetchMeetingPosts(page, searchKeyword);
+                fetchMeetingPosts(page);
             }
         };
+
         window.addEventListener("scroll", handleScroll);
         return () => window.removeEventListener("scroll", handleScroll);
-    }, [page, isLoading, searchKeyword]);
+    }, [page, isLoading]);
 
     // 현재 로그인한 유저 정보 업데이트
     const fetchUserInfo = async () => {
@@ -455,7 +456,7 @@ const Meeting = () => {
 
     return (
         <div className="max-w-[600px] mx-auto">
-            <SearchBar placeholder="모임을 검색해보세요" onChange={handleSearch} />
+            <SearchBar placeholder="모임을 검색해보세요" onChange={handleSearch} showSearchType={false}/>
             <div className="p-4 my-20">
                 <div className="space-y-3">
                     {meetingPosts.map((meeting) => {
@@ -500,6 +501,10 @@ const Meeting = () => {
                                                 }`}
                                                 onClick={(e) => {
                                                     e.stopPropagation();
+                                                    if (currentUserID == "") {
+                                                        alert("로그인이 필요합니다.");
+                                                        return;
+                                                    }
                                                     handleJoinClick(meeting.chatRoomId, isUserWaiting);
                                                 }}
                                             >
