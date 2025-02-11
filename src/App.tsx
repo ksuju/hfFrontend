@@ -80,17 +80,20 @@ const App = () => {
                 const data = await response.json();
                 console.log('받아온 회원정보:', data);
                 setIsLoggedIn(true);
+                setUserInfo(data);
                 localStorage.setItem('isLoggedIn', 'true');
                 localStorage.setItem('userInfo', JSON.stringify(data));
             } else {
                 console.log('인증 실패');
                 setIsLoggedIn(false);
+                setUserInfo(null);
                 localStorage.removeItem('isLoggedIn');
                 localStorage.removeItem('userInfo');
             }
         } catch (error) {
             console.error('인증 체크 에러:', error);
             setIsLoggedIn(false);
+            setUserInfo(null);
             localStorage.removeItem('isLoggedIn');
             localStorage.removeItem('userInfo');
         }
