@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 interface Friend {
     id: number;
     nickname: string;
-    profileImage: string | null;
+    profilePath: string | null;
     status: string;
     requestId?: number;
     friendId?: number;
@@ -141,26 +141,43 @@ export default function FriendList() {
         fetchAcceptedFriends();
     }, []);
 
-    return (
-        <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-bold mb-6">친구 목록</h2>
+    // 빈 상태 컴포넌트 추가
+    const EmptyState = ({ message }: { message: string }) => (
+        <div className="flex flex-col items-center justify-center py-8 px-4 bg-primary/5 rounded-lg">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+            </div>
+            <p className="text-gray-500 text-center">{message}</p>
+        </div>
+    );
 
+    return (
+        <div className="bg-white rounded-lg shadow-sm p-6 space-y-8">
             {/* 보낸 친구 신청 */}
-            <div className="mb-6">
-                <h3 className="text-lg font-semibold mb-3">보낸 친구 신청</h3>
+            <div>
+                <h3 className="text-base font-bold text-primary mb-4">보낸 신청</h3>
                 {sentRequests.length === 0 ? (
-                    <p className="text-gray-500">보낸 친구 신청이 없습니다.</p>
+                    <EmptyState message="아직 보낸 친구 신청이 없어요" />
                 ) : (
                     <div className="space-y-3">
                         {sentRequests.map(request => (
-                            <div key={request.id} className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                            <div key={request.id}
+                                className="flex items-center justify-between p-4 bg-primary/5 rounded-lg hover:bg-primary/10 transition-colors"
+                            >
                                 <div className="flex items-center">
-                                    <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center">
-                                        {request.profileImage ? (
-                                            <img src={request.profileImage} alt={request.nickname} className="w-full h-full rounded-full" />
-                                        ) : (
-                                            <span className="text-sm">{request.nickname[0]}</span>
-                                        )}
+                                    <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                                        <img
+                                            src={request.profilePath
+                                                ? request.profilePath.startsWith('http')
+                                                    ? request.profilePath
+                                                    : `https://kr.object.ncloudstorage.com/hf-bucket2025/member/${request.profilePath}`
+                                                : `https://kr.object.ncloudstorage.com/hf-bucket2025/member/default.png`
+                                            }
+                                            alt={request.nickname}
+                                            className="w-full h-full object-cover"
+                                        />
                                     </div>
                                     <span className="ml-2 font-medium">{request.nickname}</span>
                                 </div>
@@ -177,21 +194,28 @@ export default function FriendList() {
             </div>
 
             {/* 받은 친구 신청 */}
-            <div className="mb-6">
-                <h3 className="text-lg font-semibold mb-3">받은 친구 신청</h3>
+            <div>
+                <h3 className="text-base font-bold text-primary mb-4">받은 신청</h3>
                 {pendingRequests.length === 0 ? (
-                    <p className="text-gray-500">받은 친구 신청이 없습니다.</p>
+                    <EmptyState message="새로운 친구 신청이 없어요" />
                 ) : (
                     <div className="space-y-3">
                         {pendingRequests.map(request => (
-                            <div key={request.id} className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                            <div key={request.id}
+                                className="flex items-center justify-between p-4 bg-primary/5 rounded-lg hover:bg-primary/10 transition-colors"
+                            >
                                 <div className="flex items-center">
-                                    <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center">
-                                        {request.profileImage ? (
-                                            <img src={request.profileImage} alt={request.nickname} className="w-full h-full rounded-full" />
-                                        ) : (
-                                            <span className="text-sm">{request.nickname[0]}</span>
-                                        )}
+                                    <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                                        <img
+                                            src={request.profilePath
+                                                ? request.profilePath.startsWith('http')
+                                                    ? request.profilePath
+                                                    : `https://kr.object.ncloudstorage.com/hf-bucket2025/member/${request.profilePath}`
+                                                : `https://kr.object.ncloudstorage.com/hf-bucket2025/member/default.png`
+                                            }
+                                            alt={request.nickname}
+                                            className="w-full h-full object-cover"
+                                        />
                                     </div>
                                     <span className="ml-2 font-medium">{request.nickname}</span>
                                 </div>
@@ -217,20 +241,27 @@ export default function FriendList() {
 
             {/* 친구 목록 */}
             <div>
-                <h3 className="text-lg font-semibold mb-3">수락된 친구</h3>
+                <h3 className="text-base font-bold text-primary mb-4">친구</h3>
                 {acceptedFriends.length === 0 ? (
-                    <p className="text-gray-500">아직 친구가 없습니다.</p>
+                    <EmptyState message="새로운 친구를 만들어보세요" />
                 ) : (
                     <div className="space-y-3">
                         {acceptedFriends.map(friend => (
-                            <div key={friend.id} className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                            <div key={friend.id}
+                                className="flex items-center justify-between p-4 bg-primary/5 rounded-lg hover:bg-primary/10 transition-colors"
+                            >
                                 <div className="flex items-center">
-                                    <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center">
-                                        {friend.profileImage ? (
-                                            <img src={friend.profileImage} alt={friend.nickname} className="w-full h-full rounded-full" />
-                                        ) : (
-                                            <span className="text-sm">{friend.nickname[0]}</span>
-                                        )}
+                                    <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                                        <img
+                                            src={friend.profilePath
+                                                ? friend.profilePath.startsWith('http')
+                                                    ? friend.profilePath
+                                                    : `https://kr.object.ncloudstorage.com/hf-bucket2025/member/${friend.profilePath}`
+                                                : `https://kr.object.ncloudstorage.com/hf-bucket2025/member/default.png`
+                                            }
+                                            alt={friend.nickname}
+                                            className="w-full h-full object-cover"
+                                        />
                                     </div>
                                     <span className="ml-2 font-medium">{friend.nickname}</span>
                                 </div>

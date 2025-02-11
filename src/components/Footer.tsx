@@ -4,6 +4,11 @@ import { Link, useLocation } from 'react-router-dom'
 const Footer = () => {
     const location = useLocation()
 
+    // 관리자 페이지에서는 푸터를 렌더링하지 않음
+    if (location.pathname.startsWith('/admin')) {
+        return null;
+    }
+
     return (
         <footer className="fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-gray-200 z-30">
             <div className="max-w-[600px] lg:max-w-screen-lg mx-auto h-full">
