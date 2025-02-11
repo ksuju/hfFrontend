@@ -123,9 +123,9 @@ const Festival = () => {
     }, [selectedGenre])
 
     // 검색 실행 함수
-    const handleSearch = (keyword: string, newSearchType: string) => {
+    const handleSearch = (keyword: string, newSearchType?: string) => {
         setSearchKeyword(keyword);
-        setSearchType(newSearchType);
+        setSearchType(newSearchType ?? "");
         setPage(0);
         setHasMore(true);
     };

@@ -695,7 +695,7 @@ export default function FestivalDetail() {
     if (!post) return <div className="text-center text-gray-500 mt-10">게시글이 존재하지 않습니다.</div>;
 
     return (
-        <div className="w-full p-4">
+        <div className="w-full pt-20 p-4">
             {/* 뒤로 가기 버튼 */}
             <button onClick={() => navigate(-1)} className="mb-4 text-primary text-base">
                 ← 뒤로가기
