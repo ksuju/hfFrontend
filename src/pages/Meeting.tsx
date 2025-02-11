@@ -455,7 +455,7 @@ const Meeting = () => {
 
     return (
         <div className="max-w-[600px] mx-auto">
-            <SearchBar placeholder="모임을 검색해보세요" onChange={handleSearch} />
+            <SearchBar placeholder="모임을 검색해보세요" onChange={handleSearch} showSearchType={false}/>
             <div className="p-4 my-20">
                 <div className="space-y-3">
                     {meetingPosts.map((meeting) => {

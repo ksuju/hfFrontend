@@ -28,7 +28,7 @@ const Festival = () => {
     const [hasMore, setHasMore] = useState(true); // 더 불러올 데이터가 있는지 여부
     const [page, setPage] = useState(0);
     const [searchKeyword, setSearchKeyword] = useState("");
-
+    const [searchType, setSearchType] = useState("축제명+지역");
     // const [searchParams] = useSearchParams();
     // const selectedGenre = searchParams.get("genre") || ""; // 기본값 "축제"
 
@@ -45,29 +45,43 @@ const Festival = () => {
 
     // 축제 데이터 가져오기 (페이지 스크롤링 기준 요청)
     const fetchFestivalPosts = async (pageNumber: number, keyword = "") => {
+        // JPA 쿼리
+        // if (selectedGenre === "전체") {
+        //     url = `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/posts/all?&page=${pageNumber}&size=15`;
+        // }else {
+        //     url = keyword
+        //         ? `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/posts/search?keyword=${encodeURIComponent(keyword)}&page=${pageNumber}&size=15`
+        //         : `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/posts/select?genre=${encodeURIComponent(selectedGenre)}&page=${pageNumber}&size=15`;
+        // }
+
         if (isLoading || !hasMore) return;
         setIsLoading(true);
         try {
             let url: string = "";
+            let where = "";
 
-            // JPA 쿼리
-            // if (selectedGenre === "전체") {
-            //     url = `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/posts/all?&page=${pageNumber}&size=15`;
-            // }else {
-            //     url = keyword
-            //         ? `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/posts/search?keyword=${encodeURIComponent(keyword)}&page=${pageNumber}&size=15`
-            //         : `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/posts/select?genre=${encodeURIComponent(selectedGenre)}&page=${pageNumber}&size=15`;
-            // }
+            // 검색 타입에 따른 where 값 설정
+            switch (searchType) {
+                case '축제명+지역':
+                    where = 'all';
+                    break;
+                case '축제명':
+                    where = 'name';
+                    break;
+                case '지역':
+                    where = 'area';
+                    break;
+            }
 
-            // 엘라스틱
+            // 엘라스틱 검색 URL 구성
             if (selectedGenre === "전체") {
                 if (keyword === "") {
                     url = `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/posts/search/all?page=${pageNumber}&size=15`;
                 } else {
-                    url = `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/posts/search/key?genre=&where=&keyword=${encodeURIComponent(keyword)}&page=${pageNumber}&size=15`
+                    url = `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/posts/search/key?genre=&where=${where}&keyword=${encodeURIComponent(keyword)}&page=${pageNumber}&size=15`
                 }
             } else {
-                url = `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/posts/search/key?where=&genre=${encodeURIComponent(selectedGenre)}&keyword=${encodeURIComponent(keyword)}&page=${pageNumber}&size=15`;
+                url = `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/posts/search/key?where=${where}&genre=${encodeURIComponent(selectedGenre)}&keyword=${encodeURIComponent(keyword)}&page=${pageNumber}&size=15`;
             }
 
             const response = await fetch(url);
@@ -102,15 +116,16 @@ const Festival = () => {
         }, 100); // 100ms 디바운스 적용
 
         return () => clearTimeout(delayDebounceFn);
-    }, [searchKeyword]);
+    }, [searchKeyword, searchType]);
 
     useEffect(() => {
         fetchFestivalPosts(0, searchKeyword);
     }, [selectedGenre])
 
     // 검색 실행 함수
-    const handleSearch = (keyword: string) => {
+    const handleSearch = (keyword: string, newSearchType: string) => {
         setSearchKeyword(keyword);
+        setSearchType(newSearchType);
         setPage(0);
         setHasMore(true);
     };
@@ -129,7 +144,7 @@ const Festival = () => {
     return (
         <div className="max-w-[600px] mx-auto">
             {/* 검색창 */}
-            <SearchBar placeholder="축제, 공연을 검색해보세요" onChange={handleSearch}/>
+            <SearchBar placeholder="축제, 공연을 검색해보세요" onChange={handleSearch} showSearchType={true}/>
 
             <div className="p-4 my-20">
                 <div className="flex overflow-x-auto gap-1 pb-4">
