@@ -666,6 +666,7 @@ export default function FestivalDetail() {
             console.log("✅ 모임 생성 성공");
             setIsCreatePopupOpen(false); // 팝업 닫기
             setNewRoomData({ title: "", content: "", limit: 10 }); // 폼 초기화
+            fetchUserInfo();
             fetchMeetingPosts(0); // 리스트 갱신
         } catch (error) {
             console.error("❌ 모임 생성 실패:", error);
@@ -697,8 +698,11 @@ export default function FestivalDetail() {
     return (
         <div className="w-full pt-20 p-4">
             {/* 뒤로 가기 버튼 */}
-            <button onClick={() => navigate(-1)} className="mb-4 text-primary text-base">
-                ← 뒤로가기
+            <button onClick={() => navigate(-1)} className="mb-4 text-gray-500 hover:text-primary text-base flex items-center">
+                <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                뒤로가기
             </button>
 
             {/* 상세 카드 섹션 */}
@@ -742,7 +746,7 @@ export default function FestivalDetail() {
                                 <h2 className="text-base font-semibold">댓글</h2>
                                 <span className="text-gray-600 text-base">{comments.length}</span>
                             </div>
-                            <div className="space-y-3 max-h-[400px] overflow-visible" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                            <div className="space-y-3 max-h-[400px] overflow-y-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                                 {/* ✅ 최상위 댓글만 표시 */}
                                 {(showAll ? comments : comments.slice(0, 1))
                                     .filter(comment => comment.superCommentId === null) // ✅ 최상위 댓글만 필터링

@@ -149,7 +149,7 @@ const Festival = () => {
             <SearchBar placeholder="축제, 공연을 검색해보세요" onChange={handleSearch} showSearchType={true}/>
 
             <div className="p-4 my-20">
-                <div className="flex overflow-x-auto gap-1 pb-4">
+                <div className="flex overflow-x-auto gap-1 mb-4 mt-[-15px]" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                     {genres.map((genre) => (
                         <button
                             key={genre}
