@@ -13,6 +13,7 @@ interface ChatMessage {
     chatMessageContent: string;
     messageTimestamp: string;
     count?: number;
+    email?: string;
 }
 
 interface PageInfo {
@@ -754,7 +755,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                                             marginBottom: '4px',
                                             marginLeft: '8px'
                                         }}>
-                                            {msg.nickname}
+                                            {msg.nickname}&nbsp;{msg.email}
                                         </span>
                                     )}
                                     <div style={{
