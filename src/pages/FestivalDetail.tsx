@@ -865,7 +865,14 @@ export default function FestivalDetail() {
                     )}
 
                     {/* ✅ 맨 아래 입력 필드에서 일반 댓글/답글 입력 */}
-                    <div className="flex items-center space-x-2 mt-1">
+                    <div className="flex items-center space-x-2 mt-1"
+                         onClick={(e) => {
+                             e.stopPropagation();
+                             if (currentUserID == "") {
+                                 alert("로그인이 필요합니다.");
+                                 return;
+                             }
+                         }}>
                         <input
                             type="text"
                             placeholder={editingCommentId ? "댓글 수정 중..." : replyingTo ? "답글 추가..." : "댓글 추가..."}
