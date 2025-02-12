@@ -8,7 +8,7 @@ export const AlertBell = ({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (
     const navigate = useNavigate();
     const [visibleCount, setVisibleCount] = useState(5);
     const [showAllAlerts, setShowAllAlerts] = useState(false);
-    const { alerts, unreadCount, hasMore, loadMore, readAlerts, setAlerts, processedAlerts, setProcessedAlerts } = useContext(AlertContext);
+    const { alerts, unreadCount, hasMore, loadMore, readAlerts, handleFriendRequest } = useContext(AlertContext);
 
     const handleAlertClick = async (alert: Alert) => {
         try {
@@ -71,47 +71,6 @@ export const AlertBell = ({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (
         setVisibleCount(prev => prev + 5);
     };
 
-    const handleAcceptRequest = async (requestId: number, alertId: number) => {
-        try {
-            const response = await fetch(
-                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/friends/friend-requests/${requestId}/accept`,
-                {
-                    method: 'POST',
-                    credentials: 'include'
-                }
-            );
-            if (response.ok) {
-                setProcessedAlerts(prev => ({ ...prev, [alertId]: '수락 완료' }));
-                // 3초 후 알림 제거
-                setTimeout(() => {
-                    setAlerts(prev => prev.filter(a => a.id !== alertId));
-                }, 3000);
-            }
-        } catch (error) {
-            console.error('친구 신청 수락 실패:', error);
-        }
-    };
-
-    const handleRejectRequest = async (requestId: number, alertId: number) => {
-        try {
-            const response = await fetch(
-                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/friends/friend-requests/${requestId}/reject`,
-                {
-                    method: 'POST',
-                    credentials: 'include'
-                }
-            );
-            if (response.ok) {
-                setProcessedAlerts(prev => ({ ...prev, [alertId]: '거절 완료' }));
-                // 3초 후 알림 제거
-                setTimeout(() => {
-                    setAlerts(prev => prev.filter(a => a.id !== alertId));
-                }, 3000);
-            }
-        } catch (error) {
-            console.error('친구 신청 거절 실패:', error);
-        }
-    };
 
     const highlightText = (alert: Alert) => {
         const lines = alert.content.split('\n');
@@ -134,12 +93,13 @@ export const AlertBell = ({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (
                                     <span className={`text-sm tracking-wide ${alert.isRead ? 'font-normal' : 'font-bold'}`}>
                                         {line}
                                     </span>
-                                    {alert.navigationType === 'SELECT' && navigationData.requestId && !processedAlerts[alert.id] ? (
+                                    {/* 친구 요청 알림이고 아직 처리되지 않았다면 */}
+                                    {alert.navigationType === 'SELECT' && navigationData.requestId && !alert.processedAction ? (
                                         <div className="flex gap-2 ml-4">
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    handleAcceptRequest(navigationData.requestId, alert.id);
+                                                    handleFriendRequest(navigationData.requestId, alert.id, 'accept');
                                                 }}
                                                 className="px-2 py-1 bg-primary text-white text-xs rounded hover:bg-primary-dark"
                                             >
@@ -148,15 +108,15 @@ export const AlertBell = ({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    handleRejectRequest(navigationData.requestId, alert.id);
+                                                    handleFriendRequest(navigationData.requestId, alert.id, 'reject');
                                                 }}
                                                 className="px-2 py-1 bg-gray-200 text-gray-700 text-xs rounded hover:bg-gray-300"
                                             >
                                                 거절
                                             </button>
                                         </div>
-                                    ) : processedAlerts[alert.id] ? (
-                                        <span className="text-sm text-primary">{processedAlerts[alert.id]}</span>
+                                    ) : alert.processedAction ? (
+                                        <span className="text-sm text-primary">{alert.processedAction}</span>
                                     ) : null}
                                 </div>
                             )}
@@ -170,15 +130,15 @@ export const AlertBell = ({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (
     const getDomainBackgroundColor = (domain: string) => {
         switch (domain) {
             case 'GROUP':
-                return 'bg-amber-50';
+                return 'bg-amber-50';  // 연한 노란색
             case 'MEMBER':
-                return 'bg-blue-50';
+                return 'bg-blue-50';   // 연한 파란색
             case 'BOARD':
-                return 'bg-red-50';
+                return 'bg-green-50';  // 연한 초록색
             case 'FESTIVAL':
-                return 'bg-purple-50';
+                return 'bg-purple-50'; // 연한 보라색
             case 'COMMENT':
-                return 'bg-pink-50';
+                return 'bg-pink-50';   // 연한 분홍색
             default:
                 return 'bg-amber-50';
         }

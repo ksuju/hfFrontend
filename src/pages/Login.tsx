@@ -18,7 +18,7 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
     const redirectUrlAfterSocialLogin = import.meta.env.VITE_CORE_FRONT_BASE_URL; // 카카오 로그인 후 리다이렉트 URL
     const navigate = useNavigate();
     const location = useLocation();
-    
+
     // from 파라미터 추출
     const from = location.state?.from?.pathname || '/';
 
@@ -59,7 +59,7 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
                 } else {
                     localStorage.removeItem('savedEmail');
                 }
-                
+
                 // 사용자 정보 즉시 조회
                 const userResponse = await fetch(
                     `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/auth/me`,
@@ -74,12 +74,12 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
 
                 if (userResponse.ok) {
                     const userData = await userResponse.json();
-                    localStorage.setItem('userInfo', JSON.stringify(userData.data));
+                    localStorage.setItem('userInfo', JSON.stringify(userData));
+                    localStorage.setItem('isLoggedIn', 'true');
+                    setIsLoggedIn(true);
+                    navigate(from, { replace: true });
+                    window.location.reload();
                 }
-
-                setIsLoggedIn(true);
-                navigate(from, { replace: true });
-                window.location.reload(); // 페이지 새로고침
             } else {
                 const errorData = await response.json();
                 alert(errorData.msg || '로그인에 실패했습니다.');

@@ -12,6 +12,7 @@ interface AlertContextType {
     setAlerts: React.Dispatch<React.SetStateAction<Alert[]>>;
     processedAlerts: { [key: number]: string };
     setProcessedAlerts: React.Dispatch<React.SetStateAction<{ [key: number]: string }>>;
+    handleFriendRequest: (requestId: number, alertId: number, action: 'accept' | 'reject') => Promise<void>; // 추가
 }
 
 export const AlertContext = createContext<AlertContextType>({
@@ -22,7 +23,8 @@ export const AlertContext = createContext<AlertContextType>({
     readAlerts: async () => { },
     setAlerts: () => { },
     processedAlerts: {},
-    setProcessedAlerts: () => { }
+    setProcessedAlerts: () => { },
+    handleFriendRequest: async () => { }  // 추가
 });
 
 export const AlertProvider = ({ children, isLoggedIn, isOpen }: { children: ReactNode, isLoggedIn: boolean, isOpen: boolean }) => {
@@ -174,6 +176,40 @@ export const AlertProvider = ({ children, isLoggedIn, isOpen }: { children: Reac
         }
     }, [isOpen]);
 
+
+    const handleFriendRequest = async (requestId: number, alertId: number, action: 'accept' | 'reject') => {
+        try {
+            const response = await fetch(
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/friends/friend-requests/${requestId}/${action}`,
+                {
+                    method: 'POST',
+                    credentials: 'include'
+                }
+            );
+
+            if (response.ok) {
+                // 알림의 상태를 업데이트하여 버튼을 제거하고 처리 상태를 표시
+                setAlerts(prev => prev.map(alert =>
+                    alert.id === alertId
+                        ? {
+                            ...alert,
+                            processedAction: action === 'accept' ? '수락 완료' : '거절 완료'
+                        }
+                        : alert
+                ));
+
+                // 친구 목록 컴포넌트에 이벤트 발송
+                const event = new CustomEvent('friendRequestProcessed', {
+                    detail: { requestId, action }
+                });
+                window.dispatchEvent(event);
+            }
+        } catch (error) {
+            console.error('친구 요청 처리 실패:', error);
+        }
+    };
+
+
     return (
         <AlertContext.Provider value={{
             alerts,
@@ -183,7 +219,8 @@ export const AlertProvider = ({ children, isLoggedIn, isOpen }: { children: Reac
             readAlerts,
             setAlerts,
             processedAlerts,
-            setProcessedAlerts
+            setProcessedAlerts,
+            handleFriendRequest  // 추가
         }}>
             {children}
             {toast && <ToastAlert alert={toast} onClose={() => setToast(null)} />}
