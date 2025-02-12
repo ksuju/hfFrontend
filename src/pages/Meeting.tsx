@@ -1,7 +1,20 @@
 import { useEffect, useState } from 'react';
 import SearchBar from '../components/SearchBar';
-import {useNavigate} from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import dots from '../assets/images/three-dots.png';
+
+import MeetingCard from '../components/MeetingCard';
+import ManageMembersPopup from '../components/ManageMembersPopup';
+import EditPopup from '../components/EditPopup';
+import ConfirmLeavePopup from '../components/ConfirmLeavePopup';
+import ConfirmDelegatePopup from '../components/ConfirmDelegatePopup';
+import ConfirmKickPopup from '../components/ConfirmKickPopup';
+import MeetingActionButton from '../components/MeetingActionButton';
+import MeetingStatusBadge from '../components/MeetingStatusBadge';
+import MeetingMemberCount from '../components/MeetingMemberCount';
+import MeetingHeader from '../components/MeetingHeader';
+import MeetingContent from '../components/MeetingContent';
+
 
 interface MeetingPost {
     memberId: string;
@@ -43,7 +56,7 @@ const Meeting = () => {
     const [isConfirmLeaveOpen, setIsConfirmLeaveOpen] = useState<string | null>(null);
     const [isManagePopupOpen, setIsManagePopupOpen] = useState(false);
     const [isEditPopupOpen, setIsEditPopupOpen] = useState(false);
-    const [editRoomData, setEditRoomData] = useState({title: "", content: "", limit: 10,});
+    const [editRoomData, setEditRoomData] = useState({ title: "", content: "", limit: 10, });
     const [activeTab, setActiveTab] = useState("참여자");
     const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
     const selectedMeeting = meetingPosts.find(meeting => meeting.chatRoomId === selectedRoomId);
@@ -456,85 +469,93 @@ const Meeting = () => {
     };
 
     return (
-        <div className="max-w-[600px] mx-auto">
-            <SearchBar placeholder="모임을 검색해보세요" onChange={handleSearch} showSearchType={false} />
-            <div className="p-4 my-20">
-                <div className="space-y-3">
-                    {meetingPosts.map((meeting) => (
-                        <MeetingCard
-                            key={meeting.chatRoomId}
-                            meeting={meeting}
-                            isUserInWaitRoom={isUserInWaitRoom}
-                            isUserInJoinRoom={isUserInJoinRoom}
-                            currentUser={currentUser}
-                            currentUserID={currentUserID}
-                            handleChatRoomClick={handleChatRoomClick}
-                            handleTogglePopup={handleTogglePopup}
-                            handleJoinClick={handleJoinClick}
-                            handleManageMembers={handleManageMembers}
-                            handleEditRoom={handleEditRoom}
-                            handleLeaveRoom={handleLeaveRoom}
-                            openPopupId={openPopupId}
-                            setOpenPopupId={setOpenPopupId}
+        <div className="max-w-[1280px] mx-auto">
+            <div className="px-4 py-8">
+                <div className="max-w-[600px] mx-auto">
+                    {/* 헤더 섹션 */}
+                    <div className="flex flex-col gap-6 mb-8">
+                        <h2 className="text-2xl font-bold text-gray-800 mt-16">모임</h2>
+                        <SearchBar 
+                            placeholder="모임을 검색해보세요" 
+                            onChange={handleSearch} 
+                            showSearchType={false}
                         />
-                    ))}
+                    </div>
+
+                    {/* 모임 목록 */}
+                    <div className="space-y-6">
+                        {meetingPosts.map((meeting) => {
+                            const isUserWaiting = isUserInWaitRoom(meeting.chatRoomId);
+                            const isUserJoined = isUserInJoinRoom(meeting.chatRoomId);
+                            const isRoomOwner = meeting.memberId === currentUser?.id;
+
+                            return (
+                                <div
+                                    key={meeting.chatRoomId}
+                                    className={`bg-white rounded-2xl shadow-sm border hover:shadow-md transition-all duration-300 ${
+                                        isUserJoined ? 'border-primary/20 hover:border-primary' : 'border-gray-100'
+                                    }`}
+                                    onClick={(e) => {
+                                        if ((e.target as HTMLElement).closest('button')) return;
+                                        // 모든 모임에서 확장/축소 가능하도록 수정
+                                        setExpandedId(expandedId === meeting.chatRoomId ? null : meeting.chatRoomId);
+                                    }}
+                                >
+                                    <div className={`p-6 transition-all duration-300 ${
+                                        expandedId === meeting.chatRoomId ? 'min-h-[300px]' : ''
+                                    }`}>
+                                        {/* 상단 정보 */}
+                                        <MeetingHeader
+                                            festivalName={meeting.festivalName}
+                                            createDate={meeting.createDate}
+                                            isUserJoined={isUserJoined}
+                                        />
+
+                                        {/* 제목과 내용 */}
+                                        <MeetingContent
+                                            title={meeting.roomTitle}
+                                            content={meeting.roomContent}
+                                            isExpanded={expandedId === meeting.chatRoomId}
+                                        />
+
+                                        {/* 하단 정보와 버튼 */}
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-4">
+                                                <MeetingMemberCount
+                                                    joinMemberNum={meeting.joinMemberNum}
+                                                    roomMemberLimit={meeting.roomMemberLimit}
+                                                />
+                                                <MeetingStatusBadge 
+                                                    isUserJoined={isUserJoined}
+                                                    isUserWaiting={isUserWaiting}
+                                                />
+                                            </div>
+
+                                            <div className="flex items-center gap-3">
+                                                <MeetingActionButton
+                                                    isUserJoined={isUserJoined}
+                                                    isUserWaiting={isUserWaiting}
+                                                    currentUserID={currentUserID}
+                                                    chatRoomId={meeting.chatRoomId}
+                                                    handleChatRoomClick={handleChatRoomClick}
+                                                    handleJoinClick={handleJoinClick}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    {/* 로딩 인디케이터 */}
+                    {isLoading && (
+                        <div className="flex justify-center items-center py-8">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                        </div>
+                    )}
                 </div>
-                {isLoading && <p className="text-center text-gray-500 mt-4">Loading...</p>}
             </div>
-
-            {/* 인원관리 팝업창 */}
-            {isManagePopupOpen && selectedMeeting && (
-                <ManageMembersPopup
-                    activeTab={activeTab}
-                    setActiveTab={setActiveTab}
-                    sortedJoinMembers={sortedJoinMembers}
-                    selectedMeeting={selectedMeeting}
-                    handleConfirmDelegate={handleConfirmDelegate}
-                    handleConfirmKick={handleConfirmKick}
-                    handleApprove={handleApprove}
-                    handleRefuse={handleRefuse}
-                    closeManagePopup={closeManagePopup}
-                />
-            )}
-
-            {/* 수정하기 팝업 */}
-            {isEditPopupOpen && (
-                <EditPopup
-                    editRoomData={editRoomData}
-                    handleChange={handleChange}
-                    handleSaveEdit={handleSaveEdit}
-                    setIsEditPopupOpen={setIsEditPopupOpen}
-                    selectedMeeting={selectedMeeting}
-                />
-            )}
-
-            {/* 나가기 최종확인 팝업창 */}
-            {isConfirmLeaveOpen && (
-                <ConfirmLeavePopup
-                    cancelLeaveRoom={cancelLeaveRoom}
-                    confirmLeaveRoom={confirmLeaveRoom}
-                    isConfirmLeaveOpen={isConfirmLeaveOpen}
-                />
-            )}
-
-            {/* 위임하기 최종확인 팝업창 */}
-            {isConfirmDelegateOpen && (
-                <ConfirmDelegatePopup
-                    cancelDelegate={cancelDelegate}
-                    confirmDelegate={confirmDelegate}
-                    getNicknameById={getNicknameById}
-                    selectedDelegateId={selectedDelegateId}
-                />
-            )}
-
-            {/* 강퇴하기 최종확인 팝업창 */}
-            {isConfirmKickOpen && (
-                <ConfirmKickPopup
-                    nickname={getNicknameById(kickTargetId)}
-                    onCancel={cancelKick}
-                    onConfirm={confirmKick}
-                />
-            )}
         </div>
     );
 };
