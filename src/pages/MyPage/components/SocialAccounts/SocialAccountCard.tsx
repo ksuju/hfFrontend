@@ -120,33 +120,45 @@ const SocialAccountCard = ({ type, account, onSocialAction }: SocialAccountCardP
     };
 
     return (
-        <div className="flex items-center justify-between p-4 bg-primary/5 rounded-lg hover:bg-primary/10 transition-colors">
+        <div className={`flex items-center justify-between p-3 border rounded-lg ${account.active ? 'bg-primary/5' : ''}`}>
+            <div className="flex items-center gap-3">
+                <img src={getSocialIcon(type)} alt={type} className="w-8 h-8" />
+                <span className="font-medium">{type}</span>
+            </div>
             <div className="flex items-center gap-4">
-                <img src={getSocialIcon(type)} alt={type} className="w-12 h-12" />
-                {account?.active && (
-                    <div className="flex-1">
-                        <div className="text-gray-600 text-sm">
-                            <span className="text-gray-500 font-medium">이메일: </span>
-                            {account.email || '연동된 이메일 없음'}
-                        </div>
-                        {account.createDate && (
-                            <div className="text-gray-600 text-sm mt-1">
-                                <span className="text-gray-500 font-medium">연동일: </span>
+                {account.active ? (
+                    <>
+                        <div className="flex flex-col items-end gap-1">
+                            <span className="text-sm text-gray-700">
+                                {account.email}
+                            </span>
+                            <span className="text-xs text-gray-500">
                                 {new Date(account.createDate).toLocaleDateString()}
-                            </div>
-                        )}
-                    </div>
+                            </span>
+                        </div>
+                        <button
+                            onClick={handleSocialAction}
+                            className="px-2 py-1 text-sm bg-primary text-white rounded"
+                            disabled={isLoading}
+                        >
+                            {isLoading ? '처리중...' : 'ON'}
+                        </button>
+                    </>
+                ) : (
+                    <>
+                        <span className="text-sm text-gray-400">
+                            연동 정보 없음
+                        </span>
+                        <button
+                            onClick={handleSocialAction}
+                            className="px-2 py-1 text-sm bg-gray-200 text-gray-600 rounded hover:bg-gray-300 transition-colors"
+                            disabled={isLoading}
+                        >
+                            {isLoading ? '처리중...' : '연동하기'}
+                        </button>
+                    </>
                 )}
             </div>
-            <button
-                onClick={handleSocialAction}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${account?.active
-                    ? 'bg-red-500 text-white hover:bg-red-600'
-                    : 'bg-blue-500 text-white hover:bg-blue-600'
-                    }`}
-            >
-                {account?.active ? '연동 해제' : '연동하기'}
-            </button>
         </div>
     );
 };

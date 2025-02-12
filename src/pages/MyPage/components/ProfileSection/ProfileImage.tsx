@@ -10,7 +10,7 @@ interface ProfileImageProps {
 
 const ProfileImage = ({ profilePath, onImageUpload, onResetImage, fileInputRef }: ProfileImageProps) => {
     const [isLoading, setIsLoading] = useState(false);
-    const isDefaultImage = profilePath === 'default.png';  // 기본 이미지 체크
+    const isDefaultImage = profilePath === 'default.png' || !profilePath;  // 기본 이미지 체크
 
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         setIsLoading(true);
@@ -30,14 +30,21 @@ const ProfileImage = ({ profilePath, onImageUpload, onResetImage, fileInputRef }
         }
     };
 
+    const getImageUrl = (path: string | null | undefined) => {
+        if (!path || path === 'default.png') {
+            return 'https://kr.object.ncloudstorage.com/hf-bucket2025/member/default.png';
+        }
+        return path.startsWith('http')
+            ? path
+            : `https://kr.object.ncloudstorage.com/hf-bucket2025/member/${path}`;
+    };
+
     return (
         <div className="relative">
             <img
-                src={profilePath?.startsWith('http')
-                    ? profilePath
-                    : `https://kr.object.ncloudstorage.com/hf-bucket2025/member/${profilePath}`}
+                src={getImageUrl(profilePath)}
                 alt="프로필"
-                className={`w-64 h-64 rounded-full ${isLoading ? 'opacity-50' : ''}`}
+                className={`w-56 h-56 rounded-full ${isLoading ? 'opacity-50' : ''}`}
             />
             {!isDefaultImage && (  // 기본 이미지가 아닐 때만 삭제 버튼 표시
                 <button
@@ -53,7 +60,7 @@ const ProfileImage = ({ profilePath, onImageUpload, onResetImage, fileInputRef }
             <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isLoading}
-                className="absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-white shadow-md rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors"
+                className="absolute left-[35px] bottom-0 -translate-x-1/2 w-10 h-10 bg-white shadow-md rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors"
                 title="프로필 사진 변경"
             >
                 <FiEdit2 className="w-5 h-5 text-gray-600" />

@@ -5,6 +5,7 @@ import axios from 'axios';
 import send from "../assets/images/send.png"
 import memberList from "../assets/images/memberList.png"
 import fileImage from "../assets/images/file.png"
+import UserProfile from '../../../src/components/UserProfile';
 
 
 interface ChatMessage {
@@ -13,6 +14,7 @@ interface ChatMessage {
     chatMessageContent: string;
     messageTimestamp: string;
     count?: number;
+    email?: string;
 }
 
 interface PageInfo {
@@ -350,7 +352,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                     params: {
                         keyword,
                         nickname,
-                        page
+                        // page
                     },
                     withCredentials: true
                 }
@@ -369,6 +371,9 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                 setCurrentSearchNickname(nickname);
                 setSearchPage(page + 1);
             }
+            setTimeout(() => {
+                scrollToBottom(true);
+            }, 100);
         } catch (error) {
             console.error('채팅 내용 검색 실패:', error);
         }
@@ -414,9 +419,11 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                         const receivedData = JSON.parse(message.body);
                         switch (receivedData.type) {
                             case 'MESSAGE':
+                                console.log("채팅 메시지 데이터:", receivedData.data); // 여기로 이동
                                 const chatMessage: ChatMessage = {
                                     messageId: receivedData.data.id,
                                     nickname: receivedData.data.nickname,
+                                    email: receivedData.data.email,  // 추가
                                     chatMessageContent: receivedData.data.chatMessageContent,
                                     messageTimestamp: receivedData.data.createDate
                                 };
@@ -749,9 +756,13 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                                             fontSize: '0.8rem',
                                             color: '#666',
                                             marginBottom: '4px',
-                                            marginLeft: '8px'
+                                            marginLeft: '8px',
+                                            display: 'flex',  // 추가
+                                            alignItems: 'center',  // 추가
+                                            gap: '4px'  // 추가
                                         }}>
                                             {msg.nickname}
+                                            {msg.email && <UserProfile email={msg.email} />}
                                         </span>
                                     )}
                                     <div style={{
