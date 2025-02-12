@@ -13,6 +13,7 @@ interface ChatMessage {
     chatMessageContent: string;
     messageTimestamp: string;
     count?: number;
+    email?: string;
 }
 
 interface PageInfo {
@@ -350,7 +351,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                     params: {
                         keyword,
                         nickname,
-                        page
+                        // page
                     },
                     withCredentials: true
                 }
@@ -369,6 +370,9 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                 setCurrentSearchNickname(nickname);
                 setSearchPage(page + 1);
             }
+            setTimeout(()=>{
+                scrollToBottom(true);
+            },100);
         } catch (error) {
             console.error('채팅 내용 검색 실패:', error);
         }
@@ -751,7 +755,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                                             marginBottom: '4px',
                                             marginLeft: '8px'
                                         }}>
-                                            {msg.nickname}
+                                            {msg.nickname}&nbsp;{msg.email}
                                         </span>
                                     )}
                                     <div style={{
