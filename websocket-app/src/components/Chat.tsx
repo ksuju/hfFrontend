@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Client } from '@stomp/stompjs';
 import axios from 'axios';
 import send from "../assets/images/send.png"
@@ -75,6 +75,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
     const [currentUserNickname, setCurrentUserNickname] = useState<string>('');
     const [memberStatusList, setMemberStatusList] = useState<MemberStatus[]>([]);
     const { chatRoomId } = useParams();
+    const navigate = useNavigate();
     const [searchKeyword, setSearchKeyword] = useState<string>('');
     const [searchPage, setSearchPage] = useState(0);
     const [isSearchMode, setIsSearchMode] = useState(false);
@@ -110,7 +111,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                     prevMessages.filter(msg => msg.chatMessageContent !== fileUrl)
                 );
             }
-        } catch (error) {
+        } catch (error: any) {
             if (error && 'response' in error && error.response?.data?.msg) {
                 alert(error.response.data.msg);
             } else {
@@ -159,8 +160,12 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                     messageToSend,
                     { withCredentials: true }
                 );
+
+                setTimeout(() => {    // 맨 아래로 스크롤
+                    scrollToBottom(true);
+                }, 100)
             }
-        } catch (error) {
+        } catch (error: any) {
             if (error && 'response' in error && error.response?.data?.msg) {
                 setTimeout(() => {
                     alert(error.response.data.msg);
@@ -285,16 +290,20 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
     const updateMemberLoginStatus = async () => {
         try {
             const response = await axios.get<MemberStatusResponse>(
-                import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/chatRooms/${chatRoomId}/members`,
+                request_URL + `/api/v1/chatRooms/${chatRoomId}/members`,
                 { withCredentials: true }
             );
             setMemberStatusList(response.data.data); // data 필드에서 멤버 상태 배열 추출
         } catch (error) {
+            setTimeout(() => {
+                alert("해당 채팅방의 멤버만 입장이 가능합니다.");
+            }, 100)
             console.error('유저 로그인 상태 조회 실패:', error);
+            await navigate('/chatroom');  // 채팅방 멤버가 아닐 경우, 모임 리스트 게시판으로 이동
         }
     }
 
-    // 채팅방 멤버의 로그인 상태 로그아웃으로 변경하기
+    // 채팅방 멤버의 로그인 상태 오프라인으로 변경하기
     const updateLogout = async () => {
         try {
             await axios.patch(
@@ -307,7 +316,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
         };
     }
 
-    // 채팅방 멤버의 로그인 상태 로그인으로 변경하기
+    // 채팅방 멤버의 로그인 상태 온라인으로 변경하기
     const updateLogin = async () => {
         try {
             await axios.patch(
@@ -334,8 +343,9 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
     // 채팅 내용 검색
     const messageSearch = async (keyword: string, nickname: string, page: number = 0) => {
         try {
+            // eks 붙이면 엘라스틱, 안붙이면 쿼리dsl
             const response = await axios.get<ChatResponse>(
-                `${request_URL}/api/v1/chatRooms/${chatRoomId}/messages/search`,
+                `${request_URL}/api/v1/chatRooms/${chatRoomId}/messages/search/eks`,
                 {
                     params: {
                         keyword,
@@ -386,7 +396,6 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
             onConnect: () => {
                 console.log('STOMP 연결 성공');
                 updateLogin();
-                // updateMemberLoginStatus();
                 fetchPreviousMessages(0);
                 setTimeout(() => {
                     fetchMessageCount();
@@ -427,7 +436,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                                     if (!isScrolledNearBottom) {
                                         setShowScrollButton(true);
                                     } else {
-                                        scrollToBottom();
+                                        setTimeout(() => scrollToBottom(true), 50);
                                     }
                                 }
 
@@ -498,7 +507,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                 destination: `/app/chat/${chatRoomId}`,
                 body: JSON.stringify(messageToSend),
             });
-            // console.log(import.meta.env.VITE_CORE_API_BASE_URL)
+
             await axios.post(
                 request_URL + `/api/v1/chatRooms/${chatRoomId}/messages`,
                 messageToSend,
@@ -507,7 +516,14 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
 
             setMessageInput('');
             scrollToBottom(true);
-        } catch (error) {
+        } catch (error: any) {
+            if (error.response?.status === 403) {        // 403코드는 error로 잡혀서 조건문 실행 안됨
+                setTimeout(() => {
+                    alert("해당 채팅방의 멤버만 채팅이 가능합니다.");
+                }, 100)
+                await navigate('/chatroom');  // 채팅방 멤버가 아닐 경우, 모임 리스트 게시판으로 이동
+            }
+
             console.error('메시지 전송 실패:', error);
         }
     };
@@ -538,6 +554,7 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
     // 페이지 이동/브라우저 종료 시
     useEffect(() => {
         const handleBeforeUnload = () => {
+            // WebSocket 연결 종료
             if (stompClientRef.current) {
                 stompClientRef.current.deactivate();
                 stompClientRef.current = null;
@@ -569,7 +586,6 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
     // 채팅 검색 컴포넌트
     const ChatSearch = ({ onSearch }: { onSearch: (keyword: string, nickname: string) => void }) => {
         const [keyword, setKeyword] = useState("");
-        const [nickname, setNickname] = useState("");
 
         // 검색 처리 함수 수정
         const handleSubmit = (e: React.FormEvent) => {
@@ -606,7 +622,6 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
             setCurrentSearchNickname('');
             setSearchKeyword('');
             setKeyword("");
-            setNickname("");
 
             try {
                 // 메시지 목록 초기화

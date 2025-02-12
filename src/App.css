@@ -1,21 +1,21 @@
 #root {
-  max-width: 680px;
+  width: 600px;
   margin: 0 auto;
   text-align: center;
   margin-top: -10px;
   margin-bottom: -10px;
+  background-color: white;
 }
 
 
 /*App.tsx의 컴포넌트 크기를 동일하게 설정정*/
 .commonLayoutContainer {
-  width: 100%;
-  min-width: 650px;
-  max-width: var(--max-width);
+  width: 600px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  min-height: 150vh; /* 전체 뷰포트 높이를 차지 */
+  min-height: 150vh;
+  /* 전체 뷰포트 높이를 차지 */
   padding-top: var(--layout-padding-top);
   padding-bottom: 0;
   padding-bottom: calc(env(safe-area-inset-bottom) + 0px);
@@ -24,19 +24,14 @@
 }
 
 .route-content {
-  flex: 1; 
+  flex: 1;
   display: flex;
 }
 
-
-
 .content {
-  flex: 1; 
-  overflow-y: auto; 
+  flex: 1;
+  overflow-y: auto;
 }
-
-
-
 
 .logo {
   height: 6em;
@@ -44,9 +39,11 @@
   will-change: filter;
   transition: filter 300ms;
 }
+
 .logo:hover {
   filter: drop-shadow(0 0 2em #646cffaa);
 }
+
 .logo.react:hover {
   filter: drop-shadow(0 0 2em #61dafbaa);
 }
@@ -55,6 +52,7 @@
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
@@ -78,12 +76,13 @@
 
 /*header설정정*/
 header {
-  width: 100%;
+  width: 600px;
   padding: 10px 0;
   background-color: #333;
   color: #fff;
   top: 0;
-  left: 0;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 1000;
   margin-bottom: 3px;
   position: sticky;
@@ -179,17 +178,18 @@ header nav ul li a {
 
 /* Footer설정 */
 .footer {
-  width: 100%;
+  width: 600px;
   background-color: #333;
   color: #fff;
   padding: 20px 0;
   display: flex;
   justify-content: center;
   align-items: center;
-  position: sticky;  
-  bottom: 0;        
-  left: 0;          
-  z-index: 1000;    
+  position: sticky;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
 }
 
 ._gnb__menu_1h8bp_13 {
@@ -217,7 +217,8 @@ header nav ul li a {
 }
 
 ._gnb__menu_1h8bp_13 a:hover {
-  color: #ff6700; /* 원하는 hover 색상 */
+  color: #ff6700;
+  /* 원하는 hover 색상 */
 }
 
 
@@ -280,13 +281,3 @@ header nav ul li a {
   background-color: #f9f9f9;
   border-radius: 4px;
 }
-
-
-
-
-
-
-
-
-
-

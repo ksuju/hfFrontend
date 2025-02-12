@@ -51,6 +51,8 @@ const ProtectedAdminRoute = () => {
     return <Admin />;
 };
 
+
+
 const App = () => {
     const [isLoggedIn, setIsLoggedIn] = useState(localStorage.getItem('isLoggedIn') === 'true');
     const [isAlertOpen, setIsAlertOpen] = useState(false);
@@ -58,7 +60,7 @@ const App = () => {
         localStorage.getItem('userInfo') ? JSON.parse(localStorage.getItem('userInfo')!) : null
     );
 
-    const updateUserInfo = (newUserInfo: any) => {
+    const updateUserInfo = (newUserInfo: string) => {
         setUserInfo(newUserInfo);
         localStorage.setItem('userInfo', JSON.stringify(newUserInfo));
     };
@@ -123,6 +125,7 @@ const App = () => {
                         <Route path="/admin/*" element={<ProtectedAdminRoute />} />
                         <Route path="/admin/notice/write" element={<NoticeWrite />} />
                         <Route path="/admin/notice/edit/:id" element={<NoticeEdit />} />
+                        <Route path="/detailposts" element={<FestivalDetail />} />
                         <Route path="/*" element={
                             <div className="flex flex-col min-h-screen">
                                 <main className="flex-1 mt-16 mb-16">
@@ -148,7 +151,6 @@ const App = () => {
                                                 )} />
                                                 <Route path="/mypage" element={<MyPage updateUserInfo={updateUserInfo} />} />
                                                 <Route path="/map" element={<FestivalMap />} />
-                                                <Route path="/detailposts" element={<FestivalDetail />} />
                                             </Routes>
                                         </div>
                                     </div>
