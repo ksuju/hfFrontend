@@ -54,6 +54,7 @@ const Meeting = () => {
     const [isConfirmKickOpen, setIsConfirmKickOpen] = useState(false);
     const [kickTargetId, setKickTargetId] = useState<string | null>(null);
     const [kickChatRoomId, setKickChatRoomId] = useState<string | null>(null);
+    const [expandedId, setExpandedId] = useState<string | null>(null);
 
     const handleTogglePopup = (chatRoomId: string) => {
         setOpenPopupId(openPopupId === chatRoomId ? null : chatRoomId);
@@ -455,332 +456,154 @@ const Meeting = () => {
     };
 
     return (
-        <div className="max-w-[600px] mx-auto">
-            <SearchBar placeholder="모임을 검색해보세요" onChange={handleSearch} showSearchType={false}/>
-            <div className="p-4 my-20">
-                <div className="space-y-3">
-                    {meetingPosts.map((meeting) => {
-                        const isUserWaiting = isUserInWaitRoom(meeting.chatRoomId);
-                        const isUserJoined = isUserInJoinRoom(meeting.chatRoomId);
-                        const isRoomOwner = meeting.memberId === currentUser?.id;
+        <div className="max-w-[1280px] mx-auto">
+            <div className="px-4 py-8">
+                <div className="max-w-[600px] mx-auto">
+                    {/* 헤더 섹션 */}
+                    <div className="flex flex-col gap-6 mb-8">
+                        <h2 className="text-2xl font-bold text-gray-800 mt-16">모임</h2>
+                        <SearchBar 
+                            placeholder="모임을 검색해보세요" 
+                            onChange={handleSearch} 
+                            showSearchType={false}
+                        />
+                    </div>
 
-                        return (
-                            <div
-                                key={meeting.chatRoomId}
-                                className="bg-white rounded-lg shadow-md p-4 border border-gray-100 cursor-pointer"
-                                onClick={() => {
-                                    if (!isUserJoined) {
-                                        console.log("채팅방에 참여해야 이동할 수 있습니다.");
-                                        return; // 클릭 가능하지만 동작 안 함
-                                    }
-                                    handleChatRoomClick(meeting.chatRoomId, isUserJoined);
-                                }}
-                            >
-                                {/* 제목 + 버튼 */}
-                                <div className="flex justify-between items-start">
-                                    <h3 className="font-medium text-base flex-grow truncate max-w-[75%]">
-                                        {meeting.roomTitle}
-                                    </h3>
-                                    {/* 참여 상태 표시 */}
-                                    <div className="flex items-center space-x-3 relative">
-                                        {isUserJoined && (
-                                            <img
-                                                src={dots}
-                                                alt="사이드바"
-                                                className="h-8 mt-[-6px] mr-[-6px] cursor-pointer"
-                                                onClick={(e) => {
-                                                    e.stopPropagation(); // 채팅방 클릭 방지
-                                                    handleTogglePopup(meeting.chatRoomId);
-                                                }}
-                                            />
-                                        )}
-                                        {!isUserJoined && (
-                                            <button
-                                                className={`text-sm font-medium px-3 rounded-md ${
-                                                    isUserWaiting ? "text-gray-500 border-gray-400" : "text-primary border-primary"
-                                                }`}
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    if (currentUserID == "") {
-                                                        alert("로그인이 필요합니다.");
-                                                        return;
-                                                    }
-                                                    handleJoinClick(meeting.chatRoomId, isUserWaiting);
-                                                }}
-                                            >
-                                                {isUserWaiting ? "취소" : "참여하기"}
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-                                {/* 팝업 메뉴 */}
-                                {openPopupId === meeting.chatRoomId && (
-                                    <div
-                                        className="absolute right-12 bg-white shadow-md rounded-lg border border-gray-200 w-20 text-sm z-10"
-                                        onClick={(e) => e.stopPropagation()} // 채팅방 클릭 방지
-                                        onBlur={() => setOpenPopupId(null)}
-                                        tabIndex={0} // 포커스 유지
-                                    >
-                                        {isRoomOwner && (
-                                            <>
-                                                <button
-                                                    className="w-full text-left px-3 py-2 hover:bg-gray-100"
-                                                    onClick={() => handleManageMembers(meeting.chatRoomId)}
-                                                >
-                                                    인원 관리
-                                                </button>
-                                                <button
-                                                    className="w-full text-left px-3 py-2 hover:bg-gray-100"
-                                                    onClick={() => handleEditRoom(meeting.chatRoomId)}
-                                                >
-                                                    수정하기
-                                                </button>
-                                            </>
-                                        )}
-                                        <button
-                                            className="w-full text-left px-3 py-2 hover:bg-gray-100 text-primary"
-                                            onClick={() => handleLeaveRoom(meeting.chatRoomId)}
-                                        >
-                                            나가기
-                                        </button>
-                                    </div>
-                                )}
+                    {/* 모임 목록 */}
+                    <div className="space-y-6">
+                        {meetingPosts.map((meeting) => {
+                            const isUserWaiting = isUserInWaitRoom(meeting.chatRoomId);
+                            const isUserJoined = isUserInJoinRoom(meeting.chatRoomId);
+                            const isRoomOwner = meeting.memberId === currentUser?.id;
 
-                                {/* 인원관리 팝업창 */}
-                                {isManagePopupOpen && (
-                                    <div
-                                        className="fixed inset-0 bg-gray-500 bg-opacity-10 flex justify-center items-center z-20"
-                                        onClick={(e) => e.stopPropagation()} // 팝업 외부 클릭 방지
-                                    >
-                                        <div className="bg-white w-2/3 h-3/4 p-6 rounded-lg shadow-md flex flex-col">
-                                            <h3 className="text-lg font-semibold mb-4">인원 관리</h3>
-                                            {/* 메뉴바 */}
-                                            <div className="flex border-b">
-                                                {[
-                                                    { label: "참여자", count: sortedJoinMembers.length },
-                                                    { label: "대기자", count: selectedMeeting?.waitingMemberIdNickNameList?.length ?? 0 },
-                                                ].map(({ label, count }) => (
-                                                    <button
-                                                        key={label}
-                                                        className={`flex-1 p-2 text-center text-lg font-medium ${
-                                                            activeTab === label ? "border-b-2 border-primary text-primary" : "text-gray-500"
-                                                        }`}
-                                                        onClick={() => setActiveTab(label)}
-                                                    >
-                                                        {`${label} ${count}`}
-                                                    </button>
-                                                ))}
-                                            </div>
+                            return (
+                                <div
+                                    key={meeting.chatRoomId}
+                                    className={`bg-white rounded-2xl shadow-sm border hover:shadow-md transition-all duration-300 ${
+                                        isUserJoined ? 'border-primary/20 hover:border-primary' : 'border-gray-100'
+                                    }`}
+                                    onClick={(e) => {
+                                        if ((e.target as HTMLElement).closest('button')) return;
+                                        // 모든 모임에서 확장/축소 가능하도록 수정
+                                        setExpandedId(expandedId === meeting.chatRoomId ? null : meeting.chatRoomId);
+                                    }}
+                                >
+                                    <div className={`p-6 transition-all duration-300 ${
+                                        expandedId === meeting.chatRoomId ? 'min-h-[300px]' : ''
+                                    }`}>
+                                        {/* 상단 정보 */}
+                                        <div className="flex items-center justify-between mb-4">
+                                            <span className={`text-sm font-medium px-3 py-1.5 rounded-full ${
+                                                isUserJoined 
+                                                    ? 'bg-green-50 text-green-600'  // 참여중일 때 초록색
+                                                    : 'bg-primary/5 text-primary'   // 기본 상태
+                                            }`}>
+                                                {meeting.festivalName}
+                                            </span>
+                                            <span className="text-sm text-gray-400">
+                                                {new Date(meeting.createDate).toLocaleDateString()}
+                                            </span>
+                                        </div>
 
-                                            {/* 내용 */}
-                                            <div className="flex-grow overflow-y-auto p-4">
-                                                {activeTab === "참여자" ? (
-                                                    <ul>
-                                                        {sortedJoinMembers.map(([id, nickname], index) => (
-                                                            <li key={id} className="p-2 border-b flex items-center w-full">
-                                                                <span>{nickname}</span>
-                                                                {index === 0 && <span className="text-yellow-500 ml-1">👑</span>}
-                                                                {index !== 0 && (
-                                                                    <div className="ml-auto flex space-x-4">
-                                                                        <button
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                handleConfirmDelegate(selectedMeeting?.chatRoomId ?? '', id);
-                                                                            }}
-                                                                            className="text-primary"
-                                                                        >
-                                                                            위임
-                                                                        </button>
-                                                                        <button
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                handleConfirmKick(selectedMeeting?.chatRoomId ?? '', id);
-                                                                            }}
-                                                                            className="text-gray-500"
-                                                                        >
-                                                                            강퇴
-                                                                        </button>
-                                                                    </div>
-                                                                )}
-                                                            </li>
-                                                        ))}
-                                                    </ul>
-                                                ) : (
-                                                    <ul>
-                                                        {(selectedMeeting?.waitingMemberIdNickNameList?.length ?? 0) > 0 ? (
-                                                            selectedMeeting?.waitingMemberIdNickNameList.map(([id, nickname]) => (
-                                                                <li key={id} className="p-2 border-b flex items-center w-full">
-                                                                    <span>{nickname}</span>
-                                                                    <div className="ml-auto flex space-x-4">
-                                                                        <button
-                                                                            className="text-primary"
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                handleApprove(selectedMeeting?.chatRoomId ?? '', id); // 승인 버튼 클릭 시 승인 처리
-                                                                            }}
-                                                                        >
-                                                                            승인
-                                                                        </button>
-                                                                        <button
-                                                                            className="text-gray-500"
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                handleRefuse(selectedMeeting?.chatRoomId ?? '', id); // 거절 버튼 클릭 시 거절 처리
-                                                                            }}
-                                                                        >
-                                                                            거절
-                                                                        </button>
-                                                                    </div>
-                                                                </li>
-                                                            ))
-                                                        ) : (
-                                                            <p className="text-center text-gray-500">대기자가 없습니다.</p>
-                                                        )}
-                                                    </ul>
+                                        {/* 제목과 내용 */}
+                                        <div className={`mb-4 transition-all duration-300 ${
+                                            expandedId === meeting.chatRoomId ? 'min-h-[200px] overflow-y-auto' : ''
+                                        }`}>
+                                            <h3 className={`text-lg font-semibold text-gray-800 ${
+                                                expandedId === meeting.chatRoomId ? 'mb-4 break-words' : 'mb-0 truncate'
+                                            } hover:text-primary transition-colors`}>
+                                                {meeting.roomTitle}
+                                            </h3>
+                                            {expandedId === meeting.chatRoomId && (
+                                                <p className="text-gray-600 text-sm break-words whitespace-pre-wrap">
+                                                    {meeting.roomContent}
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        {/* 하단 정보와 버튼 */}
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-4">
+                                                <div className="flex items-center gap-3">
+                                                    {/* 참여 인원 아이콘과 숫자 */}
+                                                    <div className="flex items-center gap-1 text-gray-500">
+                                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                                                        </svg>
+                                                        <span className="text-sm font-medium">{meeting.joinMemberNum}/{meeting.roomMemberLimit}</span>
+                                                    </div>
+                                                    
+                                                    {/* 참여 인원 프로그레스 바 */}
+                                                    <div className="w-20 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                                        <div 
+                                                            className="h-full rounded-full transition-all duration-300 bg-primary" 
+                                                            style={{ 
+                                                                width: `${(meeting.joinMemberNum / meeting.roomMemberLimit) * 100}%` 
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                {/* 참여/대기 상태 뱃지 */}
+                                                {(isUserJoined || isUserWaiting) && (
+                                                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+                                                        isUserJoined 
+                                                            ? 'bg-green-50 text-green-600' 
+                                                            : 'bg-orange-50 text-orange-600'
+                                                    }`}>
+                                                        {isUserJoined ? '참여중' : '대기중'}
+                                                    </span>
                                                 )}
                                             </div>
 
-                                            {/* 닫기 버튼 */}
-                                            <div className="text-right mt-4">
-                                                <button className="px-4 py-2 text-primary rounded-lg" onClick={(e) => closeManagePopup(e)}>
-                                                    닫기</button>
+                                            <div className="flex items-center gap-3">
+                                                {isUserJoined ? (
+                                                    <>
+                                                        <button
+                                                            className="px-4 py-2 rounded-full text-sm font-medium bg-primary text-white hover:bg-primary/90 transition-all"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleChatRoomClick(meeting.chatRoomId, isUserJoined);
+                                                            }}
+                                                        >
+                                                            입장하기
+                                                        </button>
+                                                    </>
+                                                ) : (
+                                                    <button
+                                                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                                                            isUserWaiting 
+                                                                ? "text-gray-500 border border-gray-300 hover:bg-gray-50" 
+                                                                : "bg-primary text-white hover:bg-primary/90"
+                                                        }`}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            if (!currentUserID) {
+                                                                alert("로그인이 필요합니다.");
+                                                                return;
+                                                            }
+                                                            handleJoinClick(meeting.chatRoomId, isUserWaiting);
+                                                        }}
+                                                    >
+                                                        {isUserWaiting ? "대기 취소" : "참여 신청"}
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
-                                    </div>
-                                )}
-
-                                {/* 수정하기 팝업 */}
-                                {isEditPopupOpen && (
-                                    <div className="fixed inset-0 bg-gray-500 bg-opacity-10 flex justify-center items-center z-20"
-                                         onClick={(e) => e.stopPropagation()}>
-                                        <div className="bg-white w-2/3 h-4/7 p-6 rounded-lg shadow-md flex flex-col">
-                                            <h3 className="text-lg font-semibold mb-4">채팅방 수정</h3>
-
-                                            <label className="block mb-2">
-                                                제목
-                                                <input
-                                                    type="text"
-                                                    name="title"
-                                                    value={editRoomData.title}
-                                                    onChange={handleChange}
-                                                    maxLength={100}
-                                                    className="w-full border p-2 rounded mt-1"
-                                                />
-                                            </label>
-
-                                            <label className="block mb-2">
-                                                내용
-                                                <textarea
-                                                    name="content"
-                                                    value={editRoomData.content}
-                                                    onChange={handleChange}
-                                                    maxLength={500}
-                                                    className="w-full border p-2 rounded mt-1 h-32"
-                                                />
-                                            </label>
-
-                                            <label className="block mb-4">
-                                                인원 제한
-                                                <select
-                                                    name="limit"
-                                                    value={editRoomData.limit}
-                                                    onChange={handleChange}
-                                                    className="w-full border p-2 rounded mt-1 mb-2"
-                                                >
-                                                    {Array.from({ length: 10 }, (_, i) => (i + 1) * 10).map((num) => (
-                                                        <option key={num} value={num}>{num}명</option>
-                                                    ))}
-                                                </select>
-                                            </label>
-
-                                            <div className="flex justify-end space-x-4">
-                                                <button className="pl-4 py-2 text-primary" onClick={() => setIsEditPopupOpen(false)}>취소</button>
-                                                <button className="pl-4 py-2 text-primary" onClick={() => handleSaveEdit(selectedMeeting?.chatRoomId ?? '')}>
-                                                    저장
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* 내용 */}
-                                <p className="text-sm text-gray-500 mt-1 truncate max-w-full">{meeting.roomContent}</p>
-                                <div className="flex justify-between text-xs text-gray-400 mt-2">
-                                    {/* 생성 날짜 + 축제 이름 */}
-                                    <div className="flex items-center">
-                                        <p>{new Date(meeting.createDate).toISOString().slice(0, 10).replace(/-/g, ".")}</p>
-                                        <p className="ml-2 text-xs text-gray-500">{meeting.festivalName}</p>
-                                    </div>
-                                    {/* 참여 인원 */}
-                                    <div className="text-xs text-gray-500 whitespace-nowrap ml-auto">
-                                        {meeting.joinMemberNum}/{meeting.roomMemberLimit}명
                                     </div>
                                 </div>
-                            </div>
-                        );
-                    })}
+                            );
+                        })}
+                    </div>
+
+                    {/* 로딩 인디케이터 */}
+                    {isLoading && (
+                        <div className="flex justify-center items-center py-8">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                        </div>
+                    )}
                 </div>
-                {isLoading && <p className="text-center text-gray-500 mt-4">Loading...</p>}
             </div>
-
-            {/* 나가기 최종확인 팝업창 */}
-            {isConfirmLeaveOpen && (
-                <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center z-20">
-                    <div className="bg-white p-6 rounded-lg shadow-md w-80">
-                        <h3 className="text-lg font-semibold mb-8">정말 모임을 떠나시겠어요?</h3>
-                        <div className="flex justify-end space-x-10">
-                            <button
-                                className=" text-primary rounded-lg"
-                                onClick={cancelLeaveRoom}>
-                                취소
-                            </button>
-                            <button
-                                className="text-primary rounded-lg"
-                                onClick={() => confirmLeaveRoom(isConfirmLeaveOpen)}>
-                                나가기
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* 위임하기 최종확인 팝업창 */}
-            {isConfirmDelegateOpen && (
-                <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center z-20">
-                    <div className="bg-white p-6 rounded-lg shadow-md w-80">
-                        <h3 className="text-lg font-semibold mb-8">
-                            <span className="text-primary">{getNicknameById(selectedDelegateId)}</span>님에게 방장권한을 위임하시겠어요?
-                        </h3>
-                        <div className="flex justify-end space-x-10">
-                            <button className="text-primary rounded-lg" onClick={cancelDelegate}>
-                                취소
-                            </button>
-                            <button className="text-gray-500 rounded-lg" onClick={confirmDelegate}>
-                                위임하기
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* 강퇴하기 최종확인 팝업창 */}
-            {isConfirmKickOpen && (
-                <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center z-20">
-                    <div className="bg-white p-6 rounded-lg shadow-md w-80">
-                        <h3 className="text-lg font-semibold mb-8">
-                            <span className="text-primary">{getNicknameById(kickTargetId)}</span>님을 강퇴하시겠어요?
-                        </h3>
-                        <div className="flex justify-end space-x-10">
-                            <button className="text-primary rounded-lg" onClick={cancelKick}>
-                                취소
-                            </button>
-                            <button className="text-gray-500 rounded-lg" onClick={confirmKick}>
-                                강퇴하기
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

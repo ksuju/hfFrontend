@@ -1,19 +1,16 @@
 import { useState, useEffect } from 'react';
 
 interface ChatRoom {
-    chatRoomId: number;
-    memberId: number;
-    memberNickName: string;
+    memberId: string;
+    chatRoomId: string;
     roomTitle: string;
     roomContent: string;
-    roomMemberLimit: number;
-    joinMemberNum: number;
-    waitMemberNum: number;
-    festivalId: string;
-    festivalTitle: string;
+    festivalName: string;  // 축제 이름 필드 추가
+    roomMemberLimit: string;
+    joinMemberNum: string;
+    createDate: string;
     joinMemberIdNickNameList: string[][];
     waitingMemberIdNickNameList: string[][];
-    createDate: string;
 }
 
 const ChatRoomManagement = () => {
@@ -23,20 +20,12 @@ const ChatRoomManagement = () => {
     const fetchChatRooms = async () => {
         try {
             const response = await fetch(
-                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/posts/chat-rooms?page=0&size=100`,
-                { 
-                    credentials: 'include',
-                    headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-                        'Content-Type': 'application/json'
-                    }
-                }
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/posts/chat-rooms`,
+                { credentials: 'include' }
             );
             if (response.ok) {
                 const data = await response.json();
-                console.log('채팅방 데이터:', data);
-                console.log('첫 번째 채팅방:', data.content?.[0]);
-                setChatRooms(data.content || []);
+                setChatRooms(data.content);
             }
         } catch (error) {
             console.error('채팅방 목록 조회 실패:', error);
@@ -118,16 +107,16 @@ const ChatRoomManagement = () => {
                             <td className="p-4 truncate max-w-[150px]" title={room.roomTitle}>
                                 {room.roomTitle}
                             </td>
-                            <td className="p-4 truncate max-w-[150px]" title={room.festivalTitle}>
-                                {room.festivalTitle}
+                            <td className="p-4 truncate max-w-[150px]" title={room.festivalName}>
+                                {room.festivalName}
                             </td>
-                            <td className="p-4">{room.memberNickName}</td>
+                            <td className="p-4">{room.memberId}</td>
                             <td className="p-4">{room.joinMemberNum}/{room.roomMemberLimit}</td>
-                            <td className="p-4">{room.waitMemberNum}명</td>
+                            <td className="p-4">{room.waitingMemberIdNickNameList.length}명</td>
                             <td className="p-4">{new Date(room.createDate).toLocaleDateString()}</td>
                             <td className="p-4">
                                 <button
-                                    onClick={() => handleDelete(room.chatRoomId.toString())}
+                                    onClick={() => handleDelete(room.chatRoomId)}
                                     className="text-red-500 hover:text-red-700"
                                 >
                                     삭제
