@@ -1,75 +1,108 @@
 import { useState, useEffect } from 'react';
 
 interface ChatRoom {
-    chatRoomId: number;
-    memberId: number;
-    memberNickName: string;
+    memberId: string;
+    chatRoomId: string;
     roomTitle: string;
     roomContent: string;
-    roomMemberLimit: number;
-    joinMemberNum: number;
-    waitMemberNum: number;
-    festivalId: string;
-    festivalTitle: string;
+    festivalName: string;  // 축제 이름 필드 추가
+    roomMemberLimit: string;
+    joinMemberNum: string;
+    createDate: string;
     joinMemberIdNickNameList: string[][];
     waitingMemberIdNickNameList: string[][];
-    createDate: string;
 }
 
 const ChatRoomManagement = () => {
     const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [memberNicknames, setMemberNicknames] = useState<{ [key: string]: string }>({});
 
-    const fetchChatRooms = async () => {
+    // 멤버 ID로 닉네임 조회하는 함수
+    const fetchMemberNickname = async (memberId: string) => {
         try {
             const response = await fetch(
-                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/posts/chat-rooms?page=0&size=100`,
-                { 
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/members/${memberId}`,
+                {
                     credentials: 'include',
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-                        'Content-Type': 'application/json'
                     }
                 }
             );
             if (response.ok) {
                 const data = await response.json();
-                console.log('채팅방 데이터:', data);
-                console.log('첫 번째 채팅방:', data.content?.[0]);
-                setChatRooms(data.content || []);
+                return data.nickname;
+            }
+        } catch (error) {
+            console.error('멤버 정보 조회 실패:', error);
+            return null;
+        }
+    };
+
+    // 모든 방장의 닉네임을 조회하는 함수
+    const fetchAllMemberNicknames = async (rooms: ChatRoom[]) => {
+        const nicknames: { [key: string]: string } = {};
+        for (const room of rooms) {
+            if (!nicknames[room.memberId]) {
+                const nickname = await fetchMemberNickname(room.memberId);
+                if (nickname) {
+                    nicknames[room.memberId] = nickname;
+                }
+            }
+        }
+        setMemberNicknames(nicknames);
+    };
+
+    const fetchChatRooms = async () => {
+        try {
+            const response = await fetch(
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/posts/chat-rooms`,
+                { credentials: 'include' }
+            );
+            if (response.ok) {
+                const data = await response.json();
+                setChatRooms(data.content);
+                // 채팅방 데이터를 가져온 후 방장들의 닉네임 조회
+                await fetchAllMemberNicknames(data.content);
             }
         } catch (error) {
             console.error('채팅방 목록 조회 실패:', error);
         }
     };
 
-    const handleDelete = async (chatRoomId: string) => {
-        if (!window.confirm('이 채팅방을 삭제하시겠습니까?')) return;
+    const handleDeleteChatRoom = async (chatRoomId: string) => {
+        if (!window.confirm('정말로 이 채팅방을 삭제하시겠습니까?')) return;
 
         try {
+            setIsLoading(true);
+            
+            // 채팅방 삭제 API 호출
             const response = await fetch(
-                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/posts/chat-rooms/${chatRoomId}`,
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/posts/delete-chat-room/${chatRoomId}`,
                 {
-                    method: 'DELETE',
+                    method: 'GET',  // DELETE에서 GET으로 변경
                     credentials: 'include',
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-                        'Content-Type': 'application/json'
                     }
                 }
             );
 
-            if (response.ok) {
-                alert('채팅방이 삭제되었습니다.');
-                fetchChatRooms();
-            } else {
-                const errorData = await response.json();
-                alert(errorData.msg || '채팅방 삭제에 실패했습니다.');
-                console.error('채팅방 삭제 실패:', errorData);
+            if (!response.ok) {
+                throw new Error('채팅방 삭제 실패');
             }
+
+            // 성공적으로 삭제되면 목록 새로고침
+            await fetchChatRooms();
+            alert('채팅방이 성공적으로 삭제되었습니다.');
+
         } catch (error) {
             console.error('채팅방 삭제 중 오류 발생:', error);
-            alert('채팅방 삭제 중 오류가 발생했습니다.');
+            alert('채팅방 삭제에 실패했습니다.');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -118,17 +151,20 @@ const ChatRoomManagement = () => {
                             <td className="p-4 truncate max-w-[150px]" title={room.roomTitle}>
                                 {room.roomTitle}
                             </td>
-                            <td className="p-4 truncate max-w-[150px]" title={room.festivalTitle}>
-                                {room.festivalTitle}
+                            <td className="p-4 truncate max-w-[150px]" title={room.festivalName}>
+                                {room.festivalName}
                             </td>
-                            <td className="p-4">{room.memberNickName}</td>
+                            <td className="p-4">
+                                {memberNicknames[room.memberId] || room.memberId}
+                            </td>
                             <td className="p-4">{room.joinMemberNum}/{room.roomMemberLimit}</td>
-                            <td className="p-4">{room.waitMemberNum}명</td>
+                            <td className="p-4">{room.waitingMemberIdNickNameList.length}명</td>
                             <td className="p-4">{new Date(room.createDate).toLocaleDateString()}</td>
                             <td className="p-4">
                                 <button
-                                    onClick={() => handleDelete(room.chatRoomId.toString())}
-                                    className="text-red-500 hover:text-red-700"
+                                    onClick={() => handleDeleteChatRoom(room.chatRoomId)}
+                                    disabled={isLoading}
+                                    className="text-red-500 hover:text-red-700 disabled:opacity-50"
                                 >
                                     삭제
                                 </button>
