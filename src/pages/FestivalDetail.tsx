@@ -696,7 +696,7 @@ export default function FestivalDetail() {
     if (!post) return <div className="text-center text-gray-500 mt-10">게시글이 존재하지 않습니다.</div>;
 
     return (
-        <div className="w-full pt-20 p-4">
+        <div className="flex flex-col min-h-screen w-[550px] lg:max-w-screen-lg mx-auto pt-20 p-4 bg-white lg:rounded-2xl lg:shadow-md">
             {/* 뒤로 가기 버튼 */}
             <button onClick={() => navigate(-1)} className="mb-4 text-gray-500 hover:text-primary text-base flex items-center">
                 <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
