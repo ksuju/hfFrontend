@@ -44,7 +44,7 @@ const ProfileSection = ({ userInfo, editForm, setEditForm, onImageUpload, onUpda
                     />
                 </div>
                 <div className="flex-1 space-y-4">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between bg-primary/5 p-3 rounded-lg">
                         <span className="font-bold text-gray-700">닉네임</span>
                         {isNicknameEditing ? (
                             <div className="flex items-center gap-2">
@@ -72,7 +72,7 @@ const ProfileSection = ({ userInfo, editForm, setEditForm, onImageUpload, onUpda
                             </div>
                         ) : (
                             <div className="flex items-center gap-2">
-                                <span className="text-lg font-bold text-primary">
+                                <span className="text-sm text-primary">
                                     {userInfo.nickname || '닉네임 없음'}
                                 </span>
                                 <button
@@ -84,7 +84,7 @@ const ProfileSection = ({ userInfo, editForm, setEditForm, onImageUpload, onUpda
                             </div>
                         )}
                     </div>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between bg-primary/5 p-3 rounded-lg">
                         <span className="font-bold text-gray-700">계정</span>
                         <div className="flex items-center gap-2">
                             <span className="text-gray-600">
@@ -92,7 +92,7 @@ const ProfileSection = ({ userInfo, editForm, setEditForm, onImageUpload, onUpda
                             </span>
                         </div>
                     </div>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between bg-primary/5 p-3 rounded-lg">
                         <span className="font-bold text-gray-700">가입일</span>
                         <span className="text-gray-600">{formatDate(userInfo.createDate)}</span>
                     </div>

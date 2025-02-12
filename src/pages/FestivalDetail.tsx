@@ -1,47 +1,33 @@
-import 'swiper/css';
-import 'swiper/css/pagination';
-import SearchBar from '../components/SearchBar';
-import { useEffect, useState } from 'react';
-import { useNavigate } from "react-router-dom";
-import dots from "../assets/images/three-dots.png";
-import MainBanner from '../components/MainBanner';
-import SubBanner from '../components/SubBanner.tsx';
-import axios from "axios";
+import {useEffect, useState} from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import send from "../assets/images/send.png"
+import dots from '../assets/images/three-dots.png';
 
-// 게시글 데이터 타입 정의
-interface Festival {
+interface FestivalDetail {
     festivalId: string;
     festivalName: string;
     festivalStartDate: string;
     festivalEndDate: string;
-    festivalUrl: string;
     festivalArea: string;
+    festivalHallName: string;
+    festivalUrl: string;
+    genrenm: string;
 }
 
-// API 응답 전체 구조
-interface FestivalApiResponse {
-    content: Festival[];
-    page: {
-        totalPages: number;
-        number: number; // 현재 페이지 (0부터 시작)
-    };
+interface Member {
+    id: string;
+    joinRoomIdList: string[];
+    waitRoomIdList: string[];
 }
 
-// 사용할 장르 목록
-// const genres = [
-//     "축제",
-//     "뮤지컬",
-//     "연극",
-//     "서커스/마술",
-//     "대중음악",
-//     "한국음악(국악)",
-//     "서양음악(클래식)"
-// ];
-
-const eventList = [
-    "곧 종료될 축제 / 공연",
-    "곧 시작될 축제 / 공연"
-];
+interface Comment {
+    commentId: number;
+    memberId: number;
+    memberNickname: string;
+    content: string;
+    createTime: string;
+    superCommentId: number | null;
+}
 
 interface MeetingPost {
     memberId: string;
@@ -56,33 +42,38 @@ interface MeetingPost {
     waitingMemberIdNickNameList: string[][];
 }
 
-interface Member {
-    id: string;
-    joinRoomIdList: string[];
-    waitRoomIdList: string[];
-}
-
 // API 응답 전체 구조
 interface MeetingApiResponse {
     content: MeetingPost[];
+    page: {
+        totalPages: number;
+        number: number; // 현재 페이지 (0부터 시작)
+    };
 }
 
-const Main = () => {
-    const [mainPosts, setMainPosts] = useState<Festival[]>([]);
-    // const [genrePosts, setGenrePosts] = useState<Festival[][]>([]);
-    const [eventBannerData, setEventBannerData] = useState<Festival[][]>([]);
-    const [isLoading, setIsLoading] = useState(true); // 로딩 상태 추가
-    const navigate = useNavigate(); // 👈 페이지 이동 함수
-    const [searchPosts, setSearchPosts] = useState<Festival[]>([]);
-    const [meetingPosts, setMeetingPosts] = useState<MeetingPost[]>([]);
-    const [searchKeyword, setSearchKeyword] = useState("");
+export default function FestivalDetail() {
+    const [searchParams] = useSearchParams();
+    const selectedId = searchParams.get("id") || "";
+    const navigate = useNavigate();
     const [currentUser, setCurrentUser] = useState<Member | null>(null);
-    const [isSearching, setIsSearching] = useState(false);
+    const [post, setPost] = useState<FestivalDetail | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [comments, setComments] = useState<Comment[]>([]);
+    const [showAll, setShowAll] = useState(false);
+    const [newComment, setNewComment] = useState("");
+    const [expandedComments, setExpandedComments] = useState<{ [key: number]: boolean }>({});
+    const [replyingTo, setReplyingTo] = useState<number | null>(null);
+    const [selectedComment, setSelectedComment] = useState<number | null>(null);
+    const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
+    const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
+    const [commentToDelete, setCommentToDelete] = useState<number | null>(null);
+    const [meetingPosts, setMeetingPosts] = useState<MeetingPost[]>([]);
     const [openPopupId, setOpenPopupId] = useState<string | null>(null);
     const [isConfirmLeaveOpen, setIsConfirmLeaveOpen] = useState<string | null>(null);
     const [isManagePopupOpen, setIsManagePopupOpen] = useState(false);
     const [isEditPopupOpen, setIsEditPopupOpen] = useState(false);
-    const [editRoomData, setEditRoomData] = useState({ title: "", content: "", limit: 10, });
+    const [editRoomData, setEditRoomData] = useState({title: "", content: "", limit: 10,});
     const [activeTab, setActiveTab] = useState("참여자");
     const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
     const selectedMeeting = meetingPosts.find(meeting => meeting.chatRoomId === selectedRoomId);
@@ -93,151 +84,14 @@ const Main = () => {
     const [isConfirmKickOpen, setIsConfirmKickOpen] = useState(false);
     const [kickTargetId, setKickTargetId] = useState<string | null>(null);
     const [kickChatRoomId, setKickChatRoomId] = useState<string | null>(null);
-
-    const userInfo: string | null = localStorage.getItem("userInfo")
-    const userLocation = userInfo
-        ? JSON.parse(userInfo)?.data?.location?.split(" ")[0] ?? "서울"
-        : "서울";
+    const [currentPage, setCurrentPage] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
+    const [isCreatePopupOpen, setIsCreatePopupOpen] = useState(false);
+    const [newRoomData, setNewRoomData] = useState({title: "", content: "", limit: 10,});
 
     const handleTogglePopup = (chatRoomId: string) => {
         setOpenPopupId(openPopupId === chatRoomId ? null : chatRoomId);
     };
-
-    const handleSearch = async (keyword: string) => {
-        setSearchKeyword(keyword);
-        // 검색 결과가 존재하면 isSearching 상태를 true로 설정
-        setIsSearching(keyword.length > 0);
-    };
-
-    // 메인 배너 게시글 가져오기 (서울 기준)
-    // const fetchMainPosts = async () => {
-    //     try {
-    //         const url = import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/posts/view?area=서울&count=5`
-    //
-    //         const response = await fetch(url);
-    //         if (!response.ok) {
-    //             throw new Error(`HTTP error! Status: ${response.status}`);
-    //         }
-    //         const data: Festival[] = await response.json();
-    //         console.log('Fetched main posts:', data);
-    //         setMainPosts(data.slice(0, 5)); // 최대 5개 저장
-    //     } catch (error) {
-    //         console.error('Error fetching main festival data:', error);
-    //     }
-    // };
-    const fetchMainPosts = async () => {
-        try {
-            let url: string = "";
-
-            url = `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/posts/search/main1?area=${userLocation}`;
-
-            const main1Response = await axios.get<Festival[]>(url);
-            setMainPosts(main1Response.data);
-        } catch (error) {
-            console.error('Error fetching main festival data:', error);
-        }
-    };
-
-    // 장르별 게시글 가져오기
-    // const fetchGenrePosts = async () => {
-    //     const newGenrePosts: Festival[][] = [];
-    //     await Promise.all(
-    //         genres.map(async (genre, index) => {
-    //             try {
-    //                 const url = import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/posts/select?genre=${encodeURIComponent(genre)}&page=0&size=10`
-    //
-    //                 const response = await fetch(url);
-    //                 if (!response.ok) {
-    //                     throw new Error(`HTTP error! Status: ${response.status}`);
-    //                 }
-    //                 const data = await response.json();
-    //                 console.log(`Fetched posts for ${genre}:`, data);
-    //
-    //                 newGenrePosts[index] = data.content.slice(0, 10); // 최대 10개 저장
-    //             } catch (error) {
-    //                 console.error(`Error fetching ${genre} data:`, error);
-    //                 newGenrePosts[index] = []; // 에러 발생 시 빈 배열 설정
-    //             }
-    //         })
-    //     );
-    //     setGenrePosts(newGenrePosts);
-    //     setIsLoading(false); // 데이터 로딩 완료 후 로딩 상태 변경
-    // };
-
-    // 이벤트 별 게시글 가져오기
-    const fetchEventPosts = async () => {
-        const getEventData: Festival[][] = [];
-        try {
-            const [main2Response, main3Response] = await Promise.all([
-                axios.get<Festival[]>(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/posts/search/main2`),
-                axios.get<Festival[]>(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/posts/search/main3`)
-            ]);
-
-            getEventData[0] = main2Response.data;
-            getEventData[1] = main3Response.data;
-
-            setEventBannerData(getEventData);
-        } catch (error) {
-            console.error("Error fetching event posts:", error);
-            // 에러 발생 시 빈 배열로 설정
-            setEventBannerData([[], [], []]);
-        } finally {
-            setIsLoading(false);
-        }// 데이터 로딩 완료 후 로딩 상태 변경
-    };
-
-    // 축제 데이터 가져오기 (페이지 스크롤링 기준 요청)
-    const fetchFestivalPosts = async (keyword = "") => {
-        setIsLoading(true);
-        try {
-            const url = import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/posts/search?keyword=${encodeURIComponent(keyword)}&page=0&size=9`
-
-            const response = await fetch(url);
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            const data: FestivalApiResponse = await response.json();
-            console.log("Fetched Festival Posts:", data); // 👈 여기에서 콘솔 확인
-
-            setSearchPosts(data.content);
-        } catch (error) {
-            console.error("Error fetching festival posts:", error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    // 모임 데이터 가져오기
-    const fetchMeetingPosts = async (keyword = "") => {
-        setIsLoading(true);
-        try {
-            const url = keyword
-                ? import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/posts/chat-rooms/search?keyword=${encodeURIComponent(keyword)}&page=$0&size=10`
-                : import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/posts/chat-rooms?page=0&size=10`;
-
-            const response = await fetch(url);
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            const data: MeetingApiResponse = await response.json();
-
-            setMeetingPosts(data.content);
-        } catch (error) {
-            console.error("Error fetching meeting posts:", error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    // 검색어 변경 시 자동 검색 (디바운스 적용)
-    useEffect(() => {
-        const delayDebounceFn = setTimeout(() => {
-            fetchFestivalPosts(searchKeyword);
-            fetchMeetingPosts(searchKeyword);
-        }, 100);
-
-        return () => clearTimeout(delayDebounceFn);
-    }, [searchKeyword]);
 
     // 현재 로그인한 유저 정보 업데이트
     const fetchUserInfo = async () => {
@@ -261,6 +115,206 @@ const Main = () => {
             console.error("사용자 정보 로드 실패:", error);
         }
     };
+
+    // Festival 상세 데이터 가져오는 함수
+    const fetchPost = async () => {
+        try {
+            setIsLoading(true); // 로딩 시작
+            const url = import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/posts/detail/${encodeURIComponent(selectedId)}`
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            const data: FestivalDetail = await response.json();
+            console.log('Fetched main posts:', data);
+            setPost(data);
+        } catch (err) {
+            console.error("Error fetching festival data:", err);
+            setError("데이터를 불러오는 데 실패했습니다.");
+        } finally {
+            setIsLoading(false); // 로딩 종료
+        }
+    };
+
+    // 댓글 데이터 가져오는 함수
+    const fetchComments = async () => {
+        try {
+            const url = import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/posts/comments/${encodeURIComponent(selectedId)}`;
+            const response = await fetch(url);
+            if (!response.ok) throw new Error("댓글 데이터를 불러오지 못했습니다.");
+            const data: Comment[] = await response.json();
+            setComments(data);
+        } catch (err) {
+            console.error("Error fetching comments:", err);
+        }
+    };
+
+    // 댓글생성 함수
+    const handleAddComment = async (superCommentId: number | null = null) => {
+        if (!newComment.trim()) return alert("댓글을 입력해주세요!");
+        try {
+            const url = import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/posts/comments/${encodeURIComponent(selectedId)}`;
+
+            const response = await fetch(url, {
+                method: "POST",
+                credentials: "include",
+                headers: {
+                    "Authorization": `Bearer ${localStorage.getItem("accessToken")}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    content: newComment, // 댓글 내용
+                    superCommentId, // 대댓글이면 부모 ID, 아니면 null
+                }),
+            });
+            if (!response.ok) throw new Error("댓글 등록 실패");
+            setNewComment(""); // 입력 필드 초기화
+            setReplyingTo(null); // 답글 상태 초기화
+            fetchComments(); // 댓글 목록 새로고침
+        } catch (err) {
+            console.error("Error posting comment:", err);
+            alert("댓글을 등록하는 데 실패했습니다.");
+        }
+    };
+
+    // 댓글생성 경과시간 표시 함수
+    const formatElapsedTime = (createTime: string | number | Date) => {
+        const createdAt = new Date(createTime).getTime();
+        const now = Date.now();
+        const diffMs = now - createdAt;
+        const diffMinutes = Math.floor(diffMs / (1000 * 60));
+        const diffHours = Math.floor(diffMinutes / 60);
+        const diffDays = Math.floor(diffHours / 24);
+        const diffWeeks = Math.floor(diffDays / 7);
+
+        if (diffMinutes < 60) {
+            return `${diffMinutes}분`;
+        } else if (diffHours < 24) {
+            return `${diffHours}시간`;
+        } else if (diffDays < 7) {
+            return `${diffDays}일`;
+        } else {
+            return `${diffWeeks}주`;
+        }
+    };
+
+    // 답글 토글 함수
+    const handleToggleReplies = (commentId: number) => {
+        setExpandedComments(prev => ({
+            ...prev,
+            [commentId]: !prev[commentId]
+        }));
+    };
+
+    // 댓글 수정/삭제 메뉴
+    const toggleOptions = (commentId: number) => {
+        setSelectedComment(selectedComment === commentId ? null : commentId);
+    };
+
+    // 댓글 수정 함수
+    const handleEditComment = async (commentId: number) => {
+        if (!newComment.trim()) return alert("댓글을 입력해주세요!");
+
+        try {
+            const url = import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/posts/update-comment/${commentId}`;
+
+            const response = await fetch(url, {
+                method: "POST",
+                credentials: "include",
+                headers: {
+                    "Authorization": `Bearer ${localStorage.getItem("accessToken")}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    content: newComment, // 수정된 댓글 내용
+                }),
+            });
+
+            if (!response.ok) throw new Error("댓글 수정 실패");
+
+            // ✅ 상태 초기화 후 UI 업데이트
+            setNewComment("");
+            setEditingCommentId(null);
+            fetchComments();
+        } catch (err) {
+            console.error("Error updating comment:", err);
+            alert("댓글을 수정하는 데 실패했습니다.");
+        }
+    };
+
+    // 댓글 삭제 함수
+    const handleConfirmDelete = async () => {
+        if (!commentToDelete) return;
+
+        try {
+            const url = import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/posts/delete-comment/${commentToDelete}`;
+
+            const response = await fetch(url, {
+                method: "GET",
+                credentials: "include",
+                headers: {
+                    "Authorization": `Bearer ${localStorage.getItem("accessToken")}`,
+                },
+            });
+
+            if (!response.ok) throw new Error("댓글 삭제 실패");
+
+            setSelectedComment(null);
+            fetchComments();
+        } catch (err) {
+            console.error("Error deleting comment:", err);
+            alert("댓글을 삭제하는 데 실패했습니다.");
+        } finally {
+            closeDeleteConfirm();
+        }
+    };
+
+    // 최종 삭제하기 폼 띄우기
+    const openDeleteConfirm = (commentId: number) => {
+        setCommentToDelete(commentId);
+        setIsConfirmDeleteOpen(true);
+    };
+
+    // 최종 삭제하기 폼 닫기
+    const closeDeleteConfirm = () => {
+        setIsConfirmDeleteOpen(false);
+        setCommentToDelete(null);
+    };
+
+    // 모임 데이터 가져오기 (무한 스크롤)
+    const fetchMeetingPosts = async (pageNumber: number) => {
+        if (isLoading) return;
+
+        setIsLoading(true);
+        try {
+            const url = `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/posts/chat-rooms/${encodeURIComponent(selectedId)}?page=${pageNumber}&size=10`;
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+
+            const data: MeetingApiResponse = await response.json();
+            console.log("📊 API 응답 데이터:", data);
+
+            setMeetingPosts(data.content); // 새로운 페이지의 데이터로 업데이트
+            setTotalPages(data.page.totalPages);
+            setCurrentPage(data.page.number);
+        } catch (error) {
+            console.error("❌ fetchMeetingPosts 오류 발생:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // 페이지 변경 이벤트 핸들러
+    const handlePageChange = (pageNumber: number) => {
+        if (pageNumber !== currentPage) {
+            fetchMeetingPosts(pageNumber);
+        }
+    };
+
+    // 컴포넌트 마운트 시 첫 페이지 데이터 불러오기
+    useEffect(() => {
+        fetchMeetingPosts(0);
+    }, []);
 
     // 참여하기/취소 버튼 로직 구현
     const handleJoinClick = async (chatRoomId: string, isUserWaiting: boolean | undefined) => {
@@ -305,13 +359,6 @@ const Main = () => {
         }
     };
 
-    useEffect(() => {
-        fetchMainPosts();
-        // fetchGenrePosts();
-        fetchEventPosts();
-        fetchUserInfo();
-    }, []);
-
     // 인원관리 버튼 메서드
     const handleManageMembers = (chatRoomId: string) => {
         setSelectedRoomId(chatRoomId);
@@ -341,7 +388,7 @@ const Main = () => {
     };
 
     // 수정 폼 입력값 변경 핸들러
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const edithandleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setEditRoomData((prev) => ({
             ...prev,
@@ -380,7 +427,7 @@ const Main = () => {
             console.log("채팅방 수정 성공");
             setIsEditPopupOpen(false);
             // 수정하기 후 최신 데이터 다시 불러오기
-            await fetchMeetingPosts();
+            await fetchMeetingPosts(0);
         } catch (error) {
             console.error("에러 발생:", error);
         }
@@ -410,7 +457,7 @@ const Main = () => {
                 setIsConfirmLeaveOpen(null); // Close the confirmation popup
                 // 나가기 후 최신 데이터 다시 불러오기
                 await fetchUserInfo();
-                await fetchMeetingPosts();
+                await fetchMeetingPosts(0);
             } else {
                 console.error('Error leaving chat room');
             }
@@ -478,7 +525,7 @@ const Main = () => {
             if (response.ok) {
                 setIsManagePopupOpen(false);
                 // 위임 후 최신 데이터 다시 불러오기
-                await fetchMeetingPosts();
+                await fetchMeetingPosts(0);
             } else {
                 alert("위임에 실패했습니다.");
             }
@@ -518,7 +565,7 @@ const Main = () => {
             );
             if (response.ok) {
                 // 강퇴 후 최신 데이터 다시 불러오기
-                await fetchMeetingPosts();
+                await fetchMeetingPosts(0);
             } else {
                 alert("강퇴에 실패했습니다.");
             }
@@ -552,7 +599,7 @@ const Main = () => {
             );
             if (response.ok) {
                 // 승인 후 최신 데이터 다시 불러오기
-                await fetchMeetingPosts();
+                await fetchMeetingPosts(0);
             } else {
                 alert("승인에 실패했습니다.");
             }
@@ -578,7 +625,7 @@ const Main = () => {
             );
             if (response.ok) {
                 // 거절 후 최신 데이터 다시 불러오기
-                await fetchMeetingPosts();
+                await fetchMeetingPosts(0);
             } else {
                 alert("거절에 실패했습니다.");
             }
@@ -587,92 +634,327 @@ const Main = () => {
         }
     };
 
+    // 모임 생성하기 메서드
+    const handleCreateMeeting = async () => {
+        const requestBody = {
+            roomTitle: newRoomData.title,
+            roomContent: newRoomData.content,
+            roomMemberLimit: Number(newRoomData.limit),
+        };
+
+        console.log("🔍 요청 데이터:", JSON.stringify(requestBody, null, 2));
+        console.log("📌 요청 URL:", `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/posts/chat-rooms/${encodeURIComponent(selectedId)}`);
+
+        try {
+            const response = await fetch(
+                `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/posts/chat-rooms/${encodeURIComponent(selectedId)}`,
+                {
+                    method: "POST",
+                    credentials: "include",
+                    headers: {
+                        "Authorization": `Bearer ${localStorage.getItem("accessToken")}`,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(requestBody),
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
+            console.log("✅ 모임 생성 성공");
+            setIsCreatePopupOpen(false); // 팝업 닫기
+            setNewRoomData({ title: "", content: "", limit: 10 }); // 폼 초기화
+            fetchUserInfo();
+            fetchMeetingPosts(0); // 리스트 갱신
+        } catch (error) {
+            console.error("❌ 모임 생성 실패:", error);
+            alert("모임 생성에 실패했습니다.");
+        }
+    };
+
+    // 생성 폼 입력값 변경 핸들러
+    const createhandleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setNewRoomData((prev) => ({
+            ...prev,
+            [name]: name === "limit" ? Number(value) : value,
+        }));
+    };
+
+    useEffect(() => {
+        if (selectedId) {
+            fetchPost();
+            fetchComments();
+            fetchUserInfo();
+        }
+    }, [selectedId]);
+
+    if (isLoading) return <div className="text-center text-gray-500 mt-10">Loading...</div>;
+    if (error) return <div className="text-center text-red-500 mt-10">{error}</div>;
+    if (!post) return <div className="text-center text-gray-500 mt-10">게시글이 존재하지 않습니다.</div>;
+
     return (
-        <div className="flex flex-col">
-            {/* 검색창 */}
-            <SearchBar placeholder="축제, 공연, 모임을 검색해보세요" onChange={handleSearch} />
-            <div className="px-4 mb-6 mt-20">
-                {/* 로딩 중 표시 */}
-                {isLoading ? (
-                    <div className="text-center text-gray-500 mt-4">Loading...</div>
-                ) : (
-                    <>
-                        {/* 메인 배너 & 장르별 배너 (검색 중이 아닐 때만 표시) */}
-                        {!isSearching && (
-                            <>
-                                <h2 className="text-lg font-bold mb-4">
-                                    {userLocation}에서 가장 인기있는 축제/공연
-                                </h2>
-                                <MainBanner mainPosts={mainPosts} />
+        <div className="w-full pt-20 p-4">
+            {/* 뒤로 가기 버튼 */}
+            <button onClick={() => navigate(-1)} className="mb-4 text-gray-500 hover:text-primary text-base flex items-center">
+                <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                뒤로가기
+            </button>
 
-                                {eventList.map((eventTitle, index) => (
-                                    <SubBanner
-                                        key={eventTitle}
-                                        title={eventTitle}
-                                        posts={eventBannerData[index] || []}
-                                    />
-                                ))}
-                            </>
-                        )}
-                    </>
-                )}
-            </div>
+            {/* 상세 카드 섹션 */}
+            <div className="bg-white rounded-lg shadow-md overflow-hidden mb-7">
+                {/* 이미지 영역 */}
+                <div className="relative w-full h-[500px] bg-gray-100 flex justify-center items-center">
+                    <img
+                        src={post.festivalUrl || "https://via.placeholder.com/500"}
+                        alt={post.festivalName}
+                        className="w-full h-full object-cover"
+                    />
+                </div>
 
-            {/* 축제/공연 검색 섹션 */}
-            {isSearching && (
-                <>
-                    <div className="p-4 mb-6">
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-lg font-bold">축제/공연</h2>
-                            <button
-                                className="text-sm text-primary"
-                                onClick={() => navigate(`/posts`)}
-                            >
-                                더보기
-                            </button>
-                        </div>
-                        <div className="grid grid-cols-3 gap-3">
-                            {searchPosts.map((searchPost) => (
-                                <div key={searchPost.festivalId} className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col"
-                                    onClick={() => navigate(`/detailposts?id=${encodeURIComponent(searchPost.festivalId)}`)}
-                                >
-                                    {/* 이미지 영역 */}
-                                    <div className="relative pb-[90%]">
-                                        <img
-                                            src={searchPost.festivalUrl || "https://via.placeholder.com/150"}
-                                            alt={searchPost.festivalName}
-                                            className="absolute inset-0 w-full h-full object-cover bg-gray-200"
-                                        />
-                                    </div>
-                                    {/* 텍스트 영역 */}
-                                    <div className="p-2">
-                                        <h3 className="text-sm font-medium leading-tight line-clamp-2">{searchPost.festivalName}</h3>
-                                        <p className="text-xs text-gray-500 mt-1 mb-[-10px]">{searchPost.festivalArea}</p>
-                                    </div>
-                                    {/* 날짜 영역을 카드 하단에 고정 */}
-                                    <div className="p-2 text-xs text-gray-500 bg-white mt-auto">
-                                        <p>
-                                            {searchPost.festivalStartDate?.replace(/-/g, '.')} - {searchPost.festivalEndDate?.replace(/-/g, '.')}
-                                        </p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                        {isLoading && <p className="text-center text-gray-500 mt-4">Loading...</p>}
+                {/* 상세 정보 섹션 */}
+                <div className="p-6">
+                    <h1 className="text-2xl font-bold">{post.festivalName}</h1>
+                    <div className="flex items-center justify-between mt-2">
+                        <p className="text-gray-600">{post.festivalArea}</p>
+                        {post.genrenm !== "축제" && <p className="text-gray-700">{post.festivalHallName}</p>}
                     </div>
-                </>
-            )}
+
+                    <div className="flex items-center justify-between mt-2">
+                        {/* 날짜 */}
+                        <p className="text-sm text-gray-500">
+                            {post.festivalStartDate.replace(/-/g, ".")} - {post.festivalEndDate.replace(/-/g, ".")}
+                        </p>
+                    </div>
+                </div>
+
+                {/* 댓글 섹션 */}
+                <div className="border-t px-6 py-7">
+                    {comments.length > 0 ? (
+                        <>
+                            <div
+                                className="flex items-center space-x-2 mb-5"
+                                onClick={() => {
+                                    setShowAll(!showAll);
+                                    setExpandedComments({}); // ✅ 댓글 목록을 접을 때 답글도 모두 접기
+                                }}
+                            >
+                                <h2 className="text-base font-semibold">댓글</h2>
+                                <span className="text-gray-600 text-base">{comments.length}</span>
+                            </div>
+                            <div className="space-y-3 max-h-[400px] overflow-y-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                                {/* ✅ 최상위 댓글만 표시 */}
+                                {(showAll ? comments : comments.slice(0, 1))
+                                    .filter(comment => comment.superCommentId === null) // ✅ 최상위 댓글만 필터링
+                                    .map((comment) => {
+                                        const replies = comments.filter(c => c.superCommentId === comment.commentId);
+                                        const isAuthor = String(comment.memberId) === String(currentUser?.id);
+                                        return (
+                                            <div key={comment.commentId} className="rounded-lg mb-6">
+                                                <div className="flex items-center space-x-2 mb-1">
+                                                    <p className="text-xs font-semibold">{comment.memberNickname}</p>
+                                                    <p className="text-xs text-gray-500">{formatElapsedTime(comment.createTime)}</p>
+                                                </div>
+                                                <div className="flex justify-between items-center">
+                                                    <p className="text-sm text-gray-800">{comment.content}</p>
+
+                                                    {isAuthor && (
+                                                        <div className="relative">
+                                                            <button onClick={() => toggleOptions(comment.commentId)}>
+                                                                <img src={dots} alt="옵션" className="h-8 mt-[5px] mr-[-6px] cursor-pointer" />
+                                                            </button>
+                                                            {selectedComment === comment.commentId && (
+                                                                <div className="absolute right-5 bg-white shadow-md rounded-lg border border-gray-200 w-20 text-sm z-10">
+                                                                    <button
+                                                                        className="w-full text-left px-3 py-2 hover:bg-gray-100"
+                                                                        onClick={() => {
+                                                                            setEditingCommentId(comment.commentId);
+                                                                            setNewComment(comment.content); // 기존 댓글 내용 입력 필드에 채우기
+                                                                            setReplyingTo(null); // 답글 작성 상태 해제
+                                                                            setSelectedComment(null); // ✅ 메뉴 닫기
+                                                                        }}
+                                                                    >
+                                                                        수정하기
+                                                                    </button>
+                                                                    <button className="w-full text-left px-3 py-2 hover:bg-gray-100 text-primary"
+                                                                            onClick={() => {
+                                                                                openDeleteConfirm(comment.commentId);
+                                                                                setSelectedComment(null);
+                                                                            }}>
+                                                                        삭제하기
+                                                                    </button>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <div className="flex items-center space-x-4 text-xs text-gray-500 mt-1 mb-5">
+                                                    {replies.length > 0 && (
+                                                        <button onClick={() => handleToggleReplies(comment.commentId)}>
+                                                            {expandedComments[comment.commentId] ? "답글 숨기기" : `답글 ${replies.length}개`}
+                                                        </button>
+                                                    )}
+                                                    {replyingTo === comment.commentId ? (
+                                                        <button onClick={() => setReplyingTo(null)}>취소</button>
+                                                    ) : (
+                                                        <button onClick={() => setReplyingTo(comment.commentId)}>답글 달기</button>
+                                                    )}
+                                                </div>
+
+                                                {/* 답글 목록 (오직 해당 상위 댓글의 내부에서만 표시) */}
+                                                {expandedComments[comment.commentId] && replies.length > 0 && (
+                                                    <div className="ml-4 my-5 border-l pl-4 space-y-4">
+                                                        {replies.map(reply => {
+                                                            const isReplyAuthor = String(reply.memberId) === String(currentUser?.id);
+                                                            return (
+                                                                <div key={reply.commentId} className="mb-2">
+                                                                    <div className="flex items-center space-x-2 mb-2">
+                                                                        <p className="text-xs font-semibold">{reply.memberNickname}</p>
+                                                                        <p className="text-xs text-gray-500">{formatElapsedTime(reply.createTime)}</p>
+                                                                    </div>
+                                                                    <div className="flex justify-between items-center">
+                                                                        <p className="text-sm text-gray-700">{reply.content}</p>
+
+                                                                        {isReplyAuthor && (
+                                                                            <div className="relative">
+                                                                                <button onClick={() => toggleOptions(reply.commentId)}>
+                                                                                    <img src={dots} alt="옵션" className="h-8 mt-[5px] mr-[-6px] cursor-pointer" />
+                                                                                </button>
+                                                                                {selectedComment === reply.commentId && (
+                                                                                    <div className="absolute right-5 bg-white shadow-md rounded-lg border border-gray-200 w-20 text-sm z-10">
+                                                                                        <button
+                                                                                            className="w-full text-left px-3 py-2 hover:bg-gray-100"
+                                                                                            onClick={() => {
+                                                                                                setEditingCommentId(reply.commentId);
+                                                                                                setNewComment(reply.content); // 기존 댓글 내용 입력 필드에 채우기
+                                                                                                setReplyingTo(null); // 답글 작성 상태 해제
+                                                                                                setSelectedComment(null); // ✅ 메뉴 닫기
+                                                                                            }}
+                                                                                        >
+                                                                                            수정하기
+                                                                                        </button>
+                                                                                        <button className="w-full text-left px-3 py-2 hover:bg-gray-100 text-primary"
+                                                                                                onClick={() => {
+                                                                                                    openDeleteConfirm(reply.commentId);
+                                                                                                    setSelectedComment(null);
+                                                                                                }}>
+                                                                                            삭제하기
+                                                                                        </button>
+                                                                                    </div>
+                                                                                )}
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                            </div>
+                        </>
+                    ) : (
+                        <h2 className="text-lg font-semibold mb-4">댓글</h2>
+                    )}
+
+                    {/* ✅ 맨 아래 입력 필드에서 일반 댓글/답글 입력 */}
+                    <div className="flex items-center space-x-2 mt-1"
+                         onClick={(e) => {
+                             e.stopPropagation();
+                             if (currentUserID == "") {
+                                 alert("로그인이 필요합니다.");
+                                 return;
+                             }
+                         }}>
+                        <input
+                            type="text"
+                            placeholder={editingCommentId ? "댓글 수정 중..." : replyingTo ? "답글 추가..." : "댓글 추가..."}
+                            value={newComment}
+                            onChange={(e) => setNewComment(e.target.value)}
+                            maxLength={500}
+                            className="flex-1 px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                        />
+                        <button
+                            onClick={() => editingCommentId ? handleEditComment(editingCommentId) : handleAddComment(replyingTo)}
+                            style={{
+                                padding: '8px',
+                                backgroundColor: 'transparent',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
+                            }}
+                        >
+                            <img
+                                src={send}
+                                alt="전송"
+                                style={{
+                                    width: '24px',
+                                    height: '24px',
+                                    filter: newComment.trim()
+                                        ? 'invert(47%) sepia(82%) saturate(2604%) hue-rotate(337deg) brightness(97%) contrast(92%)'
+                                        : 'opacity(0.5)'
+                                }}
+                            />
+                        </button>
+                        {editingCommentId && (
+                            <button
+                                className="text-gray-500 text-sm"
+                                onClick={() => {
+                                    setEditingCommentId(null);
+                                    setNewComment("");
+                                }}
+                            >
+                                취소
+                            </button>
+                        )}
+                    </div>
+
+                    {/* 삭제하기 최종확인 팝업창 */}
+                    {isConfirmDeleteOpen && (
+                        <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center z-20">
+                            <div className="bg-white p-6 rounded-lg shadow-md w-80">
+                                <h3 className="text-lg font-semibold mb-8">정말 댓글을 삭제하시겠어요?</h3>
+                                <div className="flex justify-end space-x-10">
+                                    <button className="text-primary rounded-lg" onClick={closeDeleteConfirm}>
+                                        취소
+                                    </button>
+                                    <button className="text-primary rounded-lg" onClick={handleConfirmDelete}>
+                                        삭제하기
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </div>
 
             {/* 모임 채팅방 섹션 */}
             <div className="p-4 mb-6">
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-lg font-bold">모임</h2>
-                    <button
-                        className="text-sm text-primary"
-                        onClick={() => navigate(`/chatroom`)}
-                    >
-                        더보기
-                    </button>
+                    <div className="flex items-center space-x-7">
+                        <button
+                            className="text-sm text-primary" onClick={() => setIsCreatePopupOpen(true)}
+                        >
+                            + 추가하기
+                        </button>
+                        <button
+                            className="text-sm text-primary"
+                            onClick={() => navigate(`/chatroom`)}
+                        >
+                            더보기
+                        </button>
+                    </div>
                 </div>
                 <div className="space-y-3">
                     {meetingPosts.map((meeting) => {
@@ -683,7 +965,7 @@ const Main = () => {
                         return (
                             <div
                                 key={meeting.chatRoomId}
-                                className="bg-white rounded-lg shadow-md p-4 border border-gray-100 cursor-pointer"
+                                className="bg-white rounded-lg shadow-md p-4 border border-gray-100 cursor-pointer relative"
                                 onClick={() => {
                                     if (!isUserJoined) {
                                         console.log("채팅방에 참여해야 이동할 수 있습니다.");
@@ -712,8 +994,9 @@ const Main = () => {
                                         )}
                                         {!isUserJoined && (
                                             <button
-                                                className={`text-sm font-medium px-3 rounded-md ${isUserWaiting ? "text-gray-500 border-gray-400" : "text-primary border-primary"
-                                                    }`}
+                                                className={`text-sm font-medium px-3 rounded-md ${
+                                                    isUserWaiting ? "text-gray-500 border-gray-400" : "text-primary border-primary"
+                                                }`}
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     if (currentUserID == "") {
@@ -731,7 +1014,7 @@ const Main = () => {
                                 {/* 팝업 메뉴 */}
                                 {openPopupId === meeting.chatRoomId && (
                                     <div
-                                        className="absolute right-12 bg-white shadow-md rounded-lg border border-gray-200 w-20 text-sm z-10"
+                                        className="absolute right-5 bg-white shadow-md rounded-lg border border-gray-200 w-20 text-sm z-10"
                                         onClick={(e) => e.stopPropagation()} // 채팅방 클릭 방지
                                         onBlur={() => setOpenPopupId(null)}
                                         tabIndex={0} // 포커스 유지
@@ -777,8 +1060,9 @@ const Main = () => {
                                                 ].map(({ label, count }) => (
                                                     <button
                                                         key={label}
-                                                        className={`flex-1 p-2 text-center text-lg font-medium ${activeTab === label ? "border-b-2 border-primary text-primary" : "text-gray-500"
-                                                            }`}
+                                                        className={`flex-1 p-2 text-center text-lg font-medium ${
+                                                            activeTab === label ? "border-b-2 border-primary text-primary" : "text-gray-500"
+                                                        }`}
                                                         onClick={() => setActiveTab(label)}
                                                     >
                                                         {`${label} ${count}`}
@@ -866,7 +1150,7 @@ const Main = () => {
                                 {/* 수정하기 팝업 */}
                                 {isEditPopupOpen && (
                                     <div className="fixed inset-0 bg-gray-500 bg-opacity-10 flex justify-center items-center z-20"
-                                        onClick={(e) => e.stopPropagation()}>
+                                         onClick={(e) => e.stopPropagation()}>
                                         <div className="bg-white w-2/3 h-4/7 p-6 rounded-lg shadow-md flex flex-col">
                                             <h3 className="text-lg font-semibold mb-4">채팅방 수정</h3>
 
@@ -876,7 +1160,7 @@ const Main = () => {
                                                     type="text"
                                                     name="title"
                                                     value={editRoomData.title}
-                                                    onChange={handleChange}
+                                                    onChange={edithandleChange}
                                                     maxLength={100}
                                                     className="w-full border p-2 rounded mt-1"
                                                 />
@@ -887,7 +1171,7 @@ const Main = () => {
                                                 <textarea
                                                     name="content"
                                                     value={editRoomData.content}
-                                                    onChange={handleChange}
+                                                    onChange={edithandleChange}
                                                     maxLength={500}
                                                     className="w-full border p-2 rounded mt-1 h-32"
                                                 />
@@ -898,7 +1182,7 @@ const Main = () => {
                                                 <select
                                                     name="limit"
                                                     value={editRoomData.limit}
-                                                    onChange={handleChange}
+                                                    onChange={edithandleChange}
                                                     className="w-full border p-2 rounded mt-1 mb-2"
                                                 >
                                                     {Array.from({ length: 10 }, (_, i) => (i + 1) * 10).map((num) => (
@@ -934,7 +1218,26 @@ const Main = () => {
                         );
                     })}
                 </div>
-                {isLoading && <p className="text-center text-gray-500 mt-4">Loading...</p>}
+            </div>
+
+            {/* 페이지네이션 UI */}
+            <div className="flex justify-center mt-[-5px] mb-10">
+                <div
+                    className="flex space-x-2 overflow-x-auto"
+                    style={{ maxWidth: '300px', scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                >
+                    {Array.from({ length: totalPages }, (_, index) => (
+                        <button
+                            key={index}
+                            className={`px-3 py-1 border rounded-md ${
+                                index === currentPage ? 'bg-primary text-white' : 'bg-white text-gray-700'
+                            }`}
+                            onClick={() => handlePageChange(index)}
+                        >
+                            {index + 1}
+                        </button>
+                    ))}
+                </div>
             </div>
 
             {/* 나가기 최종확인 팝업창 */}
@@ -995,8 +1298,60 @@ const Main = () => {
                     </div>
                 </div>
             )}
+
+            {/* ✅ 모임 생성 팝업 */}
+            {isCreatePopupOpen && (
+                <div className="fixed inset-0 bg-gray-500 bg-opacity-10 flex justify-center items-center z-20"
+                     onClick={(e) => e.stopPropagation()}>
+                    <div className="bg-white w-2/3 h-4/7 p-6 rounded-lg shadow-md flex flex-col">
+                        <h3 className="text-lg font-semibold mb-4">모임 생성</h3>
+
+                        <label className="block mb-2">
+                            제목
+                            <input
+                                type="text"
+                                name="title"
+                                value={newRoomData.title}
+                                onChange={createhandleChange}
+                                maxLength={100}
+                                className="w-full border p-2 rounded mt-1"
+                            />
+                        </label>
+
+                        <label className="block mb-2">
+                            내용
+                            <textarea
+                                name="content"
+                                value={newRoomData.content}
+                                onChange={createhandleChange}
+                                maxLength={500}
+                                className="w-full border p-2 rounded mt-1 h-32"
+                            />
+                        </label>
+
+                        <label className="block mb-4">
+                            인원 제한
+                            <select
+                                name="limit"
+                                value={newRoomData.limit}
+                                onChange={createhandleChange}
+                                className="w-full border p-2 rounded mt-1 mb-2"
+                            >
+                                {Array.from({ length: 10 }, (_, i) => (i + 1) * 10).map((num) => (
+                                    <option key={num} value={num}>{num}명</option>
+                                ))}
+                            </select>
+                        </label>
+
+                        <div className="flex justify-end space-x-4">
+                            <button className="pl-4 py-2 text-primary" onClick={() => setIsCreatePopupOpen(false)}>취소</button>
+                            <button className="pl-4 py-2 text-primary" onClick={handleCreateMeeting}>
+                                저장
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
-};
-
-export default Main;
+}

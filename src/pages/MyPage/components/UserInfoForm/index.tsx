@@ -497,7 +497,7 @@ const UserInfoForm = ({ userInfo, editForm, setEditForm, onUpdate }: UserInfoFor
 
     return (
         <div className="space-y-1">
-            <div className="flex items-center justify-between p-4 border-b border-gray-100 hover:bg-gray-50">
+            <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-primary/5">
                 <span className="font-bold text-gray-700">비밀번호</span>
                 {isPasswordChanging ? (
                     <div className="flex flex-col gap-2 w-72">
@@ -550,11 +550,19 @@ const UserInfoForm = ({ userInfo, editForm, setEditForm, onUpdate }: UserInfoFor
                     </button>
                 )}
             </div>
-            {renderField('phoneNumber', '전화번호')}
-            {renderField('location', '위치')}
-            {renderField('gender', '성별')}
-            {renderField('birthday', '생년월일', 'date')}
-            <div className="flex items-center justify-between p-4 border-b border-gray-100 hover:bg-gray-50">
+            <div className="bg-primary/5">
+                {renderField('phoneNumber', '전화번호')}
+            </div>
+            <div className="bg-primary/5">
+                {renderField('location', '위치')}
+            </div>
+            <div className="bg-primary/5">
+                {renderField('gender', '성별')}
+            </div>
+            <div className="bg-primary/5">
+                {renderField('birthday', '생년월일', 'date')}
+            </div>
+            <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-primary/5">
                 <span className="font-bold text-gray-700">마케팅 수신 동의</span>
                 <input
                     type="checkbox"
