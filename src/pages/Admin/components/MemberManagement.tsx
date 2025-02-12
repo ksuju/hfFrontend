@@ -60,28 +60,6 @@ const MemberManagement = () => {
         }
     };
 
-    const getRoleBadgeStyle = (role: string) => {
-        switch (role) {
-            case 'ROLE_ADMIN':
-                return 'bg-purple-100 text-purple-800 border border-purple-200';
-            case 'ROLE_USER':
-                return 'bg-blue-100 text-blue-800 border border-blue-200';
-            default:
-                return 'bg-gray-100 text-gray-800 border border-gray-200';
-        }
-    };
-
-    const getRoleDisplayName = (role: string) => {
-        switch (role) {
-            case 'ROLE_ADMIN':
-                return '관리자';
-            case 'ROLE_USER':
-                return '일반회원';
-            default:
-                return role;
-        }
-    };
-
     useEffect(() => {
         fetchMembers();
     }, []);
@@ -113,9 +91,7 @@ const MemberManagement = () => {
                         <tr key={member.id} className="border-b hover:bg-gray-50">
                             <td className="p-4">{member.id}</td>
                             <td className="p-4">{member.nickname}</td>
-                            <td className="p-4">
-                                {member.phoneNumber || '전화번호 없음'}
-                            </td>
+                            <td className="p-4">{member.phoneNumber || '전화번호 없음'}</td>
                             <td className="p-4">
                                 <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getStateBadgeStyle(member.state)}`}>
                                     {getStateDisplayName(member.state)}

@@ -9,13 +9,16 @@ interface NoticeDetail {
     title: string;
     content: string;
     createDate: string;
-    boardComments: Comment[];
+    boardCommentDtos: Comment[];
 }
 
 interface Comment {
     id: number;
     content: string;
     createDate: string;
+    authorId: number;
+    authorNickname: string;
+    modifyDate: string | null;
 }
 
 interface ApiResponse {
@@ -65,12 +68,12 @@ const NoticeDetail = ({ isLoggedIn, setIsLoggedIn, isAlertOpen, setIsAlertOpen }
                 // 응답 데이터 확인을 위한 로그
                 console.log('게시글 상세 정보:', response.data);
                 console.log('게시글 데이터:', response.data.data);
-                console.log('댓글 목록:', response.data.data.boardComments);
+                console.log('댓글 목록:', response.data.data.boardCommentDtos);
 
                 if (response.data.resultCode === "200") {
                     setNotice(response.data.data);
                     // 댓글 목록이 undefined인 경우 빈 배열로 설정
-                    const commentList = response.data.data.boardComments;
+                    const commentList = response.data.data.boardCommentDtos;
                     console.log('설정할 댓글 목록:', commentList);
                     setComments(commentList || []);
                 }
@@ -101,7 +104,16 @@ const NoticeDetail = ({ isLoggedIn, setIsLoggedIn, isAlertOpen, setIsAlertOpen }
             );
 
             if (response.data.resultCode === "200") {
-                const newCommentData = response.data.data;
+                // 현재 로그인한 사용자의 정보를 가져옴
+                const currentUser = JSON.parse(localStorage.getItem('userInfo')!).data;
+                
+                // 새 댓글에 작성자 ID와 닉네임 포함
+                const newCommentData = {
+                    ...response.data.data,
+                    authorId: currentUser.id,
+                    authorNickname: currentUser.nickname
+                };
+                
                 setComments(prevComments => [...prevComments, newCommentData]);
                 setNewComment('');
             }
@@ -126,8 +138,15 @@ const NoticeDetail = ({ isLoggedIn, setIsLoggedIn, isAlertOpen, setIsAlertOpen }
             );
 
             if (response.data.resultCode === "200") {
+                // 기존 댓글의 모든 정보를 유지하면서 content와 modifyDate만 업데이트
                 setComments(comments.map(comment =>
-                    comment.id === commentId ? response.data.data : comment
+                    comment.id === commentId 
+                        ? { 
+                            ...comment,
+                            content: editContent,
+                            modifyDate: new Date().toISOString()
+                        }
+                        : comment
                 ));
                 setEditingCommentId(null);
                 setEditContent('');
@@ -152,7 +171,9 @@ const NoticeDetail = ({ isLoggedIn, setIsLoggedIn, isAlertOpen, setIsAlertOpen }
             );
 
             if (response.data.resultCode === "200") {
-                setComments(comments.filter(comment => comment.id !== commentId));
+                // 삭제된 댓글을 상태에서 즉시 제거
+                setComments(prevComments => prevComments.filter(comment => comment.id !== commentId));
+                alert('댓글이 삭제되었습니다.');
             }
         } catch (error) {
             console.error('댓글 삭제 실패:', error);
@@ -225,7 +246,7 @@ const NoticeDetail = ({ isLoggedIn, setIsLoggedIn, isAlertOpen, setIsAlertOpen }
                                 {/* 댓글 목록 */}
                                 <div className="space-y-4">
                                     {comments.map(comment => (
-                                        <div key={comment.id} className="border-b border-gray-100 pb-4">
+                                        <div key={comment.id} className="border-b border-gray-100 py-4">
                                             {editingCommentId === comment.id ? (
                                                 <div>
                                                     <textarea
@@ -255,32 +276,34 @@ const NoticeDetail = ({ isLoggedIn, setIsLoggedIn, isAlertOpen, setIsAlertOpen }
                                             ) : (
                                                 <div>
                                                     <div className="flex justify-between items-center mb-2">
-                                                        <span className="text-sm text-gray-500">
-                                                            {new Date(comment.createDate).toISOString().slice(0, 10).replace(/-/g, ".")}
-                                                        </span>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-medium text-gray-700">{comment.authorNickname}</span>
+                                                            <span className="text-sm text-gray-500">
+                                                                {new Date(comment.createDate).toISOString().slice(0, 10).replace(/-/g, ".")}
+                                                            </span>
+                                                        </div>
                                                     </div>
                                                     <p className="text-gray-700">{comment.content}</p>
-                                                    <div className="flex justify-end gap-2 mt-2">
-                                                        {isLoggedIn && (
-                                                            <>
-                                                                <button
-                                                                    onClick={() => {
-                                                                        setEditingCommentId(comment.id);
-                                                                        setEditContent(comment.content);
-                                                                    }}
-                                                                    className="text-sm text-gray-500 hover:text-primary"
-                                                                >
-                                                                    수정
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => handleCommentDelete(comment.id)}
-                                                                    className="text-sm text-red-500 hover:text-red-600"
-                                                                >
-                                                                    삭제
-                                                                </button>
-                                                            </>
-                                                        )}
-                                                    </div>
+                                                    {isLoggedIn && localStorage.getItem('userInfo') && 
+                                                        JSON.parse(localStorage.getItem('userInfo')!).data.id === comment.authorId && (
+                                                        <div className="flex justify-end gap-2 mt-2">
+                                                            <button
+                                                                onClick={() => {
+                                                                    setEditingCommentId(comment.id);
+                                                                    setEditContent(comment.content);
+                                                                }}
+                                                                className="text-sm text-gray-500 hover:text-primary"
+                                                            >
+                                                                수정
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleCommentDelete(comment.id)}
+                                                                className="text-sm text-red-500 hover:text-red-600"
+                                                            >
+                                                                삭제
+                                                            </button>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )}
                                         </div>
