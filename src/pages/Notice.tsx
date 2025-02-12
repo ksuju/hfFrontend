@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import SearchBar from '../components/SearchBar';
 import Footer from '../components/Footer';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
@@ -30,18 +29,15 @@ const Notice = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
-    const [searchKeyword, setSearchKeyword] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [totalNotices, setTotalNotices] = useState(0);
     const navigate = useNavigate();
 
-    const fetchNotices = async (pageNumber: number, keyword = "") => {
+    const fetchNotices = async (pageNumber: number) => {
         setIsLoading(true);
         try {
             const pageSize = 10;
-            const url = keyword
-                ? `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/boards/search?keyword=${encodeURIComponent(keyword)}&page=${pageNumber}&size=${pageSize}`
-                : `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/boards?page=${pageNumber}&size=${pageSize}`;
+            const url = `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/boards?page=${pageNumber}&size=${pageSize}`;
 
             const response = await axios.get<ApiResponse>(url, {
                 withCredentials: true,
@@ -52,7 +48,6 @@ const Notice = () => {
 
             if (response.data.resultCode === "200") {
                 const content = response.data.data.content;
-                console.log('공지사항 목록:', content); // ID 기준 정렬 확인용 로그
                 
                 const remainingItems = pageSize - content.length;
                 
@@ -70,44 +65,29 @@ const Notice = () => {
                 
                 setTotalPages(Math.max(1, response.data.data.page.totalPages));
                 setTotalNotices(response.data.data.page.totalElements);
-                
-                console.log('API 응답:', {
-                    totalPages: response.data.data.page.totalPages,
-                    number: response.data.data.page.number,
-                    size: response.data.data.page.size,
-                    totalElements: response.data.data.page.totalElements,
-                    content: response.data.data.content
-                });
             }
-        } catch (err) {
-            console.error('Error fetching notices:', err);
+        } catch (error) {
             setError('공지사항을 불러오는데 실패했습니다.');
+            console.error('Error fetching notices:', error);
         } finally {
             setIsLoading(false);
         }
     };
 
+    const handlePageChange = (pageNumber: number) => {
+        setCurrentPage(pageNumber);
+        fetchNotices(pageNumber);
+    };
+
     useEffect(() => {
-        fetchNotices(currentPage, searchKeyword);
-    }, [currentPage, searchKeyword]);
-
-    const handleSearch = (keyword: string) => {
-        setSearchKeyword(keyword);
-        setCurrentPage(0);
-    };
-
-    const handlePageChange = (page: number) => {
-        if (page >= 0 && page < totalPages) {
-            setCurrentPage(page);
-        }
-    };
+        fetchNotices(currentPage);
+    }, [currentPage]);
 
     if (error) return <div className="p-4 text-center text-red-500">{error}</div>;
 
     return (
         <>
             <div className="max-w-[1280px] mx-auto min-h-[calc(100vh-160px)]">
-                <SearchBar placeholder="공지사항을 검색해보세요" onChange={handleSearch} />
                 <main className="flex-1 mt-16 mb-16">
                     <div className="max-w-[600px] lg:max-w-screen-lg mx-auto lg:py-6">
                         <div className="p-8">

@@ -865,7 +865,14 @@ export default function FestivalDetail() {
                     )}
 
                     {/* ✅ 맨 아래 입력 필드에서 일반 댓글/답글 입력 */}
-                    <div className="flex items-center space-x-2 mt-1">
+                    <div className="flex items-center space-x-2 mt-1"
+                         onClick={(e) => {
+                             e.stopPropagation();
+                             if (currentUserID == "") {
+                                 alert("로그인이 필요합니다.");
+                                 return;
+                             }
+                         }}>
                         <input
                             type="text"
                             placeholder={editingCommentId ? "댓글 수정 중..." : replyingTo ? "답글 추가..." : "댓글 추가..."}
@@ -1211,20 +1218,26 @@ export default function FestivalDetail() {
                         );
                     })}
                 </div>
+            </div>
 
-                {/* 페이지네이션 UI */}
-                <div className="flex justify-center mt-6 space-x-2">
-                    {[...Array(totalPages)].map((_, index) => (
+            {/* 페이지네이션 UI */}
+            <div className="flex justify-center mt-[-5px] mb-10">
+                <div
+                    className="flex space-x-2 overflow-x-auto"
+                    style={{ maxWidth: '300px', scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                >
+                    {Array.from({ length: totalPages }, (_, index) => (
                         <button
                             key={index}
-                            className={`px-3 py-1 border rounded-md ${index === currentPage ? "bg-primary text-white" : "bg-white text-gray-700"}`}
+                            className={`px-3 py-1 border rounded-md ${
+                                index === currentPage ? 'bg-primary text-white' : 'bg-white text-gray-700'
+                            }`}
                             onClick={() => handlePageChange(index)}
                         >
                             {index + 1}
                         </button>
                     ))}
                 </div>
-                {isLoading && <p className="text-center text-gray-500 mt-4">Loading...</p>}
             </div>
 
             {/* 나가기 최종확인 팝업창 */}
