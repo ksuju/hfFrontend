@@ -5,7 +5,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from "react-router-dom";
 import dots from "../assets/images/three-dots.png";
 import MainBanner from '../components/MainBanner';
-import GenreBanner from '../components/GenreBanner';
+import SubBanner from '../components/SubBanner.tsx';
+import axios from "axios";
 
 // 게시글 데이터 타입 정의
 interface Festival {
@@ -27,14 +28,19 @@ interface FestivalApiResponse {
 }
 
 // 사용할 장르 목록
-const genres = [
-    "축제",
-    "뮤지컬",
-    "연극",
-    "서커스/마술",
-    "대중음악",
-    "한국음악(국악)",
-    "서양음악(클래식)"
+// const genres = [
+//     "축제",
+//     "뮤지컬",
+//     "연극",
+//     "서커스/마술",
+//     "대중음악",
+//     "한국음악(국악)",
+//     "서양음악(클래식)"
+// ];
+
+const eventList = [
+    "곧 종료될 축제 / 공연",
+    "곧 시작될 축제 / 공연"
 ];
 
 interface MeetingPost {
@@ -63,7 +69,8 @@ interface MeetingApiResponse {
 
 const Main = () => {
     const [mainPosts, setMainPosts] = useState<Festival[]>([]);
-    const [genrePosts, setGenrePosts] = useState<Festival[][]>([]);
+    // const [genrePosts, setGenrePosts] = useState<Festival[][]>([]);
+    const [eventBannerData, setEventBannerData] = useState<Festival[][]>([]);
     const [isLoading, setIsLoading] = useState(true); // 로딩 상태 추가
     const navigate = useNavigate(); // 👈 페이지 이동 함수
     const [searchPosts, setSearchPosts] = useState<Festival[]>([]);
@@ -87,6 +94,11 @@ const Main = () => {
     const [kickTargetId, setKickTargetId] = useState<string | null>(null);
     const [kickChatRoomId, setKickChatRoomId] = useState<string | null>(null);
 
+    const userInfo: string | null = localStorage.getItem("userInfo")
+    const userLocation = userInfo
+        ? JSON.parse(userInfo)?.data?.location?.split(" ")[0] ?? "서울"
+        : "서울";
+
     const handleTogglePopup = (chatRoomId: string) => {
         setOpenPopupId(openPopupId === chatRoomId ? null : chatRoomId);
     };
@@ -98,46 +110,80 @@ const Main = () => {
     };
 
     // 메인 배너 게시글 가져오기 (서울 기준)
+    // const fetchMainPosts = async () => {
+    //     try {
+    //         const url = import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/posts/view?area=서울&count=5`
+    //
+    //         const response = await fetch(url);
+    //         if (!response.ok) {
+    //             throw new Error(`HTTP error! Status: ${response.status}`);
+    //         }
+    //         const data: Festival[] = await response.json();
+    //         console.log('Fetched main posts:', data);
+    //         setMainPosts(data.slice(0, 5)); // 최대 5개 저장
+    //     } catch (error) {
+    //         console.error('Error fetching main festival data:', error);
+    //     }
+    // };
     const fetchMainPosts = async () => {
         try {
-            const url = import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/posts/view?area=서울&count=5`
+            let url: string = "";
 
-            const response = await fetch(url);
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            const data: Festival[] = await response.json();
-            console.log('Fetched main posts:', data);
-            setMainPosts(data.slice(0, 5)); // 최대 5개 저장
+            url = `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/posts/search/main1?area=${userLocation}`;
+
+            const main1Response = await axios.get<Festival[]>(url);
+            setMainPosts(main1Response.data);
         } catch (error) {
             console.error('Error fetching main festival data:', error);
         }
     };
 
     // 장르별 게시글 가져오기
-    const fetchGenrePosts = async () => {
-        const newGenrePosts: Festival[][] = [];
-        await Promise.all(
-            genres.map(async (genre, index) => {
-                try {
-                    const url = import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/posts/select?genre=${encodeURIComponent(genre)}&page=0&size=10`
+    // const fetchGenrePosts = async () => {
+    //     const newGenrePosts: Festival[][] = [];
+    //     await Promise.all(
+    //         genres.map(async (genre, index) => {
+    //             try {
+    //                 const url = import.meta.env.VITE_CORE_API_BASE_URL + `/api/v1/posts/select?genre=${encodeURIComponent(genre)}&page=0&size=10`
+    //
+    //                 const response = await fetch(url);
+    //                 if (!response.ok) {
+    //                     throw new Error(`HTTP error! Status: ${response.status}`);
+    //                 }
+    //                 const data = await response.json();
+    //                 console.log(`Fetched posts for ${genre}:`, data);
+    //
+    //                 newGenrePosts[index] = data.content.slice(0, 10); // 최대 10개 저장
+    //             } catch (error) {
+    //                 console.error(`Error fetching ${genre} data:`, error);
+    //                 newGenrePosts[index] = []; // 에러 발생 시 빈 배열 설정
+    //             }
+    //         })
+    //     );
+    //     setGenrePosts(newGenrePosts);
+    //     setIsLoading(false); // 데이터 로딩 완료 후 로딩 상태 변경
+    // };
 
-                    const response = await fetch(url);
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! Status: ${response.status}`);
-                    }
-                    const data = await response.json();
-                    console.log(`Fetched posts for ${genre}:`, data);
+    // 이벤트 별 게시글 가져오기
+    const fetchEventPosts = async () => {
+        const getEventData: Festival[][] = [];
+        try {
+            const [main2Response, main3Response] = await Promise.all([
+                axios.get<Festival[]>(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/posts/search/main2`),
+                axios.get<Festival[]>(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/posts/search/main3`)
+            ]);
 
-                    newGenrePosts[index] = data.content.slice(0, 10); // 최대 10개 저장
-                } catch (error) {
-                    console.error(`Error fetching ${genre} data:`, error);
-                    newGenrePosts[index] = []; // 에러 발생 시 빈 배열 설정
-                }
-            })
-        );
-        setGenrePosts(newGenrePosts);
-        setIsLoading(false); // 데이터 로딩 완료 후 로딩 상태 변경
+            getEventData[0] = main2Response.data;
+            getEventData[1] = main3Response.data;
+
+            setEventBannerData(getEventData);
+        } catch (error) {
+            console.error("Error fetching event posts:", error);
+            // 에러 발생 시 빈 배열로 설정
+            setEventBannerData([[], [], []]);
+        } finally {
+            setIsLoading(false);
+        }// 데이터 로딩 완료 후 로딩 상태 변경
     };
 
     // 축제 데이터 가져오기 (페이지 스크롤링 기준 요청)
@@ -261,7 +307,8 @@ const Main = () => {
 
     useEffect(() => {
         fetchMainPosts();
-        fetchGenrePosts();
+        // fetchGenrePosts();
+        fetchEventPosts();
         fetchUserInfo();
     }, []);
 
@@ -553,14 +600,16 @@ const Main = () => {
                         {/* 메인 배너 & 장르별 배너 (검색 중이 아닐 때만 표시) */}
                         {!isSearching && (
                             <>
+                                <h2 className="text-lg font-bold mb-4">
+                                    {userLocation}에서 가장 인기있는 축제/공연
+                                </h2>
                                 <MainBanner mainPosts={mainPosts} />
 
-                                {/* 장르별 배너 섹션 */}
-                                {genres.map((genre, index) => (
-                                    <GenreBanner
-                                        key={genre}
-                                        genre={genre}
-                                        posts={genrePosts[index] || []}
+                                {eventList.map((eventTitle, index) => (
+                                    <SubBanner
+                                        key={eventTitle}
+                                        title={eventTitle}
+                                        posts={eventBannerData[index] || []}
                                     />
                                 ))}
                             </>
@@ -585,7 +634,7 @@ const Main = () => {
                         <div className="grid grid-cols-3 gap-3">
                             {searchPosts.map((searchPost) => (
                                 <div key={searchPost.festivalId} className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col"
-                                     onClick={() => navigate(`/detailposts?id=${encodeURIComponent(searchPost.festivalId)}`)}
+                                    onClick={() => navigate(`/detailposts?id=${encodeURIComponent(searchPost.festivalId)}`)}
                                 >
                                     {/* 이미지 영역 */}
                                     <div className="relative pb-[90%]">
@@ -664,7 +713,7 @@ const Main = () => {
                                         {!isUserJoined && (
                                             <button
                                                 className={`text-sm font-medium px-3 rounded-md ${isUserWaiting ? "text-gray-500 border-gray-400" : "text-primary border-primary"
-                                                }`}
+                                                    }`}
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     if (currentUserID == "") {
@@ -729,7 +778,7 @@ const Main = () => {
                                                     <button
                                                         key={label}
                                                         className={`flex-1 p-2 text-center text-lg font-medium ${activeTab === label ? "border-b-2 border-primary text-primary" : "text-gray-500"
-                                                        }`}
+                                                            }`}
                                                         onClick={() => setActiveTab(label)}
                                                     >
                                                         {`${label} ${count}`}
@@ -817,7 +866,7 @@ const Main = () => {
                                 {/* 수정하기 팝업 */}
                                 {isEditPopupOpen && (
                                     <div className="fixed inset-0 bg-gray-500 bg-opacity-10 flex justify-center items-center z-20"
-                                         onClick={(e) => e.stopPropagation()}>
+                                        onClick={(e) => e.stopPropagation()}>
                                         <div className="bg-white w-2/3 h-4/7 p-6 rounded-lg shadow-md flex flex-col">
                                             <h3 className="text-lg font-semibold mb-4">채팅방 수정</h3>
 

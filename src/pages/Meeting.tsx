@@ -456,154 +456,85 @@ const Meeting = () => {
     };
 
     return (
-        <div className="max-w-[1280px] mx-auto">
-            <div className="px-4 py-8">
-                <div className="max-w-[600px] mx-auto">
-                    {/* 헤더 섹션 */}
-                    <div className="flex flex-col gap-6 mb-8">
-                        <h2 className="text-2xl font-bold text-gray-800 mt-16">모임</h2>
-                        <SearchBar 
-                            placeholder="모임을 검색해보세요" 
-                            onChange={handleSearch} 
-                            showSearchType={false}
+        <div className="max-w-[600px] mx-auto">
+            <SearchBar placeholder="모임을 검색해보세요" onChange={handleSearch} showSearchType={false} />
+            <div className="p-4 my-20">
+                <div className="space-y-3">
+                    {meetingPosts.map((meeting) => (
+                        <MeetingCard
+                            key={meeting.chatRoomId}
+                            meeting={meeting}
+                            isUserInWaitRoom={isUserInWaitRoom}
+                            isUserInJoinRoom={isUserInJoinRoom}
+                            currentUser={currentUser}
+                            currentUserID={currentUserID}
+                            handleChatRoomClick={handleChatRoomClick}
+                            handleTogglePopup={handleTogglePopup}
+                            handleJoinClick={handleJoinClick}
+                            handleManageMembers={handleManageMembers}
+                            handleEditRoom={handleEditRoom}
+                            handleLeaveRoom={handleLeaveRoom}
+                            openPopupId={openPopupId}
+                            setOpenPopupId={setOpenPopupId}
                         />
-                    </div>
-
-                    {/* 모임 목록 */}
-                    <div className="space-y-6">
-                        {meetingPosts.map((meeting) => {
-                            const isUserWaiting = isUserInWaitRoom(meeting.chatRoomId);
-                            const isUserJoined = isUserInJoinRoom(meeting.chatRoomId);
-                            const isRoomOwner = meeting.memberId === currentUser?.id;
-
-                            return (
-                                <div
-                                    key={meeting.chatRoomId}
-                                    className={`bg-white rounded-2xl shadow-sm border hover:shadow-md transition-all duration-300 ${
-                                        isUserJoined ? 'border-primary/20 hover:border-primary' : 'border-gray-100'
-                                    }`}
-                                    onClick={(e) => {
-                                        if ((e.target as HTMLElement).closest('button')) return;
-                                        // 모든 모임에서 확장/축소 가능하도록 수정
-                                        setExpandedId(expandedId === meeting.chatRoomId ? null : meeting.chatRoomId);
-                                    }}
-                                >
-                                    <div className={`p-6 transition-all duration-300 ${
-                                        expandedId === meeting.chatRoomId ? 'min-h-[300px]' : ''
-                                    }`}>
-                                        {/* 상단 정보 */}
-                                        <div className="flex items-center justify-between mb-4">
-                                            <span className={`text-sm font-medium px-3 py-1.5 rounded-full ${
-                                                isUserJoined 
-                                                    ? 'bg-green-50 text-green-600'  // 참여중일 때 초록색
-                                                    : 'bg-primary/5 text-primary'   // 기본 상태
-                                            }`}>
-                                                {meeting.festivalName}
-                                            </span>
-                                            <span className="text-sm text-gray-400">
-                                                {new Date(meeting.createDate).toLocaleDateString()}
-                                            </span>
-                                        </div>
-
-                                        {/* 제목과 내용 */}
-                                        <div className={`mb-4 transition-all duration-300 ${
-                                            expandedId === meeting.chatRoomId ? 'min-h-[200px] overflow-y-auto' : ''
-                                        }`}>
-                                            <h3 className={`text-lg font-semibold text-gray-800 ${
-                                                expandedId === meeting.chatRoomId ? 'mb-4 break-words' : 'mb-0 truncate'
-                                            } hover:text-primary transition-colors`}>
-                                                {meeting.roomTitle}
-                                            </h3>
-                                            {expandedId === meeting.chatRoomId && (
-                                                <p className="text-gray-600 text-sm break-words whitespace-pre-wrap">
-                                                    {meeting.roomContent}
-                                                </p>
-                                            )}
-                                        </div>
-
-                                        {/* 하단 정보와 버튼 */}
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-4">
-                                                <div className="flex items-center gap-3">
-                                                    {/* 참여 인원 아이콘과 숫자 */}
-                                                    <div className="flex items-center gap-1 text-gray-500">
-                                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                                                        </svg>
-                                                        <span className="text-sm font-medium">{meeting.joinMemberNum}/{meeting.roomMemberLimit}</span>
-                                                    </div>
-                                                    
-                                                    {/* 참여 인원 프로그레스 바 */}
-                                                    <div className="w-20 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                                                        <div 
-                                                            className="h-full rounded-full transition-all duration-300 bg-primary" 
-                                                            style={{ 
-                                                                width: `${(meeting.joinMemberNum / meeting.roomMemberLimit) * 100}%` 
-                                                            }}
-                                                        />
-                                                    </div>
-                                                </div>
-
-                                                {/* 참여/대기 상태 뱃지 */}
-                                                {(isUserJoined || isUserWaiting) && (
-                                                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                                                        isUserJoined 
-                                                            ? 'bg-green-50 text-green-600' 
-                                                            : 'bg-orange-50 text-orange-600'
-                                                    }`}>
-                                                        {isUserJoined ? '참여중' : '대기중'}
-                                                    </span>
-                                                )}
-                                            </div>
-
-                                            <div className="flex items-center gap-3">
-                                                {isUserJoined ? (
-                                                    <>
-                                                        <button
-                                                            className="px-4 py-2 rounded-full text-sm font-medium bg-primary text-white hover:bg-primary/90 transition-all"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleChatRoomClick(meeting.chatRoomId, isUserJoined);
-                                                            }}
-                                                        >
-                                                            입장하기
-                                                        </button>
-                                                    </>
-                                                ) : (
-                                                    <button
-                                                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                                                            isUserWaiting 
-                                                                ? "text-gray-500 border border-gray-300 hover:bg-gray-50" 
-                                                                : "bg-primary text-white hover:bg-primary/90"
-                                                        }`}
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            if (!currentUserID) {
-                                                                alert("로그인이 필요합니다.");
-                                                                return;
-                                                            }
-                                                            handleJoinClick(meeting.chatRoomId, isUserWaiting);
-                                                        }}
-                                                    >
-                                                        {isUserWaiting ? "대기 취소" : "참여 신청"}
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-
-                    {/* 로딩 인디케이터 */}
-                    {isLoading && (
-                        <div className="flex justify-center items-center py-8">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                        </div>
-                    )}
+                    ))}
                 </div>
+                {isLoading && <p className="text-center text-gray-500 mt-4">Loading...</p>}
             </div>
+
+            {/* 인원관리 팝업창 */}
+            {isManagePopupOpen && selectedMeeting && (
+                <ManageMembersPopup
+                    activeTab={activeTab}
+                    setActiveTab={setActiveTab}
+                    sortedJoinMembers={sortedJoinMembers}
+                    selectedMeeting={selectedMeeting}
+                    handleConfirmDelegate={handleConfirmDelegate}
+                    handleConfirmKick={handleConfirmKick}
+                    handleApprove={handleApprove}
+                    handleRefuse={handleRefuse}
+                    closeManagePopup={closeManagePopup}
+                />
+            )}
+
+            {/* 수정하기 팝업 */}
+            {isEditPopupOpen && (
+                <EditPopup
+                    editRoomData={editRoomData}
+                    handleChange={handleChange}
+                    handleSaveEdit={handleSaveEdit}
+                    setIsEditPopupOpen={setIsEditPopupOpen}
+                    selectedMeeting={selectedMeeting}
+                />
+            )}
+
+            {/* 나가기 최종확인 팝업창 */}
+            {isConfirmLeaveOpen && (
+                <ConfirmLeavePopup
+                    cancelLeaveRoom={cancelLeaveRoom}
+                    confirmLeaveRoom={confirmLeaveRoom}
+                    isConfirmLeaveOpen={isConfirmLeaveOpen}
+                />
+            )}
+
+            {/* 위임하기 최종확인 팝업창 */}
+            {isConfirmDelegateOpen && (
+                <ConfirmDelegatePopup
+                    cancelDelegate={cancelDelegate}
+                    confirmDelegate={confirmDelegate}
+                    getNicknameById={getNicknameById}
+                    selectedDelegateId={selectedDelegateId}
+                />
+            )}
+
+            {/* 강퇴하기 최종확인 팝업창 */}
+            {isConfirmKickOpen && (
+                <ConfirmKickPopup
+                    nickname={getNicknameById(kickTargetId)}
+                    onCancel={cancelKick}
+                    onConfirm={confirmKick}
+                />
+            )}
         </div>
     );
 };
