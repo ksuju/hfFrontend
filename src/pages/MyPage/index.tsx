@@ -15,7 +15,7 @@ interface MyPageProps {
 const MyPage = ({ updateUserInfo }: MyPageProps) => {
     const navigate = useNavigate();
     const [isPasswordVerified, setIsPasswordVerified] = useState(false);
-    const [activeTab, setActiveTab] = useState('social');
+    const [activeTab, setActiveTab] = useState('profile'); // 'profile' | 'social' | 'friends'
 
     const defaultSocialAccount = {
         active: false,
@@ -103,11 +103,10 @@ const MyPage = ({ updateUserInfo }: MyPageProps) => {
     };
 
     useEffect(() => {
-        if (window.sessionStorage.getItem('needsUpdate') === 'true') {
-            fetchUserInfo();  // 회원 정보 다시 불러오기
-            window.sessionStorage.removeItem('needsUpdate');
-        }
+        // 컴포넌트가 마운트되면 무조건 유저 정보를 가져옵니다
+        fetchUserInfo();
     }, []);
+
 
     const handleUpdate = async () => {
         try {
@@ -228,16 +227,71 @@ const MyPage = ({ updateUserInfo }: MyPageProps) => {
         }
     };
 
+
+    useEffect(() => {
+        const checkAndFetchUserInfo = async () => {
+            const isLoggedIn = localStorage.getItem('isLoggedIn');
+            if (!isLoggedIn) {
+                navigate('/login', {
+                    state: { from: { pathname: '/mypage' } }
+                });
+                return;
+            }
+
+            // 로그인 되어있다면 유저 정보 가져오기
+            await fetchUserInfo();
+        };
+
+        checkAndFetchUserInfo();
+    }, [navigate]);
+
+
     if (!userInfo) {
-        return <div>로그인이 필요합니다.</div>;
+        return <div>로딩 중...</div>; // 또는 스피너 컴포넌트
     }
 
+
     return (
-        <div className="flex flex-col min-h-screen">
+        <div className="p-4">
             {isPasswordVerified ? (
-                <>
-                    <div className="flex-none px-8 pt-8 pb-6">
-                        <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-sm p-6">
+                <div className="space-y-6">
+                    {/* 탭 네비게이션 */}
+                    <div className="flex border-b">
+                        <button
+                            onClick={() => setActiveTab('profile')}
+                            className={`flex-1 px-4 py-3 font-semibold transition-all duration-200 
+                                ${activeTab === 'profile'
+                                    ? 'text-primary border-b-2 border-primary bg-blue-50'
+                                    : 'text-gray-600 hover:text-primary hover:bg-gray-100'
+                                } focus:outline-none`}
+                        >
+                            프로필 정보
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('social')}
+                            className={`flex-1 px-4 py-3 font-semibold transition-all duration-200 
+                                ${activeTab === 'social'
+                                    ? 'text-primary border-b-2 border-primary bg-blue-50'
+                                    : 'text-gray-600 hover:text-primary hover:bg-gray-100'
+                                } focus:outline-none`}
+                        >
+                            소셜 계정
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('friends')}
+                            className={`flex-1 px-4 py-3 font-semibold transition-all duration-200 
+                                ${activeTab === 'friends'
+                                    ? 'text-primary border-b-2 border-primary bg-blue-50'
+                                    : 'text-gray-600 hover:text-primary hover:bg-gray-100'
+                                } focus:outline-none`}
+                        >
+                            친구 관리
+                        </button>
+                    </div>
+
+                    {/* 컨텐츠 영역 */}
+                    {activeTab === 'profile' && (
+                        <>
                             <ProfileSection
                                 userInfo={userInfo}
                                 editForm={editForm}
@@ -245,62 +299,25 @@ const MyPage = ({ updateUserInfo }: MyPageProps) => {
                                 onImageUpload={handleImageUpload}
                                 onUpdate={handleUpdate}
                                 handleResetImage={handleResetImage}
-                                handleDelete={handleDelete}
                             />
-                        </div>
-                    </div>
+                            <UserInfoForm
+                                userInfo={userInfo}
+                                editForm={editForm}
+                                setEditForm={setEditForm}
+                                onUpdate={handleUpdate}
+                                onDelete={handleDelete}  // handleDelete prop 추가
+                            />
+                        </>
+                    )}
 
-                    <div className="flex-1 overflow-auto">
-                        <nav className="border-t border-gray-200 bg-white shadow-sm sticky top-0 z-10">
-                            <div className="max-w-4xl mx-auto">
-                                <div className="grid grid-cols-3 text-center">
-                                    <button
-                                        className={`py-4 px-6 font-bold transition-all duration-200 ${activeTab === 'social'
-                                            ? 'text-primary border-b-2 border-primary bg-blue-50'
-                                            : 'text-gray-500 hover:text-primary hover:bg-blue-50'
-                                            }`}
-                                        onClick={() => setActiveTab('social')}
-                                    >
-                                        계정 연동
-                                    </button>
-                                    <button
-                                        className={`py-4 px-6 font-bold transition-all duration-200 ${activeTab === 'info'
-                                            ? 'text-primary border-b-2 border-primary bg-blue-50'
-                                            : 'text-gray-500 hover:text-primary hover:bg-blue-50'
-                                            }`}
-                                        onClick={() => setActiveTab('info')}
-                                    >
-                                        회원 정보
-                                    </button>
-                                    <button
-                                        className={`py-4 px-6 font-bold transition-all duration-200 ${activeTab === 'meetings'
-                                            ? 'text-primary border-b-2 border-primary bg-blue-50'
-                                            : 'text-gray-500 hover:text-primary hover:bg-blue-50'
-                                            }`}
-                                        onClick={() => setActiveTab('meetings')}
-                                    >
-                                        친구 목록
-                                    </button>
-                                </div>
-                            </div>
-                        </nav>
+                    {activeTab === 'social' && (
+                        <SocialAccounts userInfo={userInfo} onUpdate={fetchUserInfo} />
+                    )}
 
-                        <div className="max-w-4xl mx-auto p-8">
-                            {activeTab === 'social' && <SocialAccounts userInfo={userInfo} onUpdate={fetchUserInfo} />}
-                            {activeTab === 'info' && (
-                                <div className="bg-white rounded-xl shadow-sm p-6">
-                                    <UserInfoForm
-                                        userInfo={userInfo}
-                                        editForm={editForm}
-                                        setEditForm={setEditForm}
-                                        onUpdate={handleUpdate}
-                                    />
-                                </div>
-                            )}
-                            {activeTab === 'meetings' && <FriendList />}
-                        </div>
-                    </div>
-                </>
+                    {activeTab === 'friends' && (
+                        <FriendList />
+                    )}
+                </div>
             ) : (
                 <PasswordVerification
                     userInfo={userInfo}

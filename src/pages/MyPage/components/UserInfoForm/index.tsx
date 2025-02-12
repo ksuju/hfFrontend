@@ -16,6 +16,7 @@ interface UserInfoFormProps {
     editForm: EditFormData;
     setEditForm: (form: EditFormData) => void;
     onUpdate: () => void;
+    onDelete: () => void;
 }
 
 interface PasswordForm {
@@ -32,7 +33,7 @@ interface VerificationState {
     error: string;
 }
 
-const UserInfoForm = ({ userInfo, editForm, setEditForm, onUpdate }: UserInfoFormProps) => {
+const UserInfoForm = ({ userInfo, editForm, setEditForm, onUpdate, onDelete }: UserInfoFormProps) => {
     const [editingField, setEditingField] = useState<keyof EditFormData | null>(null);
     const [isPasswordChanging, setIsPasswordChanging] = useState(false);
     const [passwordForm, setPasswordForm] = useState<PasswordForm>({
@@ -198,10 +199,25 @@ const UserInfoForm = ({ userInfo, editForm, setEditForm, onUpdate }: UserInfoFor
                             <input
                                 type="tel"
                                 value={editForm.phoneNumber || ''}
-                                onChange={(e) => setEditForm({
-                                    ...editForm,
-                                    phoneNumber: e.target.value ? e.target.value : null  // 빈 문자열을 null로 변환
-                                })}
+                                onChange={(e) => {
+                                    // 숫자만 추출
+                                    const numberOnly = e.target.value.replace(/[^\d]/g, '');
+
+                                    // 숫자를 xxx-xxxx-xxxx 형식으로 포맷팅
+                                    let formattedNumber = numberOnly;
+                                    if (numberOnly.length >= 3) {
+                                        formattedNumber = numberOnly.slice(0, 3) +
+                                            (numberOnly.length > 3 ? '-' : '') +
+                                            numberOnly.slice(3, 7) +
+                                            (numberOnly.length > 7 ? '-' : '') +
+                                            numberOnly.slice(7, 11);
+                                    }
+
+                                    setEditForm({
+                                        ...editForm,
+                                        phoneNumber: formattedNumber || null
+                                    });
+                                }}
                                 className="w-48 h-9 px-3 border border-gray-300 rounded-lg focus:outline-none focus:border-primary text-sm"
                                 placeholder="010-0000-0000"
                                 maxLength={13}
@@ -475,7 +491,9 @@ const UserInfoForm = ({ userInfo, editForm, setEditForm, onUpdate }: UserInfoFor
                             <span className="text-gray-600 leading-9 truncate">
                                 {field === 'gender' ?
                                     (userInfo[field] === 'M' ? '남자' : userInfo[field] === 'W' ? '여자' : '미설정') :
-                                    (userInfo[field] || '미설정')}
+                                    field === 'phoneNumber' && userInfo[field] ?
+                                        userInfo[field].replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3') :
+                                        (userInfo[field] || '미설정')}
                             </span>
                             <button
                                 onClick={() => setEditingField(field)}
@@ -593,6 +611,16 @@ const UserInfoForm = ({ userInfo, editForm, setEditForm, onUpdate }: UserInfoFor
                     }}
                     className="w-5 h-5 text-primary rounded"
                 />
+            </div>
+            <div className="p-3">
+                <div className="flex justify-end">
+                    <button
+                        onClick={onDelete}
+                        className="text-sm text-gray-400 hover:text-red-500 transition-colors"
+                    >
+                        회원탈퇴
+                    </button>
+                </div>
             </div>
         </div>
     );

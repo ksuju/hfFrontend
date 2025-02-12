@@ -4,7 +4,8 @@ import { MoreVertical, UserPlus, Flag } from 'lucide-react';
 import useOnClickOutside from '../../hooks/useOnClickOutside';
 
 interface UserProfileProps {
-    userId: number;
+    userId?: number;
+    email?: string;
 }
 
 interface ProfileInfo {
@@ -14,7 +15,7 @@ interface ProfileInfo {
     isFriend: boolean;
 }
 
-const UserProfile = ({ userId }: UserProfileProps) => {
+const UserProfile = ({ userId, email }: UserProfileProps) => {
     const [isOpen, setIsOpen] = useState(false);
     const [reportContent, setReportContent] = useState('');
     const [showReportModal, setShowReportModal] = useState(false);
@@ -25,16 +26,32 @@ const UserProfile = ({ userId }: UserProfileProps) => {
     useOnClickOutside(menuRef, () => setIsOpen(false));
     useOnClickOutside(modalRef, () => setShowReportModal(false));
 
+
     useEffect(() => {
         const fetchProfileInfo = async () => {
             try {
-                const response = await fetch(
-                    `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/members/${userId}/profile-info`,
-                    {
-                        credentials: 'include',
-                        headers: { 'Content-Type': 'application/json' }
-                    }
-                );
+                let url = `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/members`;
+                let options: RequestInit = {
+                    credentials: 'include'
+                };
+
+                if (userId) {
+                    url += `/${userId}/profile-info`;
+                } else if (email) {
+                    url += `/email/profile-info`;
+                    options = {
+                        ...options,
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ email })
+                    };
+                } else {
+                    return;
+                }
+
+                const response = await fetch(url, options);
 
                 if (response.ok) {
                     const data = await response.json();
@@ -46,15 +63,17 @@ const UserProfile = ({ userId }: UserProfileProps) => {
         };
 
         fetchProfileInfo();
-    }, [userId]);
+    }, [userId, email]);
 
     const handleFriendRequest = async () => {
+        if (!profileInfo) return;
+
         try {
             const response = await fetch(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/friends/friend-requests`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
-                body: JSON.stringify({ receiverId: userId })
+                body: JSON.stringify({ receiverId: profileInfo.memberId })
             });
 
             if (response.ok) {
@@ -75,6 +94,8 @@ const UserProfile = ({ userId }: UserProfileProps) => {
     };
 
     const submitReport = async () => {
+        if (!profileInfo) return;
+
         if (!reportContent.trim()) {
             alert('신고 내용을 입력해주세요.');
             return;
@@ -86,7 +107,7 @@ const UserProfile = ({ userId }: UserProfileProps) => {
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
                 body: JSON.stringify({
-                    reportedId: userId,
+                    reportedId: profileInfo.memberId,  // reportedId로 전달
                     content: reportContent
                 })
             });
@@ -116,9 +137,9 @@ const UserProfile = ({ userId }: UserProfileProps) => {
             {profileInfo && (
                 <button
                     onClick={() => setIsOpen(!isOpen)}
-                    className="flex items-center gap-2 hover:bg-gray-100 rounded-lg p-2"
+                    className="flex items-center text-gray-500 hover:text-primary hover:bg-gray-100 rounded p-1"
                 >
-                    <span className="font-medium">{profileInfo.nickname}</span>
+                    <MoreVertical className="w-4 h-4" />  {/* 아이콘만 표시 */}
                 </button>
             )}
 

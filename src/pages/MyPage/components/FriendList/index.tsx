@@ -1,13 +1,18 @@
 import { useState, useEffect } from 'react';
 import UserProfile from '../../../../components/UserProfile';
 
+
+interface FriendRequestProcessedEvent {
+    requestId: number;
+    action: 'accept' | 'reject';
+}
+
 interface Friend {
-    id: number;
+    id: number;          // member의 id
     nickname: string;
     profilePath: string | null;
     status: string;
-    requestId?: number;
-    friendId?: number;
+    requestId?: number;  // friend 테이블의 id (친구 관계의 id)
 }
 
 export default function FriendList() {
@@ -136,6 +141,27 @@ export default function FriendList() {
         }
     };
 
+
+    useEffect(() => {
+        const handleRequestProcessed = (event: CustomEvent<FriendRequestProcessedEvent>) => {
+            const { action } = event.detail;
+
+            // 수락이면 pendingRequests와 acceptedFriends를 모두 갱신
+            if (action === 'accept') {
+                fetchPendingRequests();
+                fetchAcceptedFriends();
+            } else if (action === 'reject') {
+                // 거절이면 pendingRequests만 갱신
+                fetchPendingRequests();
+            }
+        };
+
+        window.addEventListener('friendRequestProcessed', handleRequestProcessed as EventListener);
+        return () => {
+            window.removeEventListener('friendRequestProcessed', handleRequestProcessed as EventListener);
+        };
+    }, []);
+
     useEffect(() => {
         fetchPendingRequests();
         fetchSentRequests();
@@ -165,7 +191,17 @@ export default function FriendList() {
                             <div key={request.id}
                                 className="flex items-center justify-between p-4 bg-primary/5 rounded-lg"
                             >
-                                <UserProfile userId={request.id} />
+                                <div className="flex items-center gap-3">
+                                    <img
+                                        src={request.profilePath?.startsWith('http')
+                                            ? request.profilePath
+                                            : `https://kr.object.ncloudstorage.com/hf-bucket2025/member/${request.profilePath || 'default.png'}`}
+                                        alt={request.nickname}
+                                        className="w-10 h-10 rounded-full"
+                                    />
+                                    <span className="font-medium">{request.nickname}</span>
+                                    <UserProfile userId={request.id} />
+                                </div>
                                 <div className="flex gap-2">
                                     <button
                                         onClick={() => handleAccept(request.requestId!)}
@@ -195,7 +231,17 @@ export default function FriendList() {
                             <div key={request.id}
                                 className="flex items-center justify-between p-4 bg-primary/5 rounded-lg"
                             >
-                                <UserProfile userId={request.id} />
+                                <div className="flex items-center gap-3">
+                                    <img
+                                        src={request.profilePath?.startsWith('http')
+                                            ? request.profilePath
+                                            : `https://kr.object.ncloudstorage.com/hf-bucket2025/member/${request.profilePath || 'default.png'}`}
+                                        alt={request.nickname}
+                                        className="w-10 h-10 rounded-full"
+                                    />
+                                    <span className="font-medium">{request.nickname}</span>
+                                    <UserProfile userId={request.id} />
+                                </div>
                                 <button
                                     onClick={() => handleCancel(request.requestId!)}
                                     className="px-3 py-1 text-red-500 hover:text-red-700 text-sm"
@@ -219,9 +265,19 @@ export default function FriendList() {
                             <div key={friend.id}
                                 className="flex items-center justify-between p-4 bg-primary/5 rounded-lg hover:bg-primary/10 transition-colors"
                             >
-                                <UserProfile userId={friend.id} />
+                                <div className="flex items-center gap-3">
+                                    <img
+                                        src={friend.profilePath?.startsWith('http')
+                                            ? friend.profilePath
+                                            : `https://kr.object.ncloudstorage.com/hf-bucket2025/member/${friend.profilePath || 'default.png'}`}
+                                        alt={friend.nickname}
+                                        className="w-10 h-10 rounded-full"
+                                    />
+                                    <span className="font-medium">{friend.nickname}</span>
+                                    <UserProfile userId={friend.id} />
+                                </div>
                                 <button
-                                    onClick={() => handleDelete(friend.friendId!)}
+                                    onClick={() => handleDelete(friend.requestId!)}
                                     className="px-3 py-1 text-red-500 hover:text-red-700 text-sm"
                                 >
                                     삭제
