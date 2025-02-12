@@ -10,21 +10,21 @@ interface Festival {
     festivalEndDate: string;
 }
 
-interface GenreBannerProps {
-    genre: string;
+interface EventBannerProps {
+    title: string;
     posts: Festival[];
 }
 
-const GenreBanner = ({ genre, posts }: GenreBannerProps) => {
+const SubBanner = ({ title, posts }: EventBannerProps) => {
     const navigate = useNavigate();
 
     return (
         <div className="mt-4 lg:mt-12">
             <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-bold">{genre}</h2>
+                <h2 className="text-lg font-bold">{title}</h2>
                 <button
                     className="text-sm text-primary"
-                    onClick={() => navigate(`/posts?genre=${encodeURIComponent(genre)}`)}
+                    onClick={() => navigate(`/posts?genre=${encodeURIComponent(title)}`)}
                 >
                     더보기
                 </button>
@@ -64,4 +64,4 @@ const GenreBanner = ({ genre, posts }: GenreBannerProps) => {
     );
 };
 
-export default GenreBanner; 
+export default SubBanner;
