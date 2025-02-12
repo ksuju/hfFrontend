@@ -37,7 +37,7 @@ const ProfileImage = ({ profilePath, onImageUpload, onResetImage, fileInputRef }
                     ? profilePath
                     : `https://kr.object.ncloudstorage.com/hf-bucket2025/member/${profilePath}`}
                 alt="프로필"
-                className={`w-64 h-64 rounded-full ${isLoading ? 'opacity-50' : ''}`}
+                className={`w-56 h-56 rounded-full ${isLoading ? 'opacity-50' : ''}`}
             />
             {!isDefaultImage && (  // 기본 이미지가 아닐 때만 삭제 버튼 표시
                 <button

@@ -440,22 +440,17 @@ const UserInfoForm = ({ userInfo, editForm, setEditForm, onUpdate }: UserInfoFor
             );
         }
 
-        // 위치 필드일 때만 넓은 너비 적용
-        const isLocationField = field === 'location';
-        const containerWidth = isLocationField ? 'min-w-[400px]' : 'min-w-[300px]';
-        const inputWidth = isLocationField ? 'w-[300px]' : 'w-48';
-
         return (
             <div className="flex items-center justify-between p-4 border-b border-gray-100 hover:bg-gray-50 min-h-[64px]">
                 <span className="font-bold text-gray-700 w-24 shrink-0">{label}</span>
-                <div className={`flex items-center gap-2 ${containerWidth} justify-end`}>
+                <div className="flex items-center gap-2 min-w-[300px] justify-end">
                     {isEditing ? (
                         <>
                             <input
                                 type={type}
                                 value={typeof editForm[field] === 'boolean' ? '' : (editForm[field] || '')}
                                 onChange={(e) => setEditForm({ ...editForm, [field]: e.target.value })}
-                                className={`${inputWidth} h-9 px-3 border border-gray-300 rounded-lg focus:outline-none focus:border-primary text-sm`}
+                                className="w-48 h-9 px-3 border border-gray-300 rounded-lg focus:outline-none focus:border-primary text-sm"
                             />
                             <div className="flex items-center gap-2 w-[120px] shrink-0">
                                 <button
@@ -476,7 +471,7 @@ const UserInfoForm = ({ userInfo, editForm, setEditForm, onUpdate }: UserInfoFor
                             </div>
                         </>
                     ) : (
-                        <div className={`flex items-center gap-2 justify-end ${inputWidth} h-9`}>
+                        <div className="flex items-center gap-2 justify-end w-48 h-9">
                             <span className="text-gray-600 leading-9 truncate">
                                 {field === 'gender' ?
                                     (userInfo[field] === 'M' ? '남자' : userInfo[field] === 'W' ? '여자' : '미설정') :

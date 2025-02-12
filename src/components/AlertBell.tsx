@@ -170,15 +170,15 @@ export const AlertBell = ({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (
     const getDomainBackgroundColor = (domain: string) => {
         switch (domain) {
             case 'GROUP':
-                return 'bg-amber-50';
+                return 'bg-amber-50';  // 연한 노란색
             case 'MEMBER':
-                return 'bg-blue-50';
+                return 'bg-blue-50';   // 연한 파란색
             case 'BOARD':
-                return 'bg-red-50';
+                return 'bg-green-50';  // 연한 초록색
             case 'FESTIVAL':
-                return 'bg-purple-50';
+                return 'bg-purple-50'; // 연한 보라색
             case 'COMMENT':
-                return 'bg-pink-50';
+                return 'bg-pink-50';   // 연한 분홍색
             default:
                 return 'bg-amber-50';
         }

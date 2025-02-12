@@ -27,14 +27,14 @@ const ProfileSection = ({ userInfo, editForm, setEditForm, onImageUpload, onUpda
     };
 
     return (
-        <div className="relative">
+        <div className="relative w-full">
             <button
                 onClick={handleDelete}
                 className="absolute top-0 right-0 text-sm text-gray-400 hover:text-red-500 transition-colors"
             >
                 회원탈퇴
             </button>
-            <div className="flex items-center gap-8">
+            <div className="flex items-center gap-8 w-full">
                 <div className="flex flex-col items-center">
                     <ProfileImage
                         profilePath={userInfo.profilePath}
@@ -45,7 +45,7 @@ const ProfileSection = ({ userInfo, editForm, setEditForm, onImageUpload, onUpda
                 </div>
                 <div className="flex-1 space-y-4">
                     <div className="flex items-center justify-between bg-primary/5 p-3 rounded-lg">
-                        <span className="font-bold text-gray-700">닉네임</span>
+                        <span className="font-bold text-gray-700 text-sm">닉네임</span>
                         {isNicknameEditing ? (
                             <div className="flex items-center gap-2">
                                 <input
@@ -85,16 +85,12 @@ const ProfileSection = ({ userInfo, editForm, setEditForm, onImageUpload, onUpda
                         )}
                     </div>
                     <div className="flex items-center justify-between bg-primary/5 p-3 rounded-lg">
-                        <span className="font-bold text-gray-700">계정</span>
-                        <div className="flex items-center gap-2">
-                            <span className="text-gray-600">
-                                {userInfo.email || '이메일 없음'}
-                            </span>
-                        </div>
+                        <span className="font-bold text-gray-700 text-sm">계정</span>
+                        <span className="text-gray-600 text-sm">{userInfo.email || '이메일 없음'}</span>
                     </div>
                     <div className="flex items-center justify-between bg-primary/5 p-3 rounded-lg">
-                        <span className="font-bold text-gray-700">가입일</span>
-                        <span className="text-gray-600">{formatDate(userInfo.createDate)}</span>
+                        <span className="font-bold text-gray-700 text-sm">가입일</span>
+                        <span className="text-gray-600 text-sm">{formatDate(userInfo.createDate)}</span>
                     </div>
                 </div>
             </div>
