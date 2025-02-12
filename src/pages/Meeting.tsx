@@ -487,7 +487,7 @@ const Meeting = () => {
             </div>
 
             {/* 인원관리 팝업창 */}
-            {isManagePopupOpen && (
+            {isManagePopupOpen && selectedMeeting && (
                 <ManageMembersPopup
                     activeTab={activeTab}
                     setActiveTab={setActiveTab}

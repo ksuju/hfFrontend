@@ -4,12 +4,19 @@ interface ManageMembersPopupProps {
     activeTab: string;
     setActiveTab: (tab: string) => void;
     sortedJoinMembers: string[][];
-    selectedMeeting: any;
+    selectedMeeting: Metting;
     handleConfirmDelegate: (chatRoomId: string, memberId: string) => void;
     handleConfirmKick: (chatRoomId: string, memberId: string) => void;
     handleApprove: (chatRoomId: string, memberId: string) => void;
     handleRefuse: (chatRoomId: string, memberId: string) => void;
     closeManagePopup: (e: React.MouseEvent<HTMLButtonElement>) => void;
+}
+
+
+interface Metting {
+    chatRoomId : string;
+    waitingMemberIdNickNameList: string[][];
+    // ... 다른 필드들
 }
 
 const ManageMembersPopup: React.FC<ManageMembersPopupProps> = ({
@@ -23,6 +30,8 @@ const ManageMembersPopup: React.FC<ManageMembersPopupProps> = ({
     handleRefuse,
     closeManagePopup,
 }) => {
+    console.log(selectedMeeting);
+
     return (
         <div
             className="fixed inset-0 bg-gray-500 bg-opacity-10 flex justify-center items-center z-20"
@@ -60,7 +69,7 @@ const ManageMembersPopup: React.FC<ManageMembersPopupProps> = ({
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    handleConfirmDelegate(selectedMeeting?.chatRoomId ?? '', id);
+                                                    handleConfirmDelegate(String(selectedMeeting?.chatRoomId ?? ''), id);
                                                 }}
                                                 className="text-primary"
                                             >
@@ -69,7 +78,7 @@ const ManageMembersPopup: React.FC<ManageMembersPopupProps> = ({
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    handleConfirmKick(selectedMeeting?.chatRoomId ?? '', id);
+                                                    handleConfirmKick(String(selectedMeeting?.chatRoomId ?? ''), id);
                                                 }}
                                                 className="text-gray-500"
                                             >
@@ -83,15 +92,15 @@ const ManageMembersPopup: React.FC<ManageMembersPopupProps> = ({
                     ) : (
                         <ul>
                             {(selectedMeeting?.waitingMemberIdNickNameList?.length ?? 0) > 0 ? (
-                                selectedMeeting?.waitingMemberIdNickNameList.map(([id, nickname]) => (
-                                    <li key={id} className="p-2 border-b flex items-center w-full">
-                                        <span>{nickname}</span>
+                                selectedMeeting?.waitingMemberIdNickNameList.map((item, index) => (
+                                    <li key={index} className="p-2 border-b flex items-center w-full">
+                                        <span>{item[1]}</span> {/* item[1]은 nickname */}
                                         <div className="ml-auto flex space-x-4">
                                             <button
                                                 className="text-primary"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    handleApprove(selectedMeeting?.chatRoomId ?? '', id); // 승인 버튼 클릭 시 승인 처리
+                                                    handleApprove(String(selectedMeeting?.chatRoomId ?? ''), String(index)); // 승인 버튼 클릭 시 승인 처리
                                                 }}
                                             >
                                                 승인
@@ -100,7 +109,7 @@ const ManageMembersPopup: React.FC<ManageMembersPopupProps> = ({
                                                 className="text-gray-500"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    handleRefuse(selectedMeeting?.chatRoomId ?? '', id); // 거절 버튼 클릭 시 거절 처리
+                                                    handleRefuse(String(selectedMeeting?.chatRoomId ?? ''), String(index)); // 거절 버튼 클릭 시 거절 처리
                                                 }}
                                             >
                                                 거절

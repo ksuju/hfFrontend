@@ -95,7 +95,9 @@ const Main = () => {
     const [kickChatRoomId, setKickChatRoomId] = useState<string | null>(null);
 
     const userInfo: string | null = localStorage.getItem("userInfo")
-    const userLocation = userInfo && JSON.parse(userInfo).data.location ? JSON.parse(userInfo).data.location.split(" ")[0] : "서울";
+    const userLocation = userInfo
+        ? JSON.parse(userInfo)?.data?.location?.split(" ")[0] ?? "서울"
+        : "서울";
 
     const handleTogglePopup = (chatRoomId: string) => {
         setOpenPopupId(openPopupId === chatRoomId ? null : chatRoomId);
