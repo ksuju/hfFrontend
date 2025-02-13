@@ -16,6 +16,12 @@ const Signup = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
+        if (!email || !password || !nickname) {
+            alert('필수 입력값이 누락되었습니다. 모든 필수 항목을 입력해 주세요.');
+            return;
+        }
+
+
         if (password !== confirmPassword) {
             setPasswordError('비밀번호가 일치하지 않습니다.');
             return;
@@ -42,13 +48,12 @@ const Signup = () => {
                 body: JSON.stringify(requestData)
             });
 
+            const data = await response.json();
             if (!response.ok) {
-                const errorData = await response.json();
-                alert(errorData.msg || '회원가입 실패했습니다.');
+                alert(data.msg || '회원가입 실패했습니다.');
                 return;
             }
 
-            const data = await response.json();
             console.log('회원가입 성공:', data);
             alert('회원가입이 완료되었습니다.');
             navigate('/login');
