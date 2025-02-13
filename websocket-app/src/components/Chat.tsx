@@ -507,10 +507,10 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
         };
 
         try {
-            stompClientRef.current.publish({
-                destination: `/app/chat/${chatRoomId}`,
-                body: JSON.stringify(messageToSend),
-            });
+            // stompClientRef.current.publish({
+            //     destination: `/app/chat/${chatRoomId}`,
+            //     body: JSON.stringify(messageToSend),
+            // });
 
             await axios.post(
                 request_URL + `/api/v1/chatRooms/${chatRoomId}/messages`,
