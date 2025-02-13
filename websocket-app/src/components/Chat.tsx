@@ -851,7 +851,13 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                     {/* 새 메시지 알림 및 스크롤 버튼 */}
                     {showScrollButton && (
                         <div
-                            className="sticky bottom-0 left-0 right-0 flex justify-center"
+                            className="sticky bottom-4 left-0 right-0 flex justify-center"
+                            style={{
+                                position: 'sticky',
+                                bottom: '20px',
+                                width: '100%',
+                                zIndex: 10
+                            }}
                         >
                             <button
                                 onClick={() => scrollToBottom(true)}
