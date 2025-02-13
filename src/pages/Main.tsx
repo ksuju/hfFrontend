@@ -95,6 +95,9 @@ const Main = () => {
     const [expandedPostId, setExpandedPostId] = useState<string | null>(null);
 
     const userInfo: string | null = localStorage.getItem("userInfo");
+    const userLocation = userInfo
+        ? JSON.parse(userInfo)?.data?.location?.split(" ")[0] ?? "서울"
+        : "서울";
 
     const handleTogglePopup = (chatRoomId: string) => {
         setOpenPopupId(openPopupId === chatRoomId ? null : chatRoomId);
@@ -517,6 +520,9 @@ const Main = () => {
             {/* 검색창 */}
             <SearchBar placeholder="축제, 공연, 모임을 검색해보세요" onChange={handleSearch} />
             <div className="px-4 mb-6 mt-20">
+                <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-lg font-bold">{userLocation}에서 모임이 가장 많은 축제예요!</h2>
+                </div>
                 {/* 로딩 중 표시 */}
                 {isLoading ? (
                     <div className="text-center text-gray-500 mt-4">Loading...</div>
