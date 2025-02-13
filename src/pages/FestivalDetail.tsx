@@ -1,4 +1,4 @@
-import {useEffect, useState} from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import send from "../assets/images/send.png"
 import dots from '../assets/images/three-dots.png';
@@ -73,7 +73,7 @@ export default function FestivalDetail() {
     const [isConfirmLeaveOpen, setIsConfirmLeaveOpen] = useState<string | null>(null);
     const [isManagePopupOpen, setIsManagePopupOpen] = useState(false);
     const [isEditPopupOpen, setIsEditPopupOpen] = useState(false);
-    const [editRoomData, setEditRoomData] = useState({title: "", content: "", limit: 10,});
+    const [editRoomData, setEditRoomData] = useState({ title: "", content: "", limit: 10, });
     const [activeTab, setActiveTab] = useState("참여자");
     const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
     const selectedMeeting = meetingPosts.find(meeting => meeting.chatRoomId === selectedRoomId);
@@ -87,7 +87,8 @@ export default function FestivalDetail() {
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [isCreatePopupOpen, setIsCreatePopupOpen] = useState(false);
-    const [newRoomData, setNewRoomData] = useState({title: "", content: "", limit: 10,});
+    const [newRoomData, setNewRoomData] = useState({ title: "", content: "", limit: 10, });
+    const [expandedPostId, setExpandedPostId] = useState<string | null>(null);
 
     const handleTogglePopup = (chatRoomId: string) => {
         setOpenPopupId(openPopupId === chatRoomId ? null : chatRoomId);
@@ -387,15 +388,6 @@ export default function FestivalDetail() {
         }
     };
 
-    // 수정 폼 입력값 변경 핸들러
-    const edithandleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-        const { name, value } = e.target;
-        setEditRoomData((prev) => ({
-            ...prev,
-            [name]: name === "limit" ? Number(value) : value,
-        }));
-    };
-
     // 수정내용 저장하기 버튼 메서드
     const handleSaveEdit = async (chatRoomId: string) => {
         const requestBody = {
@@ -683,6 +675,18 @@ export default function FestivalDetail() {
         }));
     };
 
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setEditRoomData((prev) => ({
+            ...prev,
+            [name]: name === "limit" ? Number(value) : value,
+        }));
+    };
+
+    const handleCardClick = (chatRoomId: string) => {
+        setExpandedPostId(expandedPostId === chatRoomId ? null : chatRoomId);
+    };
+
     useEffect(() => {
         if (selectedId) {
             fetchPost();
@@ -690,6 +694,7 @@ export default function FestivalDetail() {
             fetchUserInfo();
         }
     }, [selectedId]);
+
 
     if (isLoading) return <div className="text-center text-gray-500 mt-10">Loading...</div>;
     if (error) return <div className="text-center text-red-500 mt-10">{error}</div>;
@@ -781,10 +786,10 @@ export default function FestivalDetail() {
                                                                         수정하기
                                                                     </button>
                                                                     <button className="w-full text-left px-3 py-2 hover:bg-gray-100 text-primary"
-                                                                            onClick={() => {
-                                                                                openDeleteConfirm(comment.commentId);
-                                                                                setSelectedComment(null);
-                                                                            }}>
+                                                                        onClick={() => {
+                                                                            openDeleteConfirm(comment.commentId);
+                                                                            setSelectedComment(null);
+                                                                        }}>
                                                                         삭제하기
                                                                     </button>
                                                                 </div>
@@ -839,10 +844,10 @@ export default function FestivalDetail() {
                                                                                             수정하기
                                                                                         </button>
                                                                                         <button className="w-full text-left px-3 py-2 hover:bg-gray-100 text-primary"
-                                                                                                onClick={() => {
-                                                                                                    openDeleteConfirm(reply.commentId);
-                                                                                                    setSelectedComment(null);
-                                                                                                }}>
+                                                                                            onClick={() => {
+                                                                                                openDeleteConfirm(reply.commentId);
+                                                                                                setSelectedComment(null);
+                                                                                            }}>
                                                                                             삭제하기
                                                                                         </button>
                                                                                     </div>
@@ -866,13 +871,13 @@ export default function FestivalDetail() {
 
                     {/* ✅ 맨 아래 입력 필드에서 일반 댓글/답글 입력 */}
                     <div className="flex items-center space-x-2 mt-1"
-                         onClick={(e) => {
-                             e.stopPropagation();
-                             if (currentUserID == "") {
-                                 alert("로그인이 필요합니다.");
-                                 return;
-                             }
-                         }}>
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            if (currentUserID == "") {
+                                alert("로그인이 필요합니다.");
+                                return;
+                            }
+                        }}>
                         <input
                             type="text"
                             placeholder={editingCommentId ? "댓글 수정 중..." : replyingTo ? "답글 추가..." : "댓글 추가..."}
@@ -956,47 +961,148 @@ export default function FestivalDetail() {
                         </button>
                     </div>
                 </div>
-                <div className="space-y-3">
-                    {meetingPosts.map((meeting) => {
-                        const isUserWaiting = isUserInWaitRoom(meeting.chatRoomId);
-                        const isUserJoined = isUserInJoinRoom(meeting.chatRoomId);
-                        const isRoomOwner = meeting.memberId === currentUser?.id;
+                {meetingPosts && meetingPosts.length > 0 ? (
+                    <div className="space-y-3">
+                        {meetingPosts.map((meeting) => {
+                            const isUserWaiting = isUserInWaitRoom(meeting.chatRoomId);
+                            const isUserJoined = isUserInJoinRoom(meeting.chatRoomId);
+                            const isRoomOwner = meeting.memberId === currentUser?.id;
 
-                        return (
-                            <div
-                                key={meeting.chatRoomId}
-                                className="bg-white rounded-lg shadow-md p-4 border border-gray-100 cursor-pointer relative"
-                                onClick={() => {
-                                    if (!isUserJoined) {
-                                        console.log("채팅방에 참여해야 이동할 수 있습니다.");
-                                        return; // 클릭 가능하지만 동작 안 함
-                                    }
-                                    handleChatRoomClick(meeting.chatRoomId, isUserJoined);
-                                }}
-                            >
-                                {/* 제목 + 버튼 */}
-                                <div className="flex justify-between items-start">
-                                    <h3 className="font-medium text-base flex-grow truncate max-w-[75%]">
+                            return (
+                                <div
+                                    key={meeting.chatRoomId}
+                                    className="bg-white rounded-lg p-4 border border-gray-100 shadow-md hover:border-[#FF6B36] transition-colors duration-200 cursor-pointer"
+                                    onClick={() => handleCardClick(meeting.chatRoomId)}
+                                >
+                                    {/* 토요명품 표시 */}
+                                    <div className="flex justify-between items-center mb-4">
+                                        <div className={`inline-block text-xs px-3 py-1 rounded-full ${isUserJoined
+                                            ? "bg-green-50 text-green-500"
+                                            : "bg-[#FFF4F1] text-[#FF6B36]"
+                                            }`}>
+                                            {meeting.festivalName}
+                                        </div>
+                                        <div className="flex items-center text-xs text-gray-400">
+                                            <p>{new Date(meeting.createDate).toISOString().slice(0, 10).replace(/-/g, ".")}</p>
+                                            {/* 팝업 메뉴 (점 세개) */}
+                                            {isUserJoined && (
+                                                <div className="relative">
+                                                    <div className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 ml-2 border border-gray-200">
+                                                        <img
+                                                            src={dots}
+                                                            alt="사이드바"
+                                                            className="h-5 cursor-pointer"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleTogglePopup(meeting.chatRoomId);
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    {/* 팝업 메뉴 */}
+                                                    {openPopupId === meeting.chatRoomId && (
+                                                        <div
+                                                            className="absolute right-0 top-8 bg-white shadow-md rounded-lg border border-gray-200 w-20 text-sm z-10"
+                                                            onClick={(e) => e.stopPropagation()}
+                                                            onBlur={() => setOpenPopupId(null)}
+                                                            tabIndex={0}
+                                                        >
+                                                            {isRoomOwner && (
+                                                                <>
+                                                                    <button
+                                                                        className="w-full text-left px-3 py-2 hover:bg-gray-100 text-black"
+                                                                        onClick={() => handleManageMembers(meeting.chatRoomId)}
+                                                                    >
+                                                                        인원 관리
+                                                                    </button>
+                                                                    <button
+                                                                        className="w-full text-left px-3 py-2 hover:bg-gray-100 text-black"
+                                                                        onClick={() => handleEditRoom(meeting.chatRoomId)}
+                                                                    >
+                                                                        수정하기
+                                                                    </button>
+                                                                </>
+                                                            )}
+                                                            <button
+                                                                className="w-full text-left px-3 py-2 hover:bg-gray-100 text-primary"
+                                                                onClick={() => handleLeaveRoom(meeting.chatRoomId)}
+                                                            >
+                                                                나가기
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* 제목 */}
+                                    <h3 className="font-medium text-base mb-2 truncate max-w-[75%]">
                                         {meeting.roomTitle}
                                     </h3>
-                                    {/* 참여 상태 표시 */}
-                                    <div className="flex items-center space-x-3 relative">
-                                        {isUserJoined && (
-                                            <img
-                                                src={dots}
-                                                alt="사이드바"
-                                                className="h-8 mt-[-6px] mr-[-6px] cursor-pointer"
-                                                onClick={(e) => {
-                                                    e.stopPropagation(); // 채팅방 클릭 방지
-                                                    handleTogglePopup(meeting.chatRoomId);
-                                                }}
-                                            />
-                                        )}
-                                        {!isUserJoined && (
+
+                                    {/* 내용 */}
+
+                                    <p className={`text-sm text-gray-500 mb-6 ${expandedPostId === meeting.chatRoomId
+                                        ? ""
+                                        : "truncate"
+                                        } max-w-full`}>
+                                        {meeting.roomContent}
+                                    </p>
+
+                                    {/* 하단 정보 */}
+                                    <div className="flex items-center justify-between text-xs text-gray-400 mt-2">
+                                        <div className="flex items-center gap-2">
+                                            {/* 참여 인원 */}
+
+                                            <div className="flex items-center gap-1 text-gray-500">
+                                                <svg
+                                                    className="w-4 h-4"
+                                                    fill="none"
+                                                    viewBox="0 0 24 24"
+                                                    stroke="currentColor"
+                                                >
+                                                    <path
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                        strokeWidth="2"
+                                                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                                                    />
+                                                </svg>
+                                                <span>{meeting.joinMemberNum}/{meeting.roomMemberLimit}</span>
+                                            </div>
+
+                                            {/* 프로그레스 바 */}
+                                            <div className="w-32 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                                <div
+                                                    className="h-full bg-gray-500"
+                                                    style={{
+                                                        width: `${(Number(meeting.joinMemberNum) / Number(meeting.roomMemberLimit)) * 100}%`
+                                                    }}
+                                                />
+                                            </div>
+
+                                            {/* 참여중 표시 */}
+                                            {isUserJoined && (
+                                                <span className="text-green-500 bg-green-50 px-2 py-0.5 rounded-full">
+                                                    참여중
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        {/* 참여하기/입장하기 버튼 */}
+                                        {isUserJoined ? (
                                             <button
-                                                className={`text-sm font-medium px-3 rounded-md ${
-                                                    isUserWaiting ? "text-gray-500 border-gray-400" : "text-primary border-primary"
-                                                }`}
+                                                className="text-sm font-medium px-3 py-1 rounded-full bg-[#FF6B36] text-white hover:bg-[#FF855B] transition-colors duration-200"
+                                                onClick={() => handleChatRoomClick(meeting.chatRoomId, true)}
+                                            >
+                                                입장하기
+                                            </button>
+                                        ) : (
+                                            <button
+                                                className={`text-sm font-medium px-3 py-1 rounded-full border transition-colors duration-200 ${isUserWaiting
+                                                    ? "text-gray-500 border-gray-400 hover:bg-gray-100"
+                                                    : "text-[#FF6B36] border border-[#FF6B36] hover:bg-[#FFF4F1]"
+                                                    }`}
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     if (currentUserID == "") {
@@ -1010,214 +1116,195 @@ export default function FestivalDetail() {
                                             </button>
                                         )}
                                     </div>
-                                </div>
-                                {/* 팝업 메뉴 */}
-                                {openPopupId === meeting.chatRoomId && (
-                                    <div
-                                        className="absolute right-5 bg-white shadow-md rounded-lg border border-gray-200 w-20 text-sm z-10"
-                                        onClick={(e) => e.stopPropagation()} // 채팅방 클릭 방지
-                                        onBlur={() => setOpenPopupId(null)}
-                                        tabIndex={0} // 포커스 유지
-                                    >
-                                        {isRoomOwner && (
-                                            <>
-                                                <button
-                                                    className="w-full text-left px-3 py-2 hover:bg-gray-100"
-                                                    onClick={() => handleManageMembers(meeting.chatRoomId)}
-                                                >
-                                                    인원 관리
-                                                </button>
-                                                <button
-                                                    className="w-full text-left px-3 py-2 hover:bg-gray-100"
-                                                    onClick={() => handleEditRoom(meeting.chatRoomId)}
-                                                >
-                                                    수정하기
-                                                </button>
-                                            </>
-                                        )}
-                                        <button
-                                            className="w-full text-left px-3 py-2 hover:bg-gray-100 text-primary"
-                                            onClick={() => handleLeaveRoom(meeting.chatRoomId)}
+
+                                    {/* 인원관리 팝업창 */}
+                                    {isManagePopupOpen && (
+                                        <div
+                                            className="fixed inset-0 bg-gray-500 bg-opacity-10 flex justify-center items-center z-20"
+                                            onClick={(e) => e.stopPropagation()} // 팝업 외부 클릭 방지
                                         >
-                                            나가기
-                                        </button>
-                                    </div>
-                                )}
-
-                                {/* 인원관리 팝업창 */}
-                                {isManagePopupOpen && (
-                                    <div
-                                        className="fixed inset-0 bg-gray-500 bg-opacity-10 flex justify-center items-center z-20"
-                                        onClick={(e) => e.stopPropagation()} // 팝업 외부 클릭 방지
-                                    >
-                                        <div className="bg-white w-2/3 h-3/4 p-6 rounded-lg shadow-md flex flex-col">
-                                            <h3 className="text-lg font-semibold mb-4">인원 관리</h3>
-                                            {/* 메뉴바 */}
-                                            <div className="flex border-b">
-                                                {[
-                                                    { label: "참여자", count: sortedJoinMembers.length },
-                                                    { label: "대기자", count: selectedMeeting?.waitingMemberIdNickNameList?.length ?? 0 },
-                                                ].map(({ label, count }) => (
-                                                    <button
-                                                        key={label}
-                                                        className={`flex-1 p-2 text-center text-lg font-medium ${
-                                                            activeTab === label ? "border-b-2 border-primary text-primary" : "text-gray-500"
-                                                        }`}
-                                                        onClick={() => setActiveTab(label)}
-                                                    >
-                                                        {`${label} ${count}`}
-                                                    </button>
-                                                ))}
-                                            </div>
-
-                                            {/* 내용 */}
-                                            <div className="flex-grow overflow-y-auto p-4">
-                                                {activeTab === "참여자" ? (
-                                                    <ul>
-                                                        {sortedJoinMembers.map(([id, nickname], index) => (
-                                                            <li key={id} className="p-2 border-b flex items-center w-full">
-                                                                <span>{nickname}</span>
-                                                                {index === 0 && <span className="text-yellow-500 ml-1">👑</span>}
-                                                                {index !== 0 && (
-                                                                    <div className="ml-auto flex space-x-4">
-                                                                        <button
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                handleConfirmDelegate(selectedMeeting?.chatRoomId ?? '', id);
-                                                                            }}
-                                                                            className="text-primary"
-                                                                        >
-                                                                            위임
-                                                                        </button>
-                                                                        <button
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                handleConfirmKick(selectedMeeting?.chatRoomId ?? '', id);
-                                                                            }}
-                                                                            className="text-gray-500"
-                                                                        >
-                                                                            강퇴
-                                                                        </button>
-                                                                    </div>
-                                                                )}
-                                                            </li>
-                                                        ))}
-                                                    </ul>
-                                                ) : (
-                                                    <ul>
-                                                        {(selectedMeeting?.waitingMemberIdNickNameList?.length ?? 0) > 0 ? (
-                                                            selectedMeeting?.waitingMemberIdNickNameList.map(([id, nickname]) => (
-                                                                <li key={id} className="p-2 border-b flex items-center w-full">
-                                                                    <span>{nickname}</span>
-                                                                    <div className="ml-auto flex space-x-4">
-                                                                        <button
-                                                                            className="text-primary"
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                handleApprove(selectedMeeting?.chatRoomId ?? '', id); // 승인 버튼 클릭 시 승인 처리
-                                                                            }}
-                                                                        >
-                                                                            승인
-                                                                        </button>
-                                                                        <button
-                                                                            className="text-gray-500"
-                                                                            onClick={(e) => {
-                                                                                e.stopPropagation();
-                                                                                handleRefuse(selectedMeeting?.chatRoomId ?? '', id); // 거절 버튼 클릭 시 거절 처리
-                                                                            }}
-                                                                        >
-                                                                            거절
-                                                                        </button>
-                                                                    </div>
-                                                                </li>
-                                                            ))
-                                                        ) : (
-                                                            <p className="text-center text-gray-500">대기자가 없습니다.</p>
-                                                        )}
-                                                    </ul>
-                                                )}
-                                            </div>
-
-                                            {/* 닫기 버튼 */}
-                                            <div className="text-right mt-4">
-                                                <button className="px-4 py-2 text-primary rounded-lg" onClick={(e) => closeManagePopup(e)}>
-                                                    닫기</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* 수정하기 팝업 */}
-                                {isEditPopupOpen && (
-                                    <div className="fixed inset-0 bg-gray-500 bg-opacity-10 flex justify-center items-center z-20"
-                                         onClick={(e) => e.stopPropagation()}>
-                                        <div className="bg-white w-2/3 h-4/7 p-6 rounded-lg shadow-md flex flex-col">
-                                            <h3 className="text-lg font-semibold mb-4">채팅방 수정</h3>
-
-                                            <label className="block mb-2">
-                                                제목
-                                                <input
-                                                    type="text"
-                                                    name="title"
-                                                    value={editRoomData.title}
-                                                    onChange={edithandleChange}
-                                                    maxLength={100}
-                                                    className="w-full border p-2 rounded mt-1"
-                                                />
-                                            </label>
-
-                                            <label className="block mb-2">
-                                                내용
-                                                <textarea
-                                                    name="content"
-                                                    value={editRoomData.content}
-                                                    onChange={edithandleChange}
-                                                    maxLength={500}
-                                                    className="w-full border p-2 rounded mt-1 h-32"
-                                                />
-                                            </label>
-
-                                            <label className="block mb-4">
-                                                인원 제한
-                                                <select
-                                                    name="limit"
-                                                    value={editRoomData.limit}
-                                                    onChange={edithandleChange}
-                                                    className="w-full border p-2 rounded mt-1 mb-2"
-                                                >
-                                                    {Array.from({ length: 10 }, (_, i) => (i + 1) * 10).map((num) => (
-                                                        <option key={num} value={num}>{num}명</option>
+                                            <div className="bg-white w-2/3 h-3/4 p-6 rounded-lg shadow-md flex flex-col">
+                                                <h3 className="text-lg font-semibold mb-4">인원 관리</h3>
+                                                {/* 메뉴바 */}
+                                                <div className="flex border-b">
+                                                    {[
+                                                        { label: "참여자", count: sortedJoinMembers.length },
+                                                        { label: "대기자", count: selectedMeeting?.waitingMemberIdNickNameList?.length ?? 0 },
+                                                    ].map(({ label, count }) => (
+                                                        <button
+                                                            key={label}
+                                                            className={`flex-1 p-2 text-center text-lg font-medium ${activeTab === label ? "border-b-2 border-primary text-primary" : "text-gray-500"
+                                                                }`}
+                                                            onClick={() => setActiveTab(label)}
+                                                        >
+                                                            {`${label} ${count}`}
+                                                        </button>
                                                     ))}
-                                                </select>
-                                            </label>
+                                                </div>
 
-                                            <div className="flex justify-end space-x-4">
-                                                <button className="pl-4 py-2 text-primary" onClick={() => setIsEditPopupOpen(false)}>취소</button>
-                                                <button className="pl-4 py-2 text-primary" onClick={() => handleSaveEdit(selectedMeeting?.chatRoomId ?? '')}>
-                                                    저장
-                                                </button>
+                                                {/* 내용 */}
+                                                <div className="flex-grow overflow-y-auto p-4">
+                                                    {activeTab === "참여자" ? (
+                                                        <ul>
+                                                            {sortedJoinMembers.map(([id, nickname], index) => (
+                                                                <li key={id} className="p-2 border-b flex items-center w-full">
+                                                                    {index === 0 ? (
+                                                                        <svg
+                                                                            className="w-6 h-6 mr-2 text-yellow-500"
+                                                                            fill="currentColor"
+                                                                            viewBox="0 0 24 24"
+                                                                        >
+                                                                            <path d="M5 16L3 5L8.5 10L12 4L15.5 10L21 5L19 16H5ZM19 19H5V21H19V19Z" />
+                                                                        </svg>
+                                                                    ) : (
+                                                                        <svg
+                                                                            className="w-6 h-6 mr-2 text-gray-400"
+                                                                            fill="none"
+                                                                            stroke="currentColor"
+                                                                            viewBox="0 0 24 24"
+                                                                        >
+                                                                            <path
+                                                                                strokeLinecap="round"
+                                                                                strokeLinejoin="round"
+                                                                                strokeWidth="2"
+                                                                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                                                                            />
+                                                                        </svg>
+                                                                    )}
+                                                                    <span>{nickname}</span>
+                                                                    {index !== 0 && (
+                                                                        <div className="ml-auto flex space-x-4">
+                                                                            <button
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    handleConfirmDelegate(selectedMeeting?.chatRoomId ?? '', id);
+                                                                                }}
+                                                                                className="text-primary hover:bg-[#FFF4F1] px-2 py-1 rounded-md transition-colors duration-200"
+                                                                            >
+                                                                                위임
+                                                                            </button>
+                                                                            <button
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    handleConfirmKick(selectedMeeting?.chatRoomId ?? '', id);
+                                                                                }}
+                                                                                className="text-gray-500 hover:bg-gray-100 px-2 py-1 rounded-md transition-colors duration-200"
+                                                                            >
+                                                                                강퇴
+                                                                            </button>
+                                                                        </div>
+                                                                    )}
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    ) : (
+                                                        <ul>
+                                                            {(selectedMeeting?.waitingMemberIdNickNameList?.length ?? 0) > 0 ? (
+                                                                selectedMeeting?.waitingMemberIdNickNameList.map(([id, nickname]) => (
+                                                                    <li key={id} className="p-2 border-b flex items-center w-full">
+                                                                        <span>{nickname}</span>
+                                                                        <div className="ml-auto flex space-x-4">
+                                                                            <button
+                                                                                className="text-primary hover:bg-[#FFF4F1] px-2 py-1 rounded-md transition-colors duration-200"
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    handleApprove(selectedMeeting?.chatRoomId ?? '', id);
+                                                                                }}
+                                                                            >
+                                                                                승인
+                                                                            </button>
+                                                                            <button
+                                                                                className="text-gray-500 hover:bg-gray-100 px-2 py-1 rounded-md transition-colors duration-200"
+                                                                                onClick={(e) => {
+                                                                                    e.stopPropagation();
+                                                                                    handleRefuse(selectedMeeting?.chatRoomId ?? '', id);
+                                                                                }}
+                                                                            >
+                                                                                거절
+                                                                            </button>
+                                                                        </div>
+                                                                    </li>
+                                                                ))
+                                                            ) : (
+                                                                <p className="text-center text-gray-500">대기자가 없습니다.</p>
+                                                            )}
+                                                        </ul>
+                                                    )}
+                                                </div>
+
+                                                {/* 닫기 버튼 */}
+                                                <div className="text-right mt-4">
+                                                    <button className="px-4 py-2 text-primary rounded-lg" onClick={(e) => closeManagePopup(e)}>
+                                                        닫기</button>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                )}
+                                    )
+                                    }
 
-                                {/* 내용 */}
-                                <p className="text-sm text-gray-500 mt-1 truncate max-w-full">{meeting.roomContent}</p>
-                                <div className="flex justify-between text-xs text-gray-400 mt-2">
-                                    {/* 생성 날짜 + 축제 이름 */}
-                                    <div className="flex items-center">
-                                        <p>{new Date(meeting.createDate).toISOString().slice(0, 10).replace(/-/g, ".")}</p>
-                                        <p className="ml-2 text-xs text-gray-500">{meeting.festivalName}</p>
-                                    </div>
-                                    {/* 참여 인원 */}
-                                    <div className="text-xs text-gray-500 whitespace-nowrap ml-auto">
-                                        {meeting.joinMemberNum}/{meeting.roomMemberLimit}명
-                                    </div>
+                                    {/* 수정하기 팝업 */}
+                                    {isEditPopupOpen && (
+                                        <div className="fixed inset-0 bg-gray-500 bg-opacity-10 flex justify-center items-center z-20"
+                                            onClick={(e) => e.stopPropagation()}>
+                                            <div className="bg-white w-2/3 h-4/7 p-6 rounded-lg shadow-md flex flex-col">
+                                                <h3 className="text-lg font-semibold mb-4">채팅방 수정</h3>
+
+                                                <label className="block mb-2">
+                                                    제목
+                                                    <input
+                                                        type="text"
+                                                        name="title"
+                                                        value={editRoomData.title}
+                                                        onChange={handleChange}
+                                                        maxLength={100}
+                                                        className="w-full border p-2 rounded mt-1"
+                                                    />
+                                                </label>
+
+                                                <label className="block mb-2">
+                                                    내용
+                                                    <textarea
+                                                        name="content"
+                                                        value={editRoomData.content}
+                                                        onChange={handleChange}
+                                                        maxLength={500}
+                                                        className="w-full border p-2 rounded mt-1 h-32"
+                                                    />
+                                                </label>
+
+                                                <label className="block mb-4">
+                                                    인원 제한
+                                                    <select
+                                                        name="limit"
+                                                        value={editRoomData.limit}
+                                                        onChange={handleChange}
+                                                        className="w-full border p-2 rounded mt-1 mb-2"
+                                                    >
+                                                        {Array.from({ length: 10 }, (_, i) => (i + 1) * 10).map((num) => (
+                                                            <option key={num} value={num}>{num}명</option>
+                                                        ))}
+                                                    </select>
+                                                </label>
+
+                                                <div className="flex justify-end space-x-4">
+                                                    <button className="pl-4 py-2 text-primary" onClick={() => setIsEditPopupOpen(false)}>취소</button>
+                                                    <button className="pl-4 py-2 text-primary" onClick={() => handleSaveEdit(selectedMeeting?.chatRoomId ?? '')}>
+                                                        저장
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
-                            </div>
-                        );
-                    })}
-                </div>
+                            );
+                        })}
+                    </div>
+                ) : (
+                    <div className="text-center py-8">
+                        <p className="text-gray-500">생성된 모임이 없습니다</p>
+                    </div>
+                )}
+                {isLoading && <p className="text-center text-gray-500 mt-4">Loading...</p>}
             </div>
 
             {/* 페이지네이션 UI */}
@@ -1229,9 +1316,8 @@ export default function FestivalDetail() {
                     {Array.from({ length: totalPages }, (_, index) => (
                         <button
                             key={index}
-                            className={`px-3 py-1 border rounded-md ${
-                                index === currentPage ? 'bg-primary text-white' : 'bg-white text-gray-700'
-                            }`}
+                            className={`px-3 py-1 border rounded-md ${index === currentPage ? 'bg-primary text-white' : 'bg-white text-gray-700'
+                                }`}
                             onClick={() => handlePageChange(index)}
                         >
                             {index + 1}
@@ -1241,68 +1327,74 @@ export default function FestivalDetail() {
             </div>
 
             {/* 나가기 최종확인 팝업창 */}
-            {isConfirmLeaveOpen && (
-                <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center z-20">
-                    <div className="bg-white p-6 rounded-lg shadow-md w-80">
-                        <h3 className="text-lg font-semibold mb-8">정말 모임을 떠나시겠어요?</h3>
-                        <div className="flex justify-end space-x-10">
-                            <button
-                                className=" text-primary rounded-lg"
-                                onClick={cancelLeaveRoom}>
-                                취소
-                            </button>
-                            <button
-                                className="text-primary rounded-lg"
-                                onClick={() => confirmLeaveRoom(isConfirmLeaveOpen)}>
-                                나가기
-                            </button>
+            {
+                isConfirmLeaveOpen && (
+                    <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center z-20">
+                        <div className="bg-white p-6 rounded-lg shadow-md w-80">
+                            <h3 className="text-lg font-semibold mb-8">정말 모임을 떠나시겠어요?</h3>
+                            <div className="flex justify-end space-x-4">
+                                <button
+                                    className="text-gray-500 rounded-lg hover:bg-gray-100 px-3 py-1 transition-colors duration-200"
+                                    onClick={cancelLeaveRoom}>
+                                    취소
+                                </button>
+                                <button
+                                    className="text-red-500 rounded-lg hover:bg-red-50 px-3 py-1 transition-colors duration-200"
+                                    onClick={() => confirmLeaveRoom(isConfirmLeaveOpen)}>
+                                    나가기
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* 위임하기 최종확인 팝업창 */}
-            {isConfirmDelegateOpen && (
-                <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center z-20">
-                    <div className="bg-white p-6 rounded-lg shadow-md w-80">
-                        <h3 className="text-lg font-semibold mb-8">
-                            <span className="text-primary">{getNicknameById(selectedDelegateId)}</span>님에게 방장권한을 위임하시겠어요?
-                        </h3>
-                        <div className="flex justify-end space-x-10">
-                            <button className="text-primary rounded-lg" onClick={cancelDelegate}>
-                                취소
-                            </button>
-                            <button className="text-gray-500 rounded-lg" onClick={confirmDelegate}>
-                                위임하기
-                            </button>
+            {
+                isConfirmDelegateOpen && (
+                    <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center z-20">
+                        <div className="bg-white p-6 rounded-lg shadow-md w-80">
+                            <h3 className="text-lg font-semibold mb-8">
+                                <span className="text-primary">{getNicknameById(selectedDelegateId)}</span>님에게 방장권한을 위임하시겠어요?
+                            </h3>
+                            <div className="flex justify-end space-x-10">
+                                <button className="text-primary rounded-lg" onClick={cancelDelegate}>
+                                    취소
+                                </button>
+                                <button className="text-gray-500 rounded-lg" onClick={confirmDelegate}>
+                                    위임하기
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* 강퇴하기 최종확인 팝업창 */}
-            {isConfirmKickOpen && (
-                <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center z-20">
-                    <div className="bg-white p-6 rounded-lg shadow-md w-80">
-                        <h3 className="text-lg font-semibold mb-8">
-                            <span className="text-primary">{getNicknameById(kickTargetId)}</span>님을 강퇴하시겠어요?
-                        </h3>
-                        <div className="flex justify-end space-x-10">
-                            <button className="text-primary rounded-lg" onClick={cancelKick}>
-                                취소
-                            </button>
-                            <button className="text-gray-500 rounded-lg" onClick={confirmKick}>
-                                강퇴하기
-                            </button>
+            {
+                isConfirmKickOpen && (
+                    <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center z-20">
+                        <div className="bg-white p-6 rounded-lg shadow-md w-80">
+                            <h3 className="text-lg font-semibold mb-8">
+                                <span className="text-primary">{getNicknameById(kickTargetId)}</span>님을 강퇴하시겠어요?
+                            </h3>
+                            <div className="flex justify-end space-x-10">
+                                <button className="text-primary rounded-lg" onClick={cancelKick}>
+                                    취소
+                                </button>
+                                <button className="text-gray-500 rounded-lg" onClick={confirmKick}>
+                                    강퇴하기
+                                </button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* ✅ 모임 생성 팝업 */}
             {isCreatePopupOpen && (
                 <div className="fixed inset-0 bg-gray-500 bg-opacity-10 flex justify-center items-center z-20"
-                     onClick={(e) => e.stopPropagation()}>
+                    onClick={(e) => e.stopPropagation()}>
                     <div className="bg-white w-2/3 h-4/7 p-6 rounded-lg shadow-md flex flex-col">
                         <h3 className="text-lg font-semibold mb-4">모임 생성</h3>
 
