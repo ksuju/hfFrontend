@@ -623,7 +623,7 @@ const Main = () => {
                                             ? "bg-green-50 text-green-500"
                                             : "bg-[#FFF4F1] text-[#FF6B36]"
                                             }`}>
-                                            토요명품
+                                            {meeting.festivalName}
                                         </div>
                                         <div className="flex items-center text-xs text-gray-400">
                                             <p>{new Date(meeting.createDate).toISOString().slice(0, 10).replace(/-/g, ".")}</p>
