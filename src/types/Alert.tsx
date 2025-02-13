@@ -6,6 +6,7 @@ export interface Alert {
     createDate: string;
     navigationType: string;
     navigationData: string;
+    processedAction?: string;
 }
 
 export enum AlertDomain {

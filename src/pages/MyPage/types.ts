@@ -12,10 +12,10 @@ export interface UserInfo {
     loginType: string | null;
     onlySocialAccount: boolean;
     socialAccounts: {
-        KAKAO: SocialAccount;
-        NAVER: SocialAccount;
-        GOOGLE: SocialAccount;
-        GITHUB: SocialAccount;
+        KAKAO?: SocialAccount;
+        NAVER?: SocialAccount;
+        GOOGLE?: SocialAccount;
+        GITHUB?: SocialAccount;
     };
 }
 

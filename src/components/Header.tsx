@@ -23,7 +23,7 @@ interface UserInfoType {
 
 const Header = ({ isLoggedIn, setIsLoggedIn, isAlertOpen, setIsAlertOpen, userInfo }: HeaderProps) => {
     const location = useLocation();  // 현재 경로 확인을 위한 hook
-    
+
     // 관리자 페이지에서는 헤더를 렌더링하지 않음
     if (location.pathname.startsWith('/admin')) {
         return null;
@@ -86,7 +86,7 @@ const Header = ({ isLoggedIn, setIsLoggedIn, isAlertOpen, setIsAlertOpen, userIn
                     ) : (
                         <div className="flex items-center gap-4">
                             <AlertBell isOpen={isAlertOpen} setIsOpen={setIsAlertOpen} />
-                            <div className="flex items-center gap-2">
+                            <Link to="/mypage" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
                                 <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
                                     <img
                                         src={userInfo?.data?.profilePath
@@ -102,7 +102,7 @@ const Header = ({ isLoggedIn, setIsLoggedIn, isAlertOpen, setIsAlertOpen, userIn
                                 <span className="text-sm text-gray-600">
                                     {userInfo?.data?.nickname || '사용자'}
                                 </span>
-                            </div>
+                            </Link>
                             <button
                                 onClick={handleLogout}
                                 className="px-4 py-1.5 text-sm font-medium text-primary hover:text-white hover:bg-red-500 rounded-full transition-all duration-200"

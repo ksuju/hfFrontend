@@ -1,12 +1,18 @@
 import { useState, useEffect } from 'react';
+import UserProfile from '../../../../components/UserProfile';
+
+
+interface FriendRequestProcessedEvent {
+    requestId: number;
+    action: 'accept' | 'reject';
+}
 
 interface Friend {
-    id: number;
+    id: number;          // member의 id
     nickname: string;
     profilePath: string | null;
     status: string;
-    requestId?: number;
-    friendId?: number;
+    requestId?: number;  // friend 테이블의 id (친구 관계의 id)
 }
 
 export default function FriendList() {
@@ -135,6 +141,27 @@ export default function FriendList() {
         }
     };
 
+
+    useEffect(() => {
+        const handleRequestProcessed = (event: CustomEvent<FriendRequestProcessedEvent>) => {
+            const { action } = event.detail;
+
+            // 수락이면 pendingRequests와 acceptedFriends를 모두 갱신
+            if (action === 'accept') {
+                fetchPendingRequests();
+                fetchAcceptedFriends();
+            } else if (action === 'reject') {
+                // 거절이면 pendingRequests만 갱신
+                fetchPendingRequests();
+            }
+        };
+
+        window.addEventListener('friendRequestProcessed', handleRequestProcessed as EventListener);
+        return () => {
+            window.removeEventListener('friendRequestProcessed', handleRequestProcessed as EventListener);
+        };
+    }, []);
+
     useEffect(() => {
         fetchPendingRequests();
         fetchSentRequests();
@@ -154,81 +181,37 @@ export default function FriendList() {
     );
 
     return (
-        <div className="bg-white rounded-lg shadow-sm p-6 space-y-8">
-            {/* 보낸 친구 신청 */}
-            <div>
-                <h3 className="text-base font-bold text-primary mb-4">보낸 신청</h3>
-                {sentRequests.length === 0 ? (
-                    <EmptyState message="아직 보낸 친구 신청이 없어요" />
-                ) : (
-                    <div className="space-y-3">
-                        {sentRequests.map(request => (
-                            <div key={request.id}
-                                className="flex items-center justify-between p-4 bg-primary/5 rounded-lg hover:bg-primary/10 transition-colors"
-                            >
-                                <div className="flex items-center">
-                                    <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                                        <img
-                                            src={request.profilePath
-                                                ? request.profilePath.startsWith('http')
-                                                    ? request.profilePath
-                                                    : `https://kr.object.ncloudstorage.com/hf-bucket2025/member/${request.profilePath}`
-                                                : `https://kr.object.ncloudstorage.com/hf-bucket2025/member/default.png`
-                                            }
-                                            alt={request.nickname}
-                                            className="w-full h-full object-cover"
-                                        />
-                                    </div>
-                                    <span className="ml-2 font-medium">{request.nickname}</span>
-                                </div>
-                                <button
-                                    onClick={() => handleCancel(request.requestId!)}
-                                    className="px-3 py-1 text-gray-500 hover:text-gray-700 text-sm"
-                                >
-                                    취소
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
-
-            {/* 받은 친구 신청 */}
-            <div>
-                <h3 className="text-base font-bold text-primary mb-4">받은 신청</h3>
-                {pendingRequests.length === 0 ? (
-                    <EmptyState message="새로운 친구 신청이 없어요" />
-                ) : (
+        <div className="space-y-6">
+            {/* 받은 친구 신청 목록 */}
+            {pendingRequests.length > 0 && (
+                <div>
+                    <h3 className="text-base font-bold text-primary mb-4">받은 친구 신청</h3>
                     <div className="space-y-3">
                         {pendingRequests.map(request => (
                             <div key={request.id}
-                                className="flex items-center justify-between p-4 bg-primary/5 rounded-lg hover:bg-primary/10 transition-colors"
+                                className="flex items-center justify-between p-4 bg-primary/5 rounded-lg"
                             >
-                                <div className="flex items-center">
-                                    <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                                        <img
-                                            src={request.profilePath
-                                                ? request.profilePath.startsWith('http')
-                                                    ? request.profilePath
-                                                    : `https://kr.object.ncloudstorage.com/hf-bucket2025/member/${request.profilePath}`
-                                                : `https://kr.object.ncloudstorage.com/hf-bucket2025/member/default.png`
-                                            }
-                                            alt={request.nickname}
-                                            className="w-full h-full object-cover"
-                                        />
-                                    </div>
-                                    <span className="ml-2 font-medium">{request.nickname}</span>
+                                <div className="flex items-center gap-3">
+                                    <img
+                                        src={request.profilePath?.startsWith('http')
+                                            ? request.profilePath
+                                            : `https://kr.object.ncloudstorage.com/hf-bucket2025/member/${request.profilePath || 'default.png'}`}
+                                        alt={request.nickname}
+                                        className="w-10 h-10 rounded-full"
+                                    />
+                                    <span className="font-medium">{request.nickname}</span>
+                                    <UserProfile userId={request.id} />
                                 </div>
                                 <div className="flex gap-2">
                                     <button
                                         onClick={() => handleAccept(request.requestId!)}
-                                        className="px-3 py-1 bg-primary text-white text-sm rounded hover:bg-primary-dark"
+                                        className="px-3 py-1 bg-primary text-white rounded hover:bg-primary/90 text-sm"
                                     >
                                         수락
                                     </button>
                                     <button
                                         onClick={() => handleReject(request.requestId!)}
-                                        className="px-3 py-1 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300"
+                                        className="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 text-sm"
                                     >
                                         거절
                                     </button>
@@ -236,8 +219,40 @@ export default function FriendList() {
                             </div>
                         ))}
                     </div>
-                )}
-            </div>
+                </div>
+            )}
+
+            {/* 보낸 친구 신청 목록 */}
+            {sentRequests.length > 0 && (
+                <div>
+                    <h3 className="text-base font-bold text-primary mb-4">보낸 친구 신청</h3>
+                    <div className="space-y-3">
+                        {sentRequests.map(request => (
+                            <div key={request.id}
+                                className="flex items-center justify-between p-4 bg-primary/5 rounded-lg"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <img
+                                        src={request.profilePath?.startsWith('http')
+                                            ? request.profilePath
+                                            : `https://kr.object.ncloudstorage.com/hf-bucket2025/member/${request.profilePath || 'default.png'}`}
+                                        alt={request.nickname}
+                                        className="w-10 h-10 rounded-full"
+                                    />
+                                    <span className="font-medium">{request.nickname}</span>
+                                    <UserProfile userId={request.id} />
+                                </div>
+                                <button
+                                    onClick={() => handleCancel(request.requestId!)}
+                                    className="px-3 py-1 text-red-500 hover:text-red-700 text-sm"
+                                >
+                                    취소
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* 친구 목록 */}
             <div>
@@ -250,20 +265,16 @@ export default function FriendList() {
                             <div key={friend.id}
                                 className="flex items-center justify-between p-4 bg-primary/5 rounded-lg hover:bg-primary/10 transition-colors"
                             >
-                                <div className="flex items-center">
-                                    <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                                        <img
-                                            src={friend.profilePath
-                                                ? friend.profilePath.startsWith('http')
-                                                    ? friend.profilePath
-                                                    : `https://kr.object.ncloudstorage.com/hf-bucket2025/member/${friend.profilePath}`
-                                                : `https://kr.object.ncloudstorage.com/hf-bucket2025/member/default.png`
-                                            }
-                                            alt={friend.nickname}
-                                            className="w-full h-full object-cover"
-                                        />
-                                    </div>
-                                    <span className="ml-2 font-medium">{friend.nickname}</span>
+                                <div className="flex items-center gap-3">
+                                    <img
+                                        src={friend.profilePath?.startsWith('http')
+                                            ? friend.profilePath
+                                            : `https://kr.object.ncloudstorage.com/hf-bucket2025/member/${friend.profilePath || 'default.png'}`}
+                                        alt={friend.nickname}
+                                        className="w-10 h-10 rounded-full"
+                                    />
+                                    <span className="font-medium">{friend.nickname}</span>
+                                    <UserProfile userId={friend.id} />
                                 </div>
                                 <button
                                     onClick={() => handleDelete(friend.requestId!)}
@@ -278,4 +289,4 @@ export default function FriendList() {
             </div>
         </div>
     );
-} 
+}
