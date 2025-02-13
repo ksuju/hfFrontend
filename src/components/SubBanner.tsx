@@ -22,12 +22,6 @@ const SubBanner = ({ title, posts }: EventBannerProps) => {
         <div className="mt-4 lg:mt-12">
             <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-bold">{title}</h2>
-                <button
-                    className="text-sm text-primary"
-                    onClick={() => navigate(`/posts?genre=${encodeURIComponent(title)}`)}
-                >
-                    더보기
-                </button>
             </div>
             <Swiper slidesPerView={3} spaceBetween={12} className="w-full pb-1">
                 {posts?.map((post) => (

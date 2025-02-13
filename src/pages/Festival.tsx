@@ -1,6 +1,6 @@
-import {useEffect, useState} from 'react';
+import { useEffect, useState } from 'react';
 import SearchBar from '../components/SearchBar';
-import {useNavigate} from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 // API 응답 데이터 타입 정의
 interface FestivalPost {
@@ -146,7 +146,7 @@ const Festival = () => {
     return (
         <div className="max-w-[600px] mx-auto">
             {/* 검색창 */}
-            <SearchBar placeholder="축제, 공연을 검색해보세요" onChange={handleSearch} showSearchType={true}/>
+            <SearchBar placeholder="축제, 공연을 검색해보세요" onChange={handleSearch} showSearchType={true} />
 
             <div className="p-4 my-20">
                 <div className="flex overflow-x-auto gap-1 mb-4 mt-[-15px]" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
@@ -154,45 +154,50 @@ const Festival = () => {
                         <button
                             key={genre}
                             onClick={() => handleGenreClick(genre)}
-                            className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${
-                                selectedGenre === genre
-                                    ? 'bg-primary text-white'
-                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                            }`}
+                            className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${selectedGenre === genre
+                                ? 'bg-primary text-white'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                }`}
                         >
                             {genre}
                         </button>
                     ))}
                 </div>
 
-                <div className="grid grid-cols-3 gap-3">
-                    {searchPosts.map((searchPost) => (
-                        <div key={searchPost.festivalId}
-                             className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col"
-                             onClick={() => navigate(`/detailposts?id=${encodeURIComponent(searchPost.festivalId)}`)}
-                        >
-                            {/* 이미지 영역 */}
-                            <div className="relative pb-[90%]">
-                                <img
-                                    src={searchPost.festivalUrl || "https://via.placeholder.com/150"}
-                                    alt={searchPost.festivalName}
-                                    className="absolute inset-0 w-full h-full object-cover bg-gray-200"
-                                />
+                {searchPosts && searchPosts.length > 0 ? (
+                    <div className="grid grid-cols-3 gap-3">
+                        {searchPosts.map((searchPost) => (
+                            <div key={searchPost.festivalId}
+                                className="bg-white rounded-lg shadow-md overflow-hidden flex flex-col"
+                                onClick={() => navigate(`/detailposts?id=${encodeURIComponent(searchPost.festivalId)}`)}
+                            >
+                                {/* 이미지 영역 */}
+                                <div className="relative pb-[90%]">
+                                    <img
+                                        src={searchPost.festivalUrl || "https://via.placeholder.com/150"}
+                                        alt={searchPost.festivalName}
+                                        className="absolute inset-0 w-full h-full object-cover bg-gray-200"
+                                    />
+                                </div>
+                                {/* 텍스트 영역 */}
+                                <div className="p-2">
+                                    <h3 className="text-sm font-medium leading-tight line-clamp-2">{searchPost.festivalName}</h3>
+                                    <p className="text-xs text-gray-500 mt-1 mb-[-10px]">{searchPost.festivalArea}</p>
+                                </div>
+                                {/* 날짜 영역을 카드 하단에 고정 */}
+                                <div className="p-2 text-xs text-gray-500 bg-white mt-auto">
+                                    <p>
+                                        {searchPost.festivalStartDate?.replace(/-/g, '.')} - {searchPost.festivalEndDate?.replace(/-/g, '.')}
+                                    </p>
+                                </div>
                             </div>
-                            {/* 텍스트 영역 */}
-                            <div className="p-2">
-                                <h3 className="text-sm font-medium leading-tight line-clamp-2">{searchPost.festivalName}</h3>
-                                <p className="text-xs text-gray-500 mt-1 mb-[-10px]">{searchPost.festivalArea}</p>
-                            </div>
-                            {/* 날짜 영역을 카드 하단에 고정 */}
-                            <div className="p-2 text-xs text-gray-500 bg-white mt-auto">
-                                <p>
-                                    {searchPost.festivalStartDate?.replace(/-/g, '.')} - {searchPost.festivalEndDate?.replace(/-/g, '.')}
-                                </p>
-                            </div>
-                        </div>
-                    ))}
-                </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center py-8">
+                        <p className="text-gray-500">검색된 축제 / 공연이 없습니다</p>
+                    </div>
+                )}
                 {isLoading && <p className="text-center text-gray-500 mt-4">Loading...</p>}
             </div>
         </div>
