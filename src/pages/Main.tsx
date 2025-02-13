@@ -110,15 +110,7 @@ const Main = () => {
 
     const fetchMainPosts = async () => {
         try {
-            let url: string = "";
-
-            if (userInfo === null || userInfo === undefined) {
-                url = `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/posts/search/main1?area=`;
-            } else {
-                url = `${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/posts/search/main1?area=${JSON.parse(userInfo).data.location}`;
-            }
-
-            const main1Response = await axios.get<Festival[]>(url);
+            const main1Response = await axios.get<Festival[]>(`${import.meta.env.VITE_CORE_API_BASE_URL}/api/v1/posts/search/main1?area=${userLocation}`);
             setMainPosts(main1Response.data);
         } catch (error) {
             console.error('Error fetching main festival data:', error);
