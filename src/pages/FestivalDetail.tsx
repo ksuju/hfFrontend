@@ -388,15 +388,6 @@ export default function FestivalDetail() {
         }
     };
 
-    // 수정 폼 입력값 변경 핸들러
-    const edithandleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-        const { name, value } = e.target;
-        setEditRoomData((prev) => ({
-            ...prev,
-            [name]: name === "limit" ? Number(value) : value,
-        }));
-    };
-
     // 수정내용 저장하기 버튼 메서드
     const handleSaveEdit = async (chatRoomId: string) => {
         const requestBody = {
