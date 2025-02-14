@@ -464,6 +464,12 @@ const Chat: React.FC<{ memberId: number }> = ({ memberId }) => {
                                 }, {});
                                 setMessageReadCounts(countMap);
                                 break;
+
+                            case 'DELETE':
+                                setMessages(prevMessages =>
+                                    prevMessages.filter(msg => msg.chatMessageContent !== receivedData.data)
+                                );
+                                break;
                         }
                     }
 
